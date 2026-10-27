@@ -17,6 +17,11 @@ return new class extends Migration
             $table->integer('nomor_tiket');
             $table->string('status_antrean', 50)->default('menunggu');
             $table->integer('estimasi_waktu');
+            $table->string('nama_mesin', 100)->nullable()->default('Mesin Konica 1');
+            $table->string('nama_operator', 100)->nullable()->default('Feri');
+            $table->string('status_alur', 50)->nullable()->default('Diterima');
+            $table->string('status_pembayaran', 50)->nullable()->default('lunas');
+            $table->string('keterangan_tenggat', 100)->nullable()->default('Sesuai Jadwal');
             $table->timestamps();
 
             $table->foreign('pesanan_id')

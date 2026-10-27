@@ -19,49 +19,49 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // 1. Akun Pengguna
-        // Owner
-        User::create([
-            'nama' => 'Owner Matahari',
-            'email' => 'owner@matahari.com',
-            'password' => Hash::make('password123'),
-            'nomor_telepon' => '081234567890',
-            'role' => 'owner',
-        ]);
+        // Admin Uji (Kredensial Uji: admin@123 / 12345)
+        $adminUji = User::updateOrCreate(
+            ['email' => 'admin@123'],
+            [
+                'nama' => 'Admin Matahari (Uji)',
+                'password' => Hash::make('12345'),
+                'nomor_telepon' => '081234567890',
+                'role' => 'admin',
+            ]
+        );
 
-        // Kasir
-        $userKasir = User::create([
-            'nama' => 'Kasir Matahari',
-            'email' => 'kasir@matahari.com',
-            'password' => Hash::make('password123'),
-            'nomor_telepon' => '081234567891',
-            'role' => 'kasir',
-        ]);
+        AdminKasir::updateOrCreate(
+            ['user_id' => $adminUji->user_id],
+            ['shift_kerja' => 'Pagi-Sore']
+        );
 
-        AdminKasir::create([
-            'user_id' => $userKasir->user_id,
-            'shift_kerja' => 'Pagi-Malam',
-        ]);
+        // Pelanggan Uji (Kredensial Uji: user@321 / 12345)
+        $userUji = User::updateOrCreate(
+            ['email' => 'user@321'],
+            [
+                'nama' => 'Pelanggan Setia (Uji)',
+                'password' => Hash::make('12345'),
+                'nomor_telepon' => '081234567899',
+                'role' => 'user',
+            ]
+        );
 
-        // Pelanggan Member
-        $userPelanggan = User::create([
-            'nama' => 'Budi Santoso',
-            'email' => 'budi@gmail.com',
-            'password' => Hash::make('password123'),
-            'nomor_telepon' => '081234567892',
-            'role' => 'pelanggan',
-        ]);
+        $pelangganUji = Pelanggan::updateOrCreate(
+            ['user_id' => $userUji->user_id],
+            ['saldo_poin' => 250]
+        );
 
-        $pelanggan = Pelanggan::create([
-            'user_id' => $userPelanggan->user_id,
-            'saldo_poin' => 150,
-        ]);
+        ProgramLoyalitas::firstOrCreate(
+            ['pelanggan_id' => $pelangganUji->pelanggan_id],
+            [
+                'jumlah_poin_masuk' => 250,
+                'jumlah_poin_keluar' => 0,
+                'tanggal_transaksi' => now(),
+            ]
+        );
 
-        ProgramLoyalitas::create([
-            'pelanggan_id' => $pelanggan->pelanggan_id,
-            'jumlah_poin_masuk' => 150,
-            'jumlah_poin_keluar' => 0,
-            'tanggal_transaksi' => now(),
-        ]);
+        // Remove old unused demo accounts so only designated admin and user accounts exist
+        User::whereNotIn('email', ['admin@123', 'user@321'])->delete();
 
         // 2. Produk Layanan
         $produkList = [

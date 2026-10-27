@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <linearGradient id="bg_a480" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#dc2626"/>
+      <stop offset="100%" stop-color="#b91c1c"/>
+    </linearGradient>
+    <linearGradient id="top_a480" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef2f2"/>
+      <stop offset="100%" stop-color="#fee2e2"/>
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" rx="20" fill="#fef2f2"/>
+  <path d="M22 45 L50 30 L78 45 L50 60 Z" fill="url(#top_a480)" stroke="#fca5a5" stroke-width="1.5"/>
+  <path d="M22 45 L50 60 L50 78 L22 63 Z" fill="url(#bg_a480)"/>
+  <path d="M50 60 L78 45 L78 63 L50 78 Z" fill="#991b1b"/>
+  <rect x="30" y="55" width="16" height="6" rx="1.5" fill="#ffffff" opacity="0.9"/>
+  <text x="38" y="59.5" font-family="sans-serif" font-size="3.5" font-weight="900" fill="#b91c1c" text-anchor="middle">PaperOne</text>
+  <text x="64" y="59.5" font-family="monospace" font-size="3.5" font-weight="bold" fill="#ffffff" text-anchor="middle">A4 80g</text>
+</svg>

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <linearGradient id="mika_grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e0f2fe" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#bae6fd" stop-opacity="0.5"/>
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" rx="20" fill="#f0f9ff"/>
+  <!-- Glossy transparent sheets -->
+  <rect x="22" y="24" width="52" height="58" rx="3" fill="url(#mika_grad)" stroke="#38bdf8" stroke-width="1.5"/>
+  <!-- Specular shine lines -->
+  <line x1="28" y1="30" x2="68" y2="70" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" opacity="0.8"/>
+  <line x1="36" y1="30" x2="72" y2="66" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+  <rect x="30" y="64" width="40" height="9" rx="2" fill="#0284c7"/>
+  <text x="50" y="70" font-family="sans-serif" font-size="3" font-weight="900" fill="#ffffff" text-anchor="middle">MIKA BENING</text>
+</svg>

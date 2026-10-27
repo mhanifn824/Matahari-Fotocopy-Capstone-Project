@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <linearGradient id="tapeBrown" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#b45309"/>
+      <stop offset="100%" stop-color="#78350f"/>
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" rx="20" fill="#fefce8"/>
+  <!-- Tape Roll 3D Perspective -->
+  <!-- Outer circle / ellipse -->
+  <ellipse cx="50" cy="50" rx="32" ry="24" fill="url(#tapeBrown)"/>
+  <!-- Tape thickness body -->
+  <path d="M 18 50 L 18 64 A 32 24 0 0 0 82 64 L 82 50 Z" fill="#92400e"/>
+  <ellipse cx="50" cy="64" rx="32" ry="24" fill="url(#tapeBrown)"/>
+  <!-- Core hole -->
+  <ellipse cx="50" cy="64" rx="16" ry="12" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+  <text x="50" y="66" font-family="'Plus Jakarta Sans', sans-serif" font-size="3.5" font-weight="900" fill="#92400e" text-anchor="middle">DAIMARU</text>
+  <text x="50" y="88" font-family="'Plus Jakarta Sans', sans-serif" font-size="5" font-weight="bold" fill="#b45309" text-anchor="middle">LAKBAN 48MM</text>
+</svg>

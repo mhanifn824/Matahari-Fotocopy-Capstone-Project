@@ -53,4 +53,34 @@ class User extends Authenticatable
     {
         return $this->hasOne(AdminKasir::class, 'user_id', 'user_id');
     }
+
+    /**
+     * Check if user is an admin or cashier/staff.
+     */
+    public function isAdminOrStaff(): bool
+    {
+        return in_array(strtolower((string) $this->role), ['admin', 'kasir', 'owner'], true);
+    }
+
+    /**
+     * Check if user is a customer/pelanggan.
+     */
+    public function isCustomer(): bool
+    {
+        return in_array(strtolower((string) $this->role), ['user', 'pelanggan'], true);
+    }
+
+    /**
+     * Return human-friendly role label.
+     */
+    public function getRoleLabelAttribute(): string
+    {
+        return match (strtolower((string) $this->role)) {
+            'admin' => 'Administrator',
+            'kasir' => 'Kasir / Operator',
+            'owner' => 'Owner',
+            'pelanggan', 'user' => 'Pelanggan / Member',
+            default => ucfirst((string) $this->role),
+        };
+    }
 }

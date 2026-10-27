@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('email', 100)->unique();
             $table->string('password', 255);
             $table->string('nomor_telepon', 20);
-            $table->enum('role', ['pelanggan', 'kasir', 'owner']);
+            $table->string('role', 20)->default('user');
             $table->rememberToken();
             $table->timestamps();
         });
