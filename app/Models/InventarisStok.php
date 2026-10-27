@@ -45,6 +45,31 @@ class InventarisStok extends Model
         return $this->jumlah_stok <= $this->batas_minimum;
     }
 
+    /**
+     * Periksa apakah stok berada pada atau di bawah batas minimum untuk memicu Low-Stock Alert (Gambar 4.4 Class Diagram - KF-12).
+     */
+    public function cekLowStockAlert(): bool
+    {
+        return $this->isLowStock();
+    }
+
+    /**
+     * Potong jumlah stok bahan baku berdasarkan pemakaian lembar/unit (Gambar 4.4 Class Diagram - KF-13).
+     */
+    public function potongStok(int $jumlahLembar): self
+    {
+        if (strtolower(trim((string) $this->satuan)) === 'rim') {
+            $potongan = $jumlahLembar > 0 ? (int) ceil($jumlahLembar / 500) : 0;
+        } else {
+            $potongan = max(0, $jumlahLembar);
+        }
+
+        $stokBaru = max(0, (int) $this->jumlah_stok - $potongan);
+        $this->update(['jumlah_stok' => $stokBaru]);
+
+        return $this->refresh();
+    }
+
     public function getDisplayKodeAttribute(): string
     {
         return $this->kode_bahan ?: ('K-'.str_pad((string) $this->stok_id, 3, '0', STR_PAD_LEFT));

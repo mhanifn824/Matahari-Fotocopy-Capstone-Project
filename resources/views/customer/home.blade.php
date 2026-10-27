@@ -683,9 +683,16 @@
                     @foreach($customerOrders->take(4) as $order)
                         <div class="bg-white rounded-2xl p-4.5 border border-slate-200 shadow-2xs space-y-3">
                             <div class="flex items-center justify-between">
-                                <span class="font-mono text-xs font-extrabold text-slate-900">{{ $order->nomor_nota }}</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-mono text-xs font-extrabold text-slate-900">{{ $order->nomor_nota }}</span>
+                                    @if($order->antreanMesin)
+                                        <span class="px-2 py-0.5 rounded-md bg-slate-900 text-white text-[10px] font-mono font-bold">
+                                            Tiket {{ $order->antreanMesin->kode_antrean }}
+                                        </span>
+                                    @endif
+                                </div>
                                 <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase font-mono {{ $order->status_pesanan === 'selesai' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-blue-50 text-blue-700 border border-blue-200' }}">
-                                    ● {{ $order->status_pesanan }}
+                                    ● {{ $order->antreanMesin ? $order->antreanMesin->status_alur : $order->status_pesanan }}
                                 </span>
                             </div>
 
@@ -796,7 +803,8 @@
 
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">Upload Berkas PDF / Dokumen (Opsional jika ATK)</label>
-                    <input type="file" name="berkas" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition">
+                    <input type="file" name="berkas" id="cust-file-input" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onchange="handleCustFileSelect(this)" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition">
+                    <p id="cust-pdf-pages-badge" class="hidden mt-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-1"></p>
                 </div>
 
                 <div>
@@ -865,12 +873,48 @@
             document.getElementById('modalLoyalty').classList.add('hidden');
         }
 
+        let detectedPdfPages = null;
+
+        function handleCustFileSelect(input) {
+            const badge = document.getElementById('cust-pdf-pages-badge');
+            const file = input.files && input.files[0];
+            if (!file) {
+                detectedPdfPages = null;
+                if (badge) badge.classList.add('hidden');
+                calculateCustPrice();
+                return;
+            }
+            if (file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf') {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const text = e.target.result;
+                    const matches = text.match(/\/Type\s*\/Page\b(?!s)/g);
+                    const pages = matches && matches.length > 0 ? matches.length : 1;
+                    detectedPdfPages = pages;
+                    if (badge) {
+                        badge.textContent = '✓ File PDF terdeteksi otomatis: ' + pages + ' halaman';
+                        badge.classList.remove('hidden');
+                    }
+                    calculateCustPrice();
+                };
+                reader.readAsBinaryString(file);
+            } else {
+                detectedPdfPages = 1;
+                if (badge) {
+                    badge.textContent = '✓ Dokumen terdeteksi: ' + file.name;
+                    badge.classList.remove('hidden');
+                }
+                calculateCustPrice();
+            }
+        }
+
         function calculateCustPrice() {
             const select = document.getElementById('cust-prod-select');
             if (!select) return;
             const price = parseFloat(select.options[select.selectedIndex]?.getAttribute('data-price') || 300);
             const qty = parseInt(document.getElementById('cust-qty')?.value || 1);
-            const total = price * qty;
+            const pages = detectedPdfPages ? detectedPdfPages : 1;
+            const total = pages * price * qty;
             document.getElementById('cust-price-display').textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(total);
         }
 

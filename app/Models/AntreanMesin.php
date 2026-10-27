@@ -35,6 +35,19 @@ class AntreanMesin extends Model
         return 'A-'.str_pad((string) $this->nomor_tiket, 2, '0', STR_PAD_LEFT);
     }
 
+    /**
+     * Generate kode tiket antrean digital (Gambar 4.4 Class Diagram - UC-06 & UC-07).
+     */
+    public function generateTiket(): string
+    {
+        if (empty($this->nomor_tiket)) {
+            $next = (int) (self::whereDate('created_at', now()->toDateString())->max('nomor_tiket') ?? 0) + 1;
+            $this->nomor_tiket = $next;
+        }
+
+        return $this->kode_antrean;
+    }
+
     public function getStatusLabelAttribute(): string
     {
         return match (strtolower((string) $this->status_antrean)) {

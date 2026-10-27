@@ -18,9 +18,12 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -69,8 +72,11 @@ class DashboardController extends Controller
 
         $workshopData = $this->calculateWorkshopStats();
 
-        $query = AntreanMesin::with(['pesanan.pelanggan.user', 'pesanan.detailPesanan.produkLayanan'])
-            ->where('status_antrean', '!=', 'selesai');
+        $query = AntreanMesin::with([
+            'pesanan.pelanggan.user',
+            'pesanan.detailPesanan.produkLayanan',
+            'pesanan.detailPesanan.berkasDokumen',
+        ])->where('status_antrean', '!=', 'selesai');
 
         if ($filter === 'diterima') {
             $query->whereIn('status_alur', ['Diterima', 'diterima', 'menunggu']);
@@ -149,14 +155,23 @@ class DashboardController extends Controller
     {
         $workshopData = $this->calculateWorkshopStats();
 
-        $queues = AntreanMesin::with(['pesanan.pelanggan.user', 'pesanan.detailPesanan.produkLayanan'])
+        $queues = AntreanMesin::with([
+            'pesanan.pelanggan.user',
+            'pesanan.detailPesanan.produkLayanan',
+            'pesanan.detailPesanan.berkasDokumen',
+        ])
             ->where('status_antrean', '!=', 'selesai')
             ->orderBy('nomor_tiket', 'asc')
             ->take(20)
             ->get()
             ->map(function ($queue) {
+                $berkas = $queue->pesanan?->detailPesanan?->firstWhere('berkas_id', '!=', null)?->berkasDokumen;
+
                 return [
                     'antrean_id' => $queue->antrean_id,
+                    'pesanan_id' => $queue->pesanan_id,
+                    'berkas_id' => $berkas?->berkas_id,
+                    'download_url' => $berkas ? route('admin.berkas.download', $berkas->berkas_id) : null,
                     'nomor_tiket' => $queue->nomor_tiket,
                     'kode_antrean' => $queue->kode_antrean,
                     'nomor_nota' => $queue->pesanan?->nomor_nota ?? '#MF-'.str_pad((string) $queue->pesanan_id, 3, '0', STR_PAD_LEFT),
@@ -271,7 +286,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Update active queue status.
+     * Update active queue status (KF-13 & KF-15 integrated).
      */
     public function updateQueueStatus(Request $request, AntreanMesin $antrean): JsonResponse|RedirectResponse
     {
@@ -279,40 +294,60 @@ class DashboardController extends Controller
             'status' => 'required|string|in:cetak,salin,menunggu,finishing,siap,selesai',
         ]);
 
-        $statusAlurMap = [
-            'cetak' => 'Sedang Cetak',
-            'salin' => 'Sedang Cetak',
-            'menunggu' => 'Diterima',
-            'finishing' => 'Sedang Jilid',
-            'siap' => 'Siap Diambil',
-            'selesai' => 'Selesai',
-        ];
+        return DB::transaction(function () use ($validated, $request, $antrean) {
+            $statusAlurMap = [
+                'cetak' => 'Sedang Cetak',
+                'salin' => 'Sedang Cetak',
+                'menunggu' => 'Diterima',
+                'finishing' => 'Sedang Jilid',
+                'siap' => 'Siap Diambil',
+                'selesai' => 'Selesai',
+            ];
 
-        $antrean->update([
-            'status_antrean' => $validated['status'],
-            'status_alur' => $statusAlurMap[$validated['status']] ?? 'Sedang Cetak',
-        ]);
+            $newStatusAlur = $statusAlurMap[$validated['status']] ?? 'Sedang Cetak';
+            $pesanan = $antrean->pesanan;
 
-        if ($validated['status'] === 'selesai') {
-            $antrean->pesanan?->update([
-                'status_pesanan' => 'selesai',
-            ]);
-        }
+            $wasAlreadyCompleted = in_array($antrean->status_alur, ['Siap Diambil', 'Selesai'], true)
+                || in_array($antrean->status_antrean, ['siap', 'selesai'], true)
+                || $pesanan?->status_pesanan === 'selesai';
 
-        if ($request->expectsJson()) {
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Status antrean berhasil diperbarui menjadi '.$antrean->status_label,
-                'antrean' => $antrean,
-            ]);
-        }
+            $updatePayload = [
+                'status_antrean' => $validated['status'],
+                'status_alur' => $newStatusAlur,
+            ];
 
-        return redirect()->back()
-            ->with('success', 'Status antrean '.$antrean->kode_antrean.' diperbarui.');
+            if (in_array($validated['status'], ['siap', 'selesai'], true)) {
+                $updatePayload['status_pembayaran'] = 'lunas';
+            }
+
+            $antrean->update($updatePayload);
+
+            if ($validated['status'] === 'selesai' && $pesanan) {
+                $pesanan->update([
+                    'status_pesanan' => 'selesai',
+                ]);
+            }
+
+            if (! $wasAlreadyCompleted && $pesanan && in_array($newStatusAlur, ['Siap Diambil', 'Selesai'], true)) {
+                $this->deductInventoryStockForOrder($pesanan);
+                $this->allocateLoyaltyPointsForOrder($pesanan);
+            }
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Status antrean berhasil diperbarui menjadi '.$antrean->status_label,
+                    'antrean' => $antrean,
+                ]);
+            }
+
+            return redirect()->back()
+                ->with('success', 'Status antrean '.$antrean->kode_antrean.' diperbarui.');
+        });
     }
 
     /**
-     * Update Antrean Alur from Antrean Mesin page action button.
+     * Update Antrean Alur from Antrean Mesin page action button (KF-13 & KF-15 integrated).
      */
     public function updateAntreanAlur(Request $request, AntreanMesin $antrean): JsonResponse|RedirectResponse
     {
@@ -320,49 +355,177 @@ class DashboardController extends Controller
             'action' => 'required|string|in:proses_cetak,selesai,serahkan,tunggu_bahan',
         ]);
 
-        switch ($validated['action']) {
-            case 'proses_cetak':
-                $antrean->update([
-                    'status_alur' => 'Sedang Cetak',
-                    'status_antrean' => 'cetak',
+        return DB::transaction(function () use ($validated, $request, $antrean) {
+            $pesanan = $antrean->pesanan;
+            $wasAlreadyCompleted = in_array($antrean->status_alur, ['Siap Diambil', 'Selesai'], true)
+                || in_array($antrean->status_antrean, ['siap', 'selesai'], true)
+                || $pesanan?->status_pesanan === 'selesai';
+
+            switch ($validated['action']) {
+                case 'proses_cetak':
+                    $antrean->update([
+                        'status_alur' => 'Sedang Cetak',
+                        'status_antrean' => 'cetak',
+                    ]);
+                    $msg = 'Antrean '.$antrean->kode_antrean.' mulai diproses cetak.';
+                    break;
+                case 'selesai':
+                    $antrean->update([
+                        'status_alur' => 'Siap Diambil',
+                        'status_antrean' => 'siap',
+                        'status_pembayaran' => 'lunas',
+                    ]);
+                    if (! $wasAlreadyCompleted && $pesanan) {
+                        $this->deductInventoryStockForOrder($pesanan);
+                        $this->allocateLoyaltyPointsForOrder($pesanan);
+                    }
+                    $msg = 'Antrean '.$antrean->kode_antrean.' selesai proses dan siap diambil di loket.';
+                    break;
+                case 'serahkan':
+                    $antrean->update([
+                        'status_alur' => 'Selesai',
+                        'status_antrean' => 'selesai',
+                        'status_pembayaran' => 'lunas',
+                    ]);
+                    if ($pesanan) {
+                        $pesanan->update(['status_pesanan' => 'selesai']);
+                        if (! $wasAlreadyCompleted) {
+                            $this->deductInventoryStockForOrder($pesanan);
+                            $this->allocateLoyaltyPointsForOrder($pesanan);
+                        }
+                        $this->purgeOrderFiles($pesanan);
+                    }
+                    $msg = 'Pesanan '.$antrean->kode_antrean.' telah diserahkan ke pelanggan.';
+                    break;
+                case 'tunggu_bahan':
+                    $antrean->update([
+                        'status_alur' => 'Menunggu Bahan',
+                        'status_antrean' => 'menunggu',
+                    ]);
+                    $msg = 'Status antrean diubah ke Menunggu Bahan.';
+                    break;
+                default:
+                    $msg = 'Status diperbarui.';
+            }
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'status' => 'success',
+                    'message' => $msg,
+                    'antrean' => $antrean,
                 ]);
-                $msg = 'Antrean '.$antrean->kode_antrean.' mulai diproses cetak.';
-                break;
-            case 'selesai':
-                $antrean->update([
-                    'status_alur' => 'Siap Diambil',
-                    'status_antrean' => 'siap',
-                ]);
-                $msg = 'Antrean '.$antrean->kode_antrean.' selesai proses dan siap diambil di loket.';
-                break;
-            case 'serahkan':
-                $antrean->update([
-                    'status_alur' => 'Selesai',
-                    'status_antrean' => 'selesai',
-                ]);
-                $antrean->pesanan?->update(['status_pesanan' => 'selesai']);
-                $msg = 'Pesanan '.$antrean->kode_antrean.' telah diserahkan ke pelanggan.';
-                break;
-            case 'tunggu_bahan':
-                $antrean->update([
-                    'status_alur' => 'Menunggu Bahan',
-                    'status_antrean' => 'menunggu',
-                ]);
-                $msg = 'Status antrean diubah ke Menunggu Bahan.';
-                break;
-            default:
-                $msg = 'Status diperbarui.';
+            }
+
+            return redirect()->back()->with('success', $msg);
+        });
+    }
+
+    /**
+     * Securely download customer's original document file from private storage
+     * by berkas_id, pesanan_id, or antrean_id for cashier/operator printing.
+     */
+    public function downloadBerkas(int|string $id): StreamedResponse|RedirectResponse|JsonResponse
+    {
+        $berkas = BerkasDokumen::find($id);
+
+        if (! $berkas) {
+            $detail = DetailPesanan::where('pesanan_id', $id)
+                ->whereNotNull('berkas_id')
+                ->with('berkasDokumen')
+                ->first();
+            $berkas = $detail?->berkasDokumen;
         }
+
+        if (! $berkas) {
+            $antrean = AntreanMesin::with('pesanan.detailPesanan.berkasDokumen')->find($id);
+            $berkas = $antrean?->pesanan?->detailPesanan?->firstWhere('berkas_id', '!=', null)?->berkasDokumen;
+        }
+
+        if (! $berkas || empty($berkas->file_path) || ! Storage::disk('local')->exists($berkas->file_path)) {
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Berkas dokumen tidak ditemukan di penyimpanan privat.',
+                ], 404);
+            }
+
+            abort(404, 'Berkas dokumen tidak ditemukan di penyimpanan privat.');
+        }
+
+        return Storage::disk('local')->download($berkas->file_path, $berkas->nama_file);
+    }
+
+    /**
+     * Auto-purge customer uploaded document files after order handover (UU PDP No. 27/2022 - NFR-S).
+     */
+    protected function purgeOrderFiles(Pesanan $pesanan): void
+    {
+        $pesanan->loadMissing('detailPesanan.berkasDokumen');
+
+        foreach ($pesanan->detailPesanan as $detail) {
+            if ($detail->berkasDokumen) {
+                $detail->berkasDokumen->purgeBerkas();
+            }
+        }
+    }
+
+    /**
+     * Store or update service tariff in master produk_layanan (UC-14 / KF-14: Kelola Tarif Layanan).
+     */
+    public function storeTarifLayanan(Request $request): JsonResponse|RedirectResponse
+    {
+        $validated = $request->validate([
+            'nama_item' => 'required|string|max:100',
+            'kategori' => 'required|string|max:50',
+            'harga_dasar' => 'required|numeric|min:0',
+            'status_aktif' => 'nullable|boolean',
+        ]);
+
+        $produk = ProdukLayanan::updateOrCreate(
+            ['nama_item' => $validated['nama_item']],
+            [
+                'kategori' => $validated['kategori'],
+                'harga_dasar' => $validated['harga_dasar'],
+                'status_aktif' => $validated['status_aktif'] ?? true,
+            ]
+        );
 
         if ($request->expectsJson()) {
             return response()->json([
                 'status' => 'success',
-                'message' => $msg,
-                'antrean' => $antrean,
+                'message' => "Tarif layanan {$produk->nama_item} berhasil disimpan.",
+                'produk' => $produk,
             ]);
         }
 
-        return redirect()->back()->with('success', $msg);
+        return redirect()->back()
+            ->with('success', "Tarif layanan {$produk->nama_item} berhasil diperbarui.");
+    }
+
+    /**
+     * Update an existing ProdukLayanan tariff record (UC-14 / KF-14).
+     */
+    public function updateTarifLayanan(Request $request, ProdukLayanan $produk): JsonResponse|RedirectResponse
+    {
+        $validated = $request->validate([
+            'nama_item' => 'sometimes|required|string|max:100',
+            'kategori' => 'sometimes|required|string|max:50',
+            'harga_dasar' => 'required|numeric|min:0',
+            'status_aktif' => 'nullable|boolean',
+        ]);
+
+        $produk->update($validated);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => "Tarif layanan {$produk->nama_item} berhasil diperbarui.",
+                'produk' => $produk->fresh(),
+            ]);
+        }
+
+        return redirect()->back()
+            ->with('success', "Tarif layanan {$produk->nama_item} berhasil diperbarui.");
     }
 
     /**
@@ -404,10 +567,10 @@ class DashboardController extends Controller
     public function seedDemoOrders(): JsonResponse|RedirectResponse
     {
         DB::transaction(function () {
-            // Clear current data first
-            AntreanMesin::truncate();
-            DetailPesanan::truncate();
-            Pesanan::truncate();
+            // Clear current data first (use query()->delete() for MySQL foreign-key & transaction compatibility)
+            AntreanMesin::query()->delete();
+            DetailPesanan::query()->delete();
+            Pesanan::query()->delete();
 
             $today = Carbon::today();
 
@@ -720,9 +883,9 @@ class DashboardController extends Controller
     public function clearDemoOrders(): JsonResponse|RedirectResponse
     {
         DB::transaction(function () {
-            AntreanMesin::truncate();
-            DetailPesanan::truncate();
-            Pesanan::truncate();
+            AntreanMesin::query()->delete();
+            DetailPesanan::query()->delete();
+            Pesanan::query()->delete();
 
             // Reset stocks to safe levels
             InventarisStok::updateOrCreate(
@@ -814,23 +977,36 @@ class DashboardController extends Controller
             }
 
             $produk = ProdukLayanan::findOrFail($validated['produk_id']);
-            $totalHarga = $produk->harga_dasar * $validated['kuantitas'];
+            $kuantitas = (int) $validated['kuantitas'];
+            $jumlahHalaman = 1;
 
             $berkasId = null;
             if ($request->hasFile('berkas')) {
                 $file = $request->file('berkas');
-                $path = $file->store('berkas_pelanggan', 'local');
+
+                try {
+                    $path = $file->store('berkas_pelanggan', 'local');
+                } catch (\Throwable) {
+                    $ext = strtolower($file->getClientOriginalExtension() ?: 'pdf');
+                    $path = $file->storeAs('berkas_pelanggan', Str::random(40).'.'.$ext, 'local');
+                }
+
+                if ($this->isPdfFile($file, $path)) {
+                    $jumlahHalaman = $this->parsePdfPageCount($file, $path);
+                }
 
                 $berkas = BerkasDokumen::create([
                     'pelanggan_id' => $pelanggan->pelanggan_id,
                     'nama_file' => $file->getClientOriginalName(),
                     'file_path' => $path,
                     'ukuran_file' => $file->getSize(),
-                    'jumlah_halaman' => $validated['kuantitas'],
+                    'jumlah_halaman' => $jumlahHalaman,
                     'status_validasi' => 'valid (300 DPI)',
                 ]);
                 $berkasId = $berkas->berkas_id;
             }
+
+            $totalHarga = $jumlahHalaman * (float) $produk->harga_dasar * $kuantitas;
 
             $pesanan = Pesanan::create([
                 'pelanggan_id' => $pelanggan->pelanggan_id,
@@ -841,6 +1017,7 @@ class DashboardController extends Controller
                 'tenggat_waktu' => now()->addMinutes(45)->format('H:i').' WIB',
                 'jenis_pesanan' => 'online',
                 'total_harga' => $totalHarga,
+                'volume_halaman' => $jumlahHalaman,
                 'status_pesanan' => 'proses',
                 'metode_pembayaran' => $validated['metode_pembayaran'],
                 'waktu_pesan' => now(),
@@ -850,7 +1027,7 @@ class DashboardController extends Controller
                 'pesanan_id' => $pesanan->pesanan_id,
                 'produk_id' => $produk->produk_id,
                 'berkas_id' => $berkasId,
-                'kuantitas' => $validated['kuantitas'],
+                'kuantitas' => $kuantitas,
                 'sub_total' => $totalHarga,
             ]);
 
@@ -872,6 +1049,9 @@ class DashboardController extends Controller
                 'keterangan_tenggat' => 'Est. 45 mnt',
             ]);
 
+            // Allocate loyalty points when customer order is paid (lunas)
+            $this->allocateLoyaltyPointsForOrder($pesanan);
+
             if ($request->expectsJson()) {
                 return response()->json([
                     'status' => 'success',
@@ -884,6 +1064,171 @@ class DashboardController extends Controller
             return redirect()->route('customer.home')
                 ->with('success', 'Pesanan Anda berhasil dikirim ke antrean mesin workshop gerai!');
         });
+    }
+
+    /**
+     * Check whether the uploaded file is a PDF document.
+     */
+    protected function isPdfFile(UploadedFile $file, ?string $storedPath = null): bool
+    {
+        $ext = strtolower($file->getClientOriginalExtension());
+        $clientMime = strtolower((string) $file->getClientMimeType());
+
+        if ($ext === 'pdf' || str_contains($clientMime, 'pdf')) {
+            return true;
+        }
+
+        if ($storedPath && Storage::disk('local')->exists($storedPath)) {
+            $head = (string) Storage::disk('local')->get($storedPath);
+            if (str_starts_with(ltrim($head), '%PDF-')) {
+                return true;
+            }
+        }
+
+        try {
+            $detectedMime = strtolower((string) $file->getMimeType());
+
+            return str_contains($detectedMime, 'pdf');
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
+    /**
+     * Native stream/regex parser to calculate real PDF page count (KF-04).
+     */
+    public function parsePdfPageCount(UploadedFile|string $file, ?string $storedPath = null): int
+    {
+        $content = '';
+
+        if ($storedPath && Storage::disk('local')->exists($storedPath)) {
+            $content = (string) Storage::disk('local')->get($storedPath);
+        }
+
+        if ($content === '') {
+            $filePath = $file instanceof UploadedFile ? ($file->getRealPath() ?: $file->getPathname()) : $file;
+            if ($filePath && is_file($filePath)) {
+                $content = (string) @file_get_contents($filePath);
+            }
+        }
+
+        if ($content === '') {
+            return 1;
+        }
+
+        // 1. Match individual /Type /Page dictionary objects (excluding /Pages)
+        $pageObjectCount = preg_match_all('/\/Type\s*\/Page(?!s)\b/i', $content, $pageMatches);
+
+        // 2. Inspect /Count N entries in /Pages tree dictionaries
+        $treeCount = 0;
+        if (preg_match_all('/\/Type\s*\/Pages\b[^>]*?\/Count\s+(\d+)/is', $content, $treeMatches) && ! empty($treeMatches[1])) {
+            $treeCount = max(array_map('intval', $treeMatches[1]));
+        } elseif (preg_match_all('/\/Count\s+(\d+)/i', $content, $countMatches) && ! empty($countMatches[1])) {
+            $treeCount = max(array_map('intval', $countMatches[1]));
+        }
+
+        $detectedPages = max((int) $pageObjectCount, (int) $treeCount);
+
+        return max(1, $detectedPages);
+    }
+
+    /**
+     * Automatically deduct raw paper stock from inventaris_stok based on order specification & volume (KF-13).
+     */
+    protected function deductInventoryStockForOrder(Pesanan $pesanan): ?InventarisStok
+    {
+        $pesanan->loadMissing('detailPesanan.produkLayanan');
+
+        $specCombined = strtoupper(
+            ($pesanan->spesifikasi ?? '').' '.
+            ($pesanan->judul_dokumen ?? '').' '.
+            ($pesanan->detailPesanan->map(fn ($d) => $d->produkLayanan?->nama_item ?? '')->implode(' '))
+        );
+
+        $isF4 = str_contains($specCombined, 'F4') || str_contains($specCombined, 'FOLIO');
+        $is80gr = str_contains($specCombined, '80G') || str_contains($specCombined, '80 GR');
+
+        $stok = null;
+        if ($isF4) {
+            $stok = InventarisStok::where('nama_bahan', 'like', '%Kertas%F4%')
+                ->orWhere('nama_bahan', 'like', '%Folio%F4%')
+                ->orWhere('nama_bahan', 'like', '%F4%')
+                ->orWhere('kode_bahan', 'like', '%F4%')
+                ->orderBy('stok_id', 'asc')
+                ->first();
+        } else {
+            if ($is80gr) {
+                $stok = InventarisStok::where('nama_bahan', 'like', '%A4%80%')
+                    ->orWhere('kode_bahan', 'like', '%A480%')
+                    ->first();
+            }
+
+            if (! $stok) {
+                $stok = InventarisStok::where('nama_bahan', 'Kertas HVS A4 70gr')->first()
+                    ?? InventarisStok::where('nama_bahan', 'like', '%Kertas HVS A4%')->orderBy('stok_id', 'asc')->first()
+                    ?? InventarisStok::where('nama_bahan', 'like', '%A4%')->orderBy('stok_id', 'asc')->first();
+            }
+        }
+
+        if (! $stok) {
+            $stok = InventarisStok::where('kategori', 'like', '%Kertas%')
+                ->orWhere('nama_bahan', 'like', '%Kertas%')
+                ->orderBy('stok_id', 'asc')
+                ->first();
+        }
+
+        if (! $stok) {
+            return null;
+        }
+
+        $volumeHalaman = max(1, (int) ($pesanan->volume_halaman ?? 1));
+        $kuantitas = max(1, (int) ($pesanan->detailPesanan->sum('kuantitas') ?: 1));
+        $totalLembar = $volumeHalaman * $kuantitas;
+
+        if (strtolower(trim((string) $stok->satuan)) === 'rim') {
+            $potongan = $totalLembar > 0 ? (int) ceil($totalLembar / 500) : 0;
+        } else {
+            $potongan = $totalLembar;
+        }
+
+        $stokBaru = max(0, (int) $stok->jumlah_stok - $potongan);
+        $stok->update([
+            'jumlah_stok' => $stokBaru,
+        ]);
+
+        return $stok->fresh();
+    }
+
+    /**
+     * Automatically allocate loyalty points when a registered customer's order is paid/completed (KF-15).
+     * Grants 10 points for every Rp 10.000 of total_harga.
+     */
+    protected function allocateLoyaltyPointsForOrder(Pesanan $pesanan): int
+    {
+        if (! $pesanan->pelanggan_id) {
+            return 0;
+        }
+
+        $pelanggan = Pelanggan::find($pesanan->pelanggan_id);
+        if (! $pelanggan) {
+            return 0;
+        }
+
+        $poinMasuk = (int) floor(((float) $pesanan->total_harga) / 10000) * 10;
+        if ($poinMasuk <= 0) {
+            return 0;
+        }
+
+        $pelanggan->increment('saldo_poin', $poinMasuk);
+
+        ProgramLoyalitas::create([
+            'pelanggan_id' => $pelanggan->pelanggan_id,
+            'jumlah_poin_masuk' => $poinMasuk,
+            'jumlah_poin_keluar' => 0,
+            'tanggal_transaksi' => now(),
+        ]);
+
+        return $poinMasuk;
     }
 
     /**
@@ -1245,6 +1590,9 @@ class DashboardController extends Controller
 
             // Transaksi Kasir Walk-in adalah transaksi kasir langsung (POS) dan tidak masuk ke antrean mesin workshop
             $antrean = null;
+
+            // Allocate loyalty points if walk-in transaction belongs to a registered member (KF-15)
+            $this->allocateLoyaltyPointsForOrder($pesanan);
 
             // Synchronize monthly revenue report immediately
             $this->syncMonthlyOmset();

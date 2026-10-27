@@ -46,6 +46,8 @@ Route::middleware(['auth', 'admin.only'])->prefix('admin')->name('admin.')->grou
     Route::get('/antrean', [DashboardController::class, 'antreanIndex'])->name('antrean.index');
     Route::get('/antrean/live-data', [DashboardController::class, 'antreanLiveData'])->name('antrean.live-data');
     Route::post('/antrean/{antrean}/action', [DashboardController::class, 'updateAntreanAlur'])->name('antrean.action');
+    Route::get('/berkas/{id}/download', [DashboardController::class, 'downloadBerkas'])->name('berkas.download');
+    Route::get('/antrean/download/{id}', [DashboardController::class, 'downloadBerkas'])->name('antrean.download');
 
     // Kasir POS Walk-in Routes
     Route::get('/walk-in', [DashboardController::class, 'walkInIndex'])->name('walkin.index');
@@ -70,6 +72,10 @@ Route::middleware(['auth', 'admin.only'])->prefix('admin')->name('admin.')->grou
     // Laporan Penjualan & Analitik Gerai Routes
     Route::get('/laporan', [DashboardController::class, 'laporanIndex'])->name('laporan.index');
     Route::get('/laporan/export', [DashboardController::class, 'laporanExport'])->name('laporan.export');
+
+    // Master Tarif Layanan Routes (UC-14 / KF-14)
+    Route::post('/tarif', [DashboardController::class, 'storeTarifLayanan'])->name('tarif.store');
+    Route::post('/tarif/{produk}', [DashboardController::class, 'updateTarifLayanan'])->name('tarif.update');
 });
 
 // Protected Customer Portal Routes

@@ -474,28 +474,39 @@
 
                                     <!-- AKSI -->
                                     <td class="py-3.5 px-4 text-center">
-                                        @php $alur = strtolower($q->status_alur ?? 'diterima'); @endphp
-                                        @if($alur === 'sedang cetak')
-                                            <button type="button" onclick="actionAntrean({{ $q->antrean_id }}, 'selesai')" class="px-3.5 py-1.5 rounded-xl bg-[#f59e0b] hover:bg-[#ea580c] text-white font-bold text-xs shadow-2xs transition">
-                                                Proses Cetak
-                                            </button>
-                                        @elseif($alur === 'diterima')
-                                            <button type="button" onclick="actionAntrean({{ $q->antrean_id }}, 'proses_cetak')" class="px-3.5 py-1.5 rounded-xl bg-[#f59e0b] hover:bg-[#ea580c] text-white font-bold text-xs shadow-2xs transition">
-                                                Proses Cetak
-                                            </button>
-                                        @elseif($alur === 'sedang jilid')
-                                            <button type="button" onclick="actionAntrean({{ $q->antrean_id }}, 'selesai')" class="px-3.5 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs transition border border-blue-200">
-                                                Selesai
-                                            </button>
-                                        @elseif($alur === 'siap diambil')
-                                            <button type="button" onclick="actionAntrean({{ $q->antrean_id }}, 'serahkan')" class="px-3.5 py-1.5 rounded-xl bg-[#78350f] hover:bg-[#5e290b] text-white font-bold text-xs shadow-2xs transition">
-                                                Serahkan
-                                            </button>
-                                        @else
-                                            <button type="button" onclick="actionAntrean({{ $q->antrean_id }}, 'proses_cetak')" class="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">
-                                                Detail
-                                            </button>
-                                        @endif
+                                        @php
+                                            $alur = strtolower($q->status_alur ?? 'diterima');
+                                            $berkasDok = $pesanan?->detailPesanan?->firstWhere('berkas_id', '!=', null)?->berkasDokumen;
+                                        @endphp
+                                        <div class="flex items-center justify-center gap-1.5 flex-wrap">
+                                            @if($berkasDok)
+                                                <a href="{{ route('admin.berkas.download', $berkasDok->berkas_id) }}" title="Unduh Berkas Asli ({{ $berkasDok->nama_file }})" class="px-2.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold text-xs transition inline-flex items-center gap-1">
+                                                    <span>⬇</span>
+                                                    <span>Unduh</span>
+                                                </a>
+                                            @endif
+                                            @if($alur === 'sedang cetak')
+                                                <button type="button" onclick="actionAntrean({{ $q->antrean_id }}, 'selesai')" class="px-3.5 py-1.5 rounded-xl bg-[#f59e0b] hover:bg-[#ea580c] text-white font-bold text-xs shadow-2xs transition">
+                                                    Proses Cetak
+                                                </button>
+                                            @elseif($alur === 'diterima')
+                                                <button type="button" onclick="actionAntrean({{ $q->antrean_id }}, 'proses_cetak')" class="px-3.5 py-1.5 rounded-xl bg-[#f59e0b] hover:bg-[#ea580c] text-white font-bold text-xs shadow-2xs transition">
+                                                    Proses Cetak
+                                                </button>
+                                            @elseif($alur === 'sedang jilid')
+                                                <button type="button" onclick="actionAntrean({{ $q->antrean_id }}, 'selesai')" class="px-3.5 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs transition border border-blue-200">
+                                                    Selesai
+                                                </button>
+                                            @elseif($alur === 'siap diambil')
+                                                <button type="button" onclick="actionAntrean({{ $q->antrean_id }}, 'serahkan')" class="px-3.5 py-1.5 rounded-xl bg-[#78350f] hover:bg-[#5e290b] text-white font-bold text-xs shadow-2xs transition">
+                                                    Serahkan
+                                                </button>
+                                            @else
+                                                <button type="button" onclick="actionAntrean({{ $q->antrean_id }}, 'proses_cetak')" class="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">
+                                                    Detail
+                                                </button>
+                                            @endif
+                                        </div>
                                     </td>
                                 </tr>
                             @empty

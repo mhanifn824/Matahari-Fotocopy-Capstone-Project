@@ -57,6 +57,36 @@ class Pesanan extends Model
         return $this->hasOne(AntreanMesin::class, 'pesanan_id', 'pesanan_id');
     }
 
+    /**
+     * Kalkulasi total biaya pesanan berdasarkan volume halaman, harga dasar produk, dan kuantitas (Gambar 4.4 Class Diagram - KF-05).
+     */
+    public function hitungTotalBiaya(?int $jumlahHalaman = null, ?float $hargaDasar = null, ?int $kuantitas = null): float
+    {
+        if ($jumlahHalaman !== null && $hargaDasar !== null && $kuantitas !== null) {
+            return round(max(1, $jumlahHalaman) * max(0.0, $hargaDasar) * max(1, $kuantitas), 2);
+        }
+
+        $this->loadMissing('detailPesanan.produkLayanan');
+
+        $volumeHalaman = max(1, (int) ($this->volume_halaman ?: 1));
+        $total = 0.0;
+
+        foreach ($this->detailPesanan as $detail) {
+            $hargaItem = (float) ($detail->produkLayanan?->harga_dasar ?? 0);
+            $qtyItem = max(1, (int) $detail->kuantitas);
+            $subTotal = $hargaItem > 0
+                ? ($volumeHalaman * $hargaItem * $qtyItem)
+                : (float) $detail->sub_total;
+            $total += $subTotal;
+        }
+
+        if ($total <= 0) {
+            $total = (float) $this->total_harga;
+        }
+
+        return round($total, 2);
+    }
+
     public function getNomorNotaAttribute(): string
     {
         if (! empty($this->nomor_nota_kustom)) {
