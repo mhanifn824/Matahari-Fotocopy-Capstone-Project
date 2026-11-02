@@ -44,7 +44,7 @@ class AdminStokTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('Inventaris Bahan & Stok Gerai', false);
-        $response->assertSee('GUDANG UTAMA BINTARO');
+        $response->assertDontSee('GUDANG UTAMA BINTARO');
         $response->assertSee('Catat Bahan Masuk');
         $response->assertSee('Tambah Item Baru');
         $response->assertSee('TOTAL ITEM TERDAFTAR');

@@ -42,14 +42,12 @@ class AdminLaporanTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('Laporan Penjualan &amp; Analitik Gerai', false);
-        $response->assertSee('CABANG BINTARO SEKTOR 3');
+        $response->assertDontSee('CABANG BINTARO SEKTOR 3');
         $response->assertSee('TOTAL OMZET 7 HARI');
         $response->assertSee('TOTAL NOTA PESANAN');
-        $response->assertSee('VOLUME KERTAS TERCETAK');
-        $response->assertSee('RATA-RATA TRANSAKSI');
+        $response->assertDontSee('RATA-RATA TRANSAKSI');
         $response->assertSee('Tren Pendapatan 7 Hari');
         $response->assertSee('Komposisi Layanan');
-        $response->assertSee('Analitik Waktu: Jam Sibuk Operasional Gerai');
         $response->assertSee('Transaksi Terakhir Gerai');
         $response->assertSee('Ekspor Laporan Excel (.xlsx)');
         $response->assertSee('Unduh Rekap PDF');

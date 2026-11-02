@@ -107,11 +107,7 @@
 
             <!-- Topbar Badges & Actions -->
             <div class="flex items-center gap-3 flex-wrap justify-end w-full sm:w-auto">
-                <!-- Shift Capsule -->
-                <div class="flex items-center gap-2 bg-white border border-slate-200/90 shadow-2xs px-3 py-1.5 rounded-full text-xs font-semibold text-slate-700">
-                    <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
-                    <span>Buka • Shift Siang</span>
-                </div>
+
 
                 <!-- Live Clock Capsule -->
                 <div class="flex items-center gap-2 bg-slate-100/80 border border-slate-200 px-3 py-1.5 rounded-full text-xs font-mono font-medium text-slate-700">
@@ -142,10 +138,7 @@
                 
                 <!-- Title & Breadcrumb -->
                 <div>
-                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono">
-                        ANALITIK POS • <span class="text-amber-500">CABANG BINTARO SEKTOR 3</span>
-                    </div>
-                    <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
+                    <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
                         Laporan Penjualan &amp; Analitik Gerai
                     </h1>
                     <p class="text-xs text-slate-500 font-medium mt-1">
@@ -178,46 +171,27 @@
         <!-- ========================================== -->
         <!-- FILTER BAR & SHIFT INFO                    -->
         <!-- ========================================== -->
+        <!-- FILTER RENTANG WAKTU                       -->
+        <!-- ========================================== -->
         <div class="px-4 md:px-8 pb-4">
-            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-2.5 rounded-2xl border border-slate-200/80 shadow-2xs">
-                
-                <!-- Filter Pills -->
-                <div class="flex items-center gap-1.5 flex-wrap w-full sm:w-auto">
-                    <a href="{{ route('admin.laporan.index', ['rentang' => 'hari_ini']) }}" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition {{ $rentang === 'hari_ini' ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-500 hover:text-slate-800' }}">
-                        Hari Ini
-                    </a>
-                    <a href="{{ route('admin.laporan.index', ['rentang' => '7_hari']) }}" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition {{ $rentang === '7_hari' ? 'bg-white border border-slate-300 text-slate-900 shadow-2xs font-extrabold' : 'text-slate-500 hover:text-slate-800' }}">
-                        7 Hari Terakhir
-                    </a>
-                    <a href="{{ route('admin.laporan.index', ['rentang' => 'bulan_ini']) }}" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition {{ $rentang === 'bulan_ini' ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-500 hover:text-slate-800' }}">
-                        Bulan Ini (Okt 2024)
-                    </a>
-                    <a href="{{ route('admin.laporan.index', ['rentang' => 'kustom']) }}" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition {{ $rentang === 'kustom' ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-500 hover:text-slate-800' }}">
-                        Kustom Rentang 📅
-                    </a>
-                </div>
-
-                <!-- Shift Badge & Refresh Button -->
-                <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-                    <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl text-xs font-medium text-slate-700">
-                        <span>👤</span>
-                        <span>Shift: <strong>Shift Siang + Feri (14:00 - 21:00)</strong></span>
-                    </div>
-                    <button type="button" onclick="window.location.reload()" class="p-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 transition" title="Refresh Laporan">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                        </svg>
-                    </button>
-                </div>
-
+            <div class="flex items-center gap-1.5 flex-wrap bg-white p-2.5 rounded-2xl border border-slate-200/80 shadow-2xs">
+                <a href="{{ route('admin.laporan.index', ['rentang' => 'hari_ini']) }}" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition {{ $rentang === 'hari_ini' ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-500 hover:text-slate-800' }}">
+                    Hari Ini
+                </a>
+                <a href="{{ route('admin.laporan.index', ['rentang' => '7_hari']) }}" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition {{ $rentang === '7_hari' ? 'bg-white border border-slate-300 text-slate-900 shadow-2xs font-extrabold' : 'text-slate-500 hover:text-slate-800' }}">
+                    7 Hari Terakhir
+                </a>
+                <a href="{{ route('admin.laporan.index', ['rentang' => 'bulan_ini']) }}" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition {{ $rentang === 'bulan_ini' ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-500 hover:text-slate-800' }}">
+                    Bulan Ini ({{ now()->translatedFormat('M Y') }})
+                </a>
             </div>
         </div>
 
         <!-- ========================================== -->
-        <!-- 4 KPI SUMMARY METRIC CARDS                 -->
+        <!-- 2 KPI SUMMARY METRIC CARDS                 -->
         <!-- ========================================== -->
         <div class="px-4 md:px-8 pb-5">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 
                 <!-- Card 1: TOTAL OMZET 7 HARI -->
                 <div class="bg-white rounded-2xl p-4 shadow-xs border border-slate-200/80 flex flex-col justify-between">
@@ -233,9 +207,8 @@
                         <div class="flex items-baseline">
                             <span class="text-2xl sm:text-3xl font-black text-slate-900 font-mono">Rp {{ number_format($totalOmzet7Hari, 0, ',', '.') }}</span>
                         </div>
-                        <p class="text-[11px] text-blue-600 font-bold mt-1 flex items-center gap-1">
-                            <span>📈 +14.2%</span>
-                            <span class="text-slate-400 font-normal">vs. minggu lalu</span>
+                        <p class="text-[11px] text-slate-500 font-medium mt-1">
+                            Rata-rata <strong class="text-slate-700 font-mono">Rp {{ number_format($rataRataOmzetPerHari, 0, ',', '.') }}</strong> / hari
                         </p>
                     </div>
                 </div>
@@ -256,49 +229,7 @@
                             <span class="text-xs text-slate-500 font-bold ml-1.5">Nota</span>
                         </div>
                         <p class="text-[11px] text-slate-500 font-medium mt-1">
-                            Rata-rata 26 nota / hari • <span class="text-emerald-600 font-bold">Selesai 99.4%</span>
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Card 3: VOLUME KERTAS TERCETAK -->
-                <div class="bg-white rounded-2xl p-4 shadow-xs border border-slate-200/80 flex flex-col justify-between">
-                    <div class="flex items-center justify-between">
-                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono">VOLUME KERTAS TERCETAK</span>
-                        <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="mt-2">
-                        <div class="flex items-baseline">
-                            <span class="text-2xl sm:text-3xl font-black text-slate-900 font-mono">{{ number_format($volumeKertas, 0, ',', '.') }}</span>
-                            <span class="text-xs text-slate-500 font-bold ml-1.5">Lembar</span>
-                        </div>
-                        <p class="text-[11px] text-slate-500 font-medium mt-1 flex items-center gap-1">
-                            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-                            <span>A4 (72%) • F4/A3 (28%)</span>
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Card 4: RATA-RATA TRANSAKSI -->
-                <div class="bg-white rounded-2xl p-4 shadow-xs border border-slate-200/80 flex flex-col justify-between">
-                    <div class="flex items-center justify-between">
-                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono">RATA-RATA TRANSAKSI</span>
-                        <div class="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="mt-2">
-                        <div class="flex items-baseline">
-                            <span class="text-2xl sm:text-3xl font-black text-slate-900 font-mono">Rp {{ number_format($rataRataTransaksi, 0, ',', '.') }}</span>
-                        </div>
-                        <p class="text-[11px] text-slate-500 font-medium mt-1">
-                            <span class="font-bold text-slate-700">Tinggi: Rp 310.000</span> per nota cetak
+                            Rata-rata <strong class="text-slate-700 font-mono">{{ number_format($rataRataNotaPerHari, 1, ',', '.') }}</strong> nota / hari • <span class="text-emerald-600 font-bold">{{ $selesaiCount }} Selesai ({{ $persenSelesai }}%)</span>
                         </p>
                     </div>
                 </div>
@@ -318,7 +249,7 @@
                         <div class="flex items-start justify-between">
                             <div>
                                 <h3 class="text-sm font-extrabold text-slate-900">Tren Pendapatan 7 Hari</h3>
-                                <p class="text-xs text-slate-400 mt-0.5">Fluktuasi omzet harian 18 - 24 Oktober 2024</p>
+                                <p class="text-xs text-slate-400 mt-0.5">Fluktuasi omzet harian {{ $rentangTanggalLabel }}</p>
                             </div>
                             <!-- Legend -->
                             <div class="flex items-center gap-1.5 text-xs text-slate-600 font-semibold">
@@ -353,16 +284,7 @@
                         </div>
                     </div>
 
-                    <!-- Highlight Peak Day Banner -->
-                    <div class="mt-4 p-3 rounded-2xl bg-blue-50/70 border border-blue-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                        <div class="flex items-center gap-2 text-blue-900 font-bold">
-                            <span class="text-blue-600">✓</span>
-                            <span>Hari Paling Produktif: Rabu (Tugas Akhir Kampus UPJ &amp; STAN)</span>
-                        </div>
-                        <div class="font-mono font-black text-blue-700 whitespace-nowrap">
-                            Rp 1.650.000 / 38 Nota
-                        </div>
-                    </div>
+
                 </div>
 
                 <!-- COLUMN 2: KOMPOSISI LAYANAN (DONUT CHART) -->
@@ -419,60 +341,7 @@
             </div>
         </div>
 
-        <!-- ========================================== -->
-        <!-- HEATMAP: ANALITIK WAKTU / JAM SIBUK        -->
-        <!-- ========================================== -->
-        <div class="px-4 md:px-8 pb-5">
-            <div class="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-2xs space-y-4">
-                
-                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-                    <div class="flex items-start gap-3">
-                        <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0 shadow-2xs font-bold text-base">
-                            🕒
-                        </div>
-                        <div>
-                            <div class="flex items-center gap-2 flex-wrap">
-                                <h3 class="text-sm font-extrabold text-slate-900">Analitik Waktu: Jam Sibuk Operasional Gerai</h3>
-                                <span class="px-2 py-0.5 rounded text-[10px] font-extrabold tracking-wider bg-amber-500 text-white font-mono uppercase">
-                                    High Load Notice
-                                </span>
-                            </div>
-                            <p class="text-xs text-slate-500 font-medium mt-0.5">
-                                Lonjakan antrean fisik teratur terjadi pada 2 rentang waktu: <strong>13.00 – 15.00 WIB</strong> (Revisi Dosen Siang) dan <strong>19.00 – 21.00 WIB</strong> (Mahasiswa PKN STAN &amp; UPJ cetak tugas malam).
-                            </p>
-                        </div>
-                    </div>
 
-                    <!-- Recommendation Card -->
-                    <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200/80 flex items-center gap-3 flex-shrink-0">
-                        <div>
-                            <span class="text-[10px] font-bold text-slate-400 uppercase font-mono block">REKOMENDASI KASIR</span>
-                            <span class="text-xs font-extrabold text-slate-800">Buka Loket B cadangan</span>
-                        </div>
-                        <button type="button" onclick="alert('Permintaan alokasi staf bantuan loket B telah dikirim.')" class="bg-white hover:bg-slate-100 border border-slate-300 text-slate-800 text-xs font-bold px-3 py-1.5 rounded-xl transition shadow-2xs active:scale-95">
-                            Alokasikan Staf
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Hourly Blocks Visual Strip -->
-                <div class="pt-2">
-                    <div class="grid grid-cols-6 sm:grid-cols-12 gap-2 text-center">
-                        @foreach($hourlyDistribution as $h)
-                        <div class="flex flex-col items-center gap-1.5">
-                            <div class="w-full h-10 rounded-xl flex items-center justify-center font-mono font-bold text-xs transition {{ !empty($h['is_peak']) ? 'bg-amber-500 text-white shadow-xs' : 'bg-slate-100 text-slate-400 hover:bg-slate-200' }}">
-                                {{ !empty($h['is_peak']) ? '🔥' : '•' }}
-                            </div>
-                            <span class="text-[10px] font-mono font-semibold {{ !empty($h['is_peak']) ? 'text-slate-900 font-black' : 'text-slate-400' }}">
-                                {{ $h['jam'] }}
-                            </span>
-                        </div>
-                        @endforeach
-                    </div>
-                </div>
-
-            </div>
-        </div>
 
         <!-- ========================================== -->
         <!-- BOTTOM SECTION: TRANSAKSI TERAKHIR GERAI   -->

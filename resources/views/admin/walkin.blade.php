@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Kasir POS Walk-in - Matahari Fotocopy</title>
+    <title>Kasir Walk-in - Matahari Fotocopy</title>
     
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
@@ -133,27 +133,7 @@
             <!-- Topbar Badges & Quick Toggles -->
             <div class="flex items-center gap-3 flex-wrap justify-end w-full sm:w-auto">
                 
-                <!-- Demo Toggle Buttons -->
-                <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs">
-                    <form action="{{ route('admin.walkin.seed-demo') }}" method="POST" class="inline">
-                        @csrf
-                        <button type="submit" class="px-2.5 py-1 rounded-lg text-[11px] font-bold text-amber-800 bg-amber-100 hover:bg-amber-200 transition flex items-center gap-1">
-                            <span>⚡ Isi Demo 34 Trx</span>
-                        </button>
-                    </form>
-                    <form action="{{ route('admin.walkin.clear-demo') }}" method="POST" class="inline">
-                        @csrf
-                        <button type="submit" class="px-2.5 py-1 rounded-lg text-[11px] font-bold text-slate-600 hover:bg-white hover:text-slate-800 transition flex items-center gap-1">
-                            <span>Kosongkan</span>
-                        </button>
-                    </form>
-                </div>
 
-                <!-- Shift Capsule -->
-                <div class="hidden md:flex items-center gap-2 bg-amber-50 border border-amber-200/80 px-3 py-1.5 rounded-full text-xs font-semibold text-amber-800">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                    <span>Buka • Shift Siang</span>
-                </div>
 
                 <!-- Live Clock Capsule -->
                 <div class="flex items-center gap-2 bg-slate-100/80 border border-slate-200 px-3 py-1.5 rounded-full text-xs font-mono font-medium text-slate-700">
@@ -192,50 +172,29 @@
         @endif
 
         <!-- ====================================== -->
-        <!-- POS WALK-IN HEADER & ACTION STRIP      -->
+        <!-- POS WALK-IN SUBHEADER & ACTION STRIP   -->
         <!-- ====================================== -->
-        <div class="px-4 md:px-8 pt-6 pb-4">
-            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div class="px-4 md:px-8 py-4 sm:py-5">
+            <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
                 
                 <!-- Title & Pills -->
                 <div>
-                    <div class="flex flex-wrap items-center gap-2.5">
-                        <h1 class="text-2xl font-black text-slate-900 tracking-tight">Kasir POS Walk-in</h1>
-                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">
-                            Loket A05 • Kasir Buka
-                        </span>
-                        <span id="headerNotaBadge" class="px-2.5 py-0.5 rounded-full text-xs font-bold font-mono bg-blue-100 text-blue-800 border border-blue-200">
-                            No. Nota {{ $nextNotaCode }}
-                        </span>
-                    </div>
-                    <p class="text-xs text-slate-500 font-medium mt-1">
-                        Penjualan langsung: ATK, fotokopi kilat, jilid, materai, map, & cetak dokumen walk-in
+                    <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                        Kasir Walk-in
+                    </h1>
+                    <p class="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                        Penjualan langsung: ATK, fotokopi, jilid &amp; cetak dokumen walk-in
                     </p>
                 </div>
 
-                <!-- Info Strip & Action Buttons -->
-                <div class="flex flex-wrap items-center gap-2.5">
+                <!-- Right Action Buttons -->
+                <div class="flex items-center gap-2 sm:gap-2.5 flex-nowrap shrink-0">
                     <!-- Dynamic Omset Loket Pill -->
-                    <div class="bg-white border border-slate-200/90 shadow-2xs rounded-xl px-3.5 py-2 flex items-center gap-2 text-xs font-bold text-slate-800">
-                        <span class="text-base">💵</span>
-                        <span>Omset Loket: <strong id="headerOmsetVal" class="text-slate-900">Rp {{ number_format($todayOmset, 0, ',', '.') }}</strong> <span id="headerCountVal" class="text-slate-500 font-normal">({{ $todayCount }} Transaksi)</span></span>
+                    <div class="bg-white border border-slate-200/90 shadow-2xs rounded-xl px-3 py-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-800 shrink-0">
+                        <span>💵</span>
+                        <span>Omset: <strong id="headerOmsetVal" class="text-slate-900">Rp {{ number_format($todayOmset, 0, ',', '.') }}</strong> <span id="headerCountVal" class="text-slate-500 font-normal">({{ $todayCount }} Transaksi)</span></span>
                     </div>
 
-                    <!-- Open Cash Drawer Button -->
-                    <button type="button" onclick="triggerOpenDrawer()" class="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold px-3.5 py-2 rounded-xl text-xs flex items-center gap-2 shadow-2xs transition active:scale-95">
-                        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-                        </svg>
-                        <span>Buka Laci Kasir (F12)</span>
-                    </button>
-
-                    <!-- Clear Current Cart Button -->
-                    <button type="button" onclick="clearCurrentCart()" class="text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100/80 border border-red-200 font-semibold px-3 py-2 rounded-xl text-xs flex items-center gap-1.5 transition">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                        </svg>
-                        <span>Kosongkan Nota</span>
-                    </button>
                 </div>
             </div>
         </div>
@@ -246,17 +205,17 @@
         <div class="px-4 md:px-8 pb-10 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             
             <!-- ================================== -->
-            <!-- LEFT 8 COLS: CATALOG & TRX TABLE   -->
+            <!-- LEFT: CATALOG & TRX TABLE          -->
             <!-- ================================== -->
-            <div class="lg:col-span-8 space-y-5">
+            <div class="lg:col-span-7 xl:col-span-8 space-y-5">
                 
                 <!-- Category Filter Pills -->
-                <div class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                <div class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none flex-nowrap">
                     @foreach($categories as $index => $cat)
                     <button 
                         type="button" 
                         onclick="filterCategory('{{ $cat }}', this)" 
-                        class="category-filter-btn px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap {{ $index === 0 ? 'bg-slate-900 text-white shadow-xs' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200' }}"
+                        class="category-filter-btn px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap shrink-0 {{ $index === 0 ? 'bg-slate-900 text-white shadow-xs' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200' }}"
                     >
                         @if($cat === 'Semua Item')
                             <span>🔲</span>
@@ -266,8 +225,10 @@
                             <span>✏️</span>
                         @elseif($cat === 'Jilid & Finishing')
                             <span>📑</span>
+                        @elseif($cat === 'Jasa & Lainnya')
+                            <span>⚡</span>
                         @else
-                            <span>•••</span>
+                            <span>📦</span>
                         @endif
                         <span>{{ $cat }}</span>
                     </button>
@@ -284,17 +245,17 @@
                         <span class="text-[11px] text-slate-400 font-mono">{{ $catalogProducts->count() }} Item Tersedia</span>
                     </div>
 
-                    <div id="catalogGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 max-h-56 overflow-y-auto pr-1">
+                    <div id="catalogGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 max-h-56 overflow-y-auto pr-2 custom-scrollbar">
                         @foreach($catalogProducts as $prod)
                         <div 
                             onclick="addItemToCart('{{ addslashes($prod->nama_item) }}', {{ (float)$prod->harga_dasar }}, '{{ $prod->kategori }}', {{ $prod->produk_id }})"
                             data-category="{{ $prod->kategori }}"
-                            class="catalog-item-card p-2.5 rounded-xl border border-slate-200/90 hover:border-amber-400 hover:bg-amber-50/40 bg-slate-50/40 cursor-pointer transition transform active:scale-95 flex flex-col justify-between group"
+                            class="catalog-item-card p-2.5 rounded-xl border border-slate-200/90 hover:border-amber-400 hover:bg-amber-50/40 bg-slate-50/40 cursor-pointer transition transform active:scale-95 flex flex-col justify-between group min-h-[92px]"
                         >
                             <div>
                                 <div class="flex items-center justify-between text-[10px] text-slate-400 mb-1">
                                     <span class="truncate">{{ $prod->kategori }}</span>
-                                    <span class="text-amber-600 font-bold opacity-0 group-hover:opacity-100 transition">+ Nota</span>
+                                    <span class="text-amber-600 font-bold opacity-0 group-hover:opacity-100 transition text-[10px]">+ Nota</span>
                                 </div>
                                 <h4 class="text-xs font-bold text-slate-800 line-clamp-2 leading-snug group-hover:text-amber-900">
                                     {{ $prod->nama_item }}
@@ -304,7 +265,7 @@
                                 <span class="text-xs font-mono font-extrabold text-slate-900 group-hover:text-amber-700">
                                     Rp {{ number_format($prod->harga_dasar, 0, ',', '.') }}
                                 </span>
-                                <span class="text-[10px] px-1 rounded bg-slate-200/60 text-slate-600">+</span>
+                                <span class="text-[11px] w-5 h-5 rounded-md bg-slate-200/70 group-hover:bg-amber-500 group-hover:text-white flex items-center justify-center font-bold text-slate-600 transition">+</span>
                             </div>
                         </div>
                         @endforeach
@@ -396,125 +357,123 @@
             </div>
 
             <!-- ================================== -->
-            <!-- RIGHT 4 COLS: NOTA POS REGISTER    -->
+            <!-- RIGHT: NOTA POS REGISTER           -->
             <!-- ================================== -->
-            <div class="lg:col-span-4 sticky top-20">
-                <div class="bg-white rounded-3xl shadow-sm border border-slate-200/90 p-5 space-y-4">
+            <div class="lg:col-span-5 xl:col-span-4 sticky top-16">
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-200/90 p-3.5 sm:p-4 space-y-3">
                     
                     <!-- Cart Card Header -->
-                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-                        <div class="flex items-center gap-3">
-                            <div class="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold text-sm shadow-xs">
-                                👜
-                            </div>
-                            <div>
-                                <h3 id="cartNotaTitle" class="text-sm font-extrabold text-slate-900 font-mono">
-                                    Nota POS Walk-in {{ $nextNotaCode }}
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100 gap-2">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <span class="text-lg">👜</span>
+                            <div class="min-w-0">
+                                <h3 id="cartNotaTitle" class="text-xs sm:text-sm font-extrabold text-slate-900 tracking-tight whitespace-nowrap">
+                                    Nota Walk-in {{ $nextNotaCode }}
                                 </h3>
-                                <p id="cartCustomerSubtitle" class="text-[11px] text-slate-500">
-                                    Pelanggan: <span id="cartCustomerNameText">Pelanggan Umum (Walk-in)</span>
-                                </p>
+                                <span id="cartCustomerNameText" class="hidden">Pelanggan Umum (Walk-in)</span>
                             </div>
                         </div>
-                        <span id="cartItemsCountBadge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-white font-mono">
+                        <span id="cartItemsCountBadge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-white font-mono whitespace-nowrap shrink-0">
                             0 Item
                         </span>
                     </div>
 
                     <!-- Customer Selector Capsule -->
-                    <div class="bg-slate-50 rounded-2xl p-3 border border-slate-200/80 flex items-center justify-between gap-3">
-                        <div class="flex items-center gap-2.5 min-w-0">
-                            <div class="w-8 h-8 rounded-full bg-slate-300 text-slate-700 font-bold flex items-center justify-center text-xs flex-shrink-0">
+                    <div class="bg-slate-50/80 rounded-2xl p-2 sm:p-2.5 border border-slate-200/80 flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2 min-w-0 flex-1">
+                            <div class="w-7 h-7 rounded-full bg-slate-200 text-slate-600 font-bold flex items-center justify-center text-xs shrink-0">
                                 👤
                             </div>
-                            <div class="min-w-0">
-                                <h4 id="currentCustomerName" class="text-xs font-bold text-slate-900 truncate">
-                                    Pelanggan Umum
-                                </h4>
-                                <span id="currentCustomerBadge" class="text-[10px] font-bold text-slate-600 bg-slate-200 px-1.5 py-0.2 rounded font-mono inline-block mt-0.5">
-                                    Tamu Reguler / Non-Member
-                                </span>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <h4 id="currentCustomerName" class="text-xs font-bold text-slate-900 truncate">
+                                        Pelanggan Umum
+                                    </h4>
+                                    <span id="currentCustomerBadge" class="text-[10px] font-semibold text-slate-600 bg-slate-200/70 px-1.5 py-0.5 rounded-md inline-block whitespace-nowrap">
+                                        Non-Member
+                                    </span>
+                                </div>
                             </div>
                         </div>
-                        <button type="button" onclick="openCustomerModal()" class="text-xs font-bold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 px-2.5 py-1.5 rounded-lg shadow-2xs transition">
+                        <button type="button" onclick="openCustomerModal()" class="text-xs font-bold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-xl shadow-2xs transition shrink-0">
                             Ganti
                         </button>
                     </div>
 
                     <!-- Cart Item Rows Container -->
-                    <div id="cartItemsList" class="space-y-2.5 max-h-64 overflow-y-auto pr-1 divide-y divide-slate-100">
+                    <div id="cartItemsList" class="space-y-2 max-h-44 overflow-y-auto pr-1 divide-y divide-slate-100 custom-scrollbar">
                         <!-- Populated by JavaScript -->
-                        <div id="cartEmptyPlaceholder" class="p-8 text-center text-slate-400">
-                            <svg class="w-8 h-8 mx-auto mb-2 text-slate-300" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                        <div id="cartEmptyPlaceholder" class="py-4 px-3 text-center text-slate-400">
+                            <svg class="w-7 h-7 mx-auto mb-1.5 text-slate-300" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                             </svg>
                             <p class="text-xs font-bold text-slate-600">Keranjang Nota Masih Kosong</p>
-                            <p class="text-[11px] text-slate-400 mt-0.5">Klik item pada katalog layanan di samping untuk menambahkan ke nota ini.</p>
+                            <p class="text-[11px] text-slate-400 mt-0.5">Klik item katalog di samping untuk menambahkan ke nota</p>
                         </div>
                     </div>
 
                     <!-- Summary & Discount -->
-                    <div class="pt-3 border-t border-slate-100 space-y-2 text-xs">
+                    <div class="pt-2 border-t border-slate-100 space-y-1.5 text-xs">
                         <div class="flex items-center justify-between text-slate-500 font-medium">
-                            <span id="subtotalItemLabel">Subtotal Item (0 item)</span>
-                            <span id="subtotalValText" class="font-mono text-slate-800 font-bold">Rp 0</span>
+                            <span id="subtotalItemLabel" class="truncate">Subtotal Item (0 item)</span>
+                            <span id="subtotalValText" class="font-mono text-slate-800 font-bold whitespace-nowrap shrink-0 ml-2">Rp 0</span>
                         </div>
                         <div class="flex items-center justify-between text-amber-700 font-bold">
-                            <span class="flex items-center gap-1">
-                                <span>🏷️</span>
-                                <span>Diskon Member Matahari (Point Tier)</span>
+                            <span class="flex items-center gap-1 min-w-0 truncate">
+                                <span class="shrink-0">🏷️</span>
+                                <span class="truncate">Diskon Member (Tier Point)</span>
                             </span>
-                            <span id="diskonValText" class="font-mono">- Rp 0</span>
+                            <span id="diskonValText" class="font-mono whitespace-nowrap shrink-0 ml-2">- Rp 0</span>
                         </div>
                         <div class="pt-2 border-t border-slate-200 flex items-center justify-between">
-                            <span class="text-xs font-extrabold text-slate-900 uppercase tracking-tight">Total Tagihan Kasir</span>
-                            <span id="totalTagihanValText" class="text-2xl font-black font-mono text-slate-900">Rp 0</span>
+                            <span class="text-xs font-extrabold text-slate-900 uppercase tracking-tight truncate">Total Tagihan Kasir</span>
+                            <span id="totalTagihanValText" class="text-xl font-black font-mono text-slate-900 whitespace-nowrap shrink-0 ml-2">Rp 0</span>
                         </div>
                     </div>
 
                     <!-- Payment Method Quick Selector -->
-                    <div class="pt-2">
-                        <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">
+                    <div class="pt-1">
+                        <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
                             Pilihan Cepat Metode Pembayaran
                         </label>
                         <div class="grid grid-cols-4 gap-1.5">
-                            <button type="button" onclick="selectPaymentMethod('QRIS', this)" class="payment-method-btn active py-2 rounded-xl border border-sky-300 bg-sky-50 text-sky-800 font-bold text-xs flex flex-col items-center justify-center gap-0.5 transition">
+                            <button type="button" onclick="selectPaymentMethod('QRIS', this)" class="payment-method-btn active py-1.5 rounded-xl border border-sky-300 bg-sky-50 text-sky-800 font-bold text-xs flex flex-col items-center justify-center gap-0.5 transition">
                                 <span class="text-xs">📱</span>
                                 <span class="text-[10px] font-mono">QRIS</span>
                             </button>
-                            <button type="button" onclick="selectPaymentMethod('TUNAI', this)" class="payment-method-btn py-2 rounded-xl border border-slate-200 hover:border-slate-300 text-slate-700 font-bold text-xs flex flex-col items-center justify-center gap-0.5 transition">
+                            <button type="button" onclick="selectPaymentMethod('TUNAI', this)" class="payment-method-btn py-1.5 rounded-xl border border-slate-200 hover:border-slate-300 text-slate-700 font-bold text-xs flex flex-col items-center justify-center gap-0.5 transition">
                                 <span class="text-xs">💵</span>
                                 <span class="text-[10px] font-mono">Tunai</span>
                             </button>
-                            <button type="button" onclick="selectPaymentMethod('EDC', this)" class="payment-method-btn py-2 rounded-xl border border-slate-200 hover:border-slate-300 text-slate-700 font-bold text-xs flex flex-col items-center justify-center gap-0.5 transition">
+                            <button type="button" onclick="selectPaymentMethod('EDC', this)" class="payment-method-btn py-1.5 rounded-xl border border-slate-200 hover:border-slate-300 text-slate-700 font-bold text-xs flex flex-col items-center justify-center gap-0.5 transition">
                                 <span class="text-xs">💳</span>
                                 <span class="text-[10px] font-mono">EDC</span>
                             </button>
-                            <button type="button" onclick="selectPaymentMethod('TRANSFER', this)" class="payment-method-btn py-2 rounded-xl border border-slate-200 hover:border-slate-300 text-slate-700 font-bold text-xs flex flex-col items-center justify-center gap-0.5 transition">
+                            <button type="button" onclick="selectPaymentMethod('TRANSFER', this)" class="payment-method-btn py-1.5 rounded-xl border border-slate-200 hover:border-slate-300 text-slate-700 font-bold text-xs flex flex-col items-center justify-center gap-0.5 transition">
                                 <span class="text-xs">🏦</span>
                                 <span class="text-[10px] font-mono">Transfer</span>
                             </button>
                         </div>
                     </div>
 
-                    <!-- Cash Tender / Uang Diterima -->
-                    <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200/80 space-y-2">
-                        <div class="flex items-center justify-between text-[11px] font-bold text-slate-500">
-                            <span>UANG DITERIMA (PECAHAN PAS / BULAT)</span>
+                    <!-- Cash Tender / Uang Diterima (Only visible when TUNAI is selected) -->
+                    <div id="cashTenderSection" class="hidden bg-slate-50 p-2.5 rounded-2xl border border-slate-200/80 space-y-1.5 transition-all">
+                        <div class="flex items-center justify-between text-[10px] font-bold text-slate-500">
+                            <span>UANG DITERIMA (TUNAI)</span>
                             <span class="text-amber-700 font-mono font-bold" id="kembalianText">Kembalian: Rp 0</span>
                         </div>
-                        <div class="grid grid-cols-4 gap-1.5 text-xs">
-                            <button type="button" onclick="setTenderAmount('pas')" id="tenderPasBtn" class="tender-btn py-1.5 px-1 rounded-lg border border-slate-200 bg-white font-bold text-slate-800 hover:bg-slate-100 text-[11px] truncate">
+                        <div class="grid grid-cols-4 gap-1 text-xs">
+                            <button type="button" onclick="setTenderAmount('pas')" id="tenderPasBtn" class="tender-btn py-1 px-1 rounded-lg border border-slate-200 bg-white font-bold text-slate-800 hover:bg-slate-100 text-[10px] truncate">
                                 Rp Pas
                             </button>
-                            <button type="button" onclick="setTenderAmount(50000)" class="tender-btn py-1.5 px-1 rounded-lg border border-amber-400 bg-amber-500 text-white font-bold text-[11px] truncate">
-                                Rp 50.000
+                            <button type="button" onclick="setTenderAmount(50000)" class="tender-btn py-1 px-1 rounded-lg border border-amber-400 bg-amber-500 text-white font-bold text-[10px] truncate">
+                                50.000
                             </button>
-                            <button type="button" onclick="setTenderAmount(100000)" class="tender-btn py-1.5 px-1 rounded-lg border border-slate-200 bg-white font-bold text-slate-800 hover:bg-slate-100 text-[11px] truncate">
-                                Rp 100.000
+                            <button type="button" onclick="setTenderAmount(100000)" class="tender-btn py-1 px-1 rounded-lg border border-slate-200 bg-white font-bold text-slate-800 hover:bg-slate-100 text-[10px] truncate">
+                                100.000
                             </button>
-                            <button type="button" onclick="promptCustomTender()" class="tender-btn py-1.5 px-1 rounded-lg border border-slate-200 bg-white font-bold text-slate-800 hover:bg-slate-100 text-[11px] truncate">
-                                Custom...
+                            <button type="button" onclick="promptCustomTender()" class="tender-btn py-1 px-1 rounded-lg border border-slate-200 bg-white font-bold text-slate-800 hover:bg-slate-100 text-[10px] truncate">
+                                Custom
                             </button>
                         </div>
                     </div>
@@ -524,29 +483,17 @@
                         type="button" 
                         id="checkoutReviewBtn"
                         onclick="openReviewModal()" 
-                        class="w-full py-3.5 px-4 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-md transition active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none"
+                        class="w-full py-3 px-4 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-md transition active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none"
                     >
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
                         <span>Selesaikan Transaksi (Enter)</span>
                     </button>
+                </div>
+            </div>
 
-                    <!-- Secondary Actions -->
-                    <div class="grid grid-cols-2 gap-2 pt-1">
-                        <button type="button" onclick="sendReceiptWhatsapp()" class="py-2.5 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs flex items-center justify-center gap-1.5 shadow-2xs transition">
-                            <svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.669-.699c.969.54 1.769.814 2.791.814 3.179 0 5.769-2.587 5.769-5.766.001-3.18-2.587-5.766-5.769-5.766zm9.969 5.766c0 5.514-4.486 10-10 10-1.823 0-3.535-.494-5.011-1.353l-5.989 1.567 1.6-5.834c-.958-1.528-1.5-3.329-1.5-5.38 0-5.514 4.486-10 10-10s10 4.486 10 10z"/>
-                            </svg>
-                            <span>Nota via WhatsApp</span>
-                        </button>
-                        <button type="button" onclick="holdCurrentCart()" class="py-2.5 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs flex items-center justify-center gap-1.5 shadow-2xs transition">
-                            <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            <span>Tahan Nota (Pending)</span>
-                        </button>
-                    </div>
+
 
                 </div>
             </div>
@@ -820,12 +767,12 @@
 
             if (cart.length === 0) {
                 listContainer.innerHTML = `
-                    <div id="cartEmptyPlaceholder" class="p-8 text-center text-slate-400">
-                        <svg class="w-8 h-8 mx-auto mb-2 text-slate-300" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                    <div id="cartEmptyPlaceholder" class="py-4 px-3 text-center text-slate-400">
+                        <svg class="w-7 h-7 mx-auto mb-1.5 text-slate-300" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                         </svg>
                         <p class="text-xs font-bold text-slate-600">Keranjang Nota Masih Kosong</p>
-                        <p class="text-[11px] text-slate-400 mt-0.5">Klik item pada katalog layanan di samping untuk menambahkan ke nota ini.</p>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Klik item katalog di samping untuk menambahkan ke nota</p>
                     </div>
                 `;
                 if (itemsCountBadge) itemsCountBadge.textContent = '0 Item';
@@ -945,6 +892,15 @@
             });
             btn.classList.add('active', 'border-sky-300', 'bg-sky-50', 'text-sky-800');
             btn.classList.remove('border-slate-200', 'text-slate-700');
+
+            const cashTenderSection = document.getElementById('cashTenderSection');
+            if (cashTenderSection) {
+                if (method === 'TUNAI') {
+                    cashTenderSection.classList.remove('hidden');
+                } else {
+                    cashTenderSection.classList.add('hidden');
+                }
+            }
         }
 
         // Filter Category in Catalog Grid
@@ -1012,7 +968,8 @@
             const rawDiscount = currentCustomer.discount || 0;
             const appliedDiscount = Math.min(rawDiscount, subtotal);
             const finalTotal = Math.max(0, subtotal - appliedDiscount);
-            const change = Math.max(0, currentTender - finalTotal);
+            const tenderAmount = selectedPayment === 'TUNAI' ? currentTender : finalTotal;
+            const change = selectedPayment === 'TUNAI' ? Math.max(0, currentTender - finalTotal) : 0;
 
             const now = new Date();
             const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} WIB`;
@@ -1024,7 +981,7 @@
             document.getElementById('rcptDiskon').textContent = `- Rp ${formatNumber(appliedDiscount)}`;
             document.getElementById('rcptTotal').textContent = `Rp ${formatNumber(finalTotal)}`;
             document.getElementById('rcptMetode').textContent = `Metode (${selectedPayment}):`;
-            document.getElementById('rcptTender').textContent = `Rp ${formatNumber(currentTender)}`;
+            document.getElementById('rcptTender').textContent = `Rp ${formatNumber(tenderAmount)}`;
             document.getElementById('rcptKembalian').textContent = `Rp ${formatNumber(change)}`;
 
             let itemsHtml = '';
@@ -1068,8 +1025,8 @@
                 diskon: appliedDiscount,
                 total_harga: finalTotal,
                 metode_pembayaran: selectedPayment,
-                uang_diterima: currentTender,
-                kembalian: Math.max(0, currentTender - finalTotal)
+                uang_diterima: selectedPayment === 'TUNAI' ? currentTender : finalTotal,
+                kembalian: selectedPayment === 'TUNAI' ? Math.max(0, currentTender - finalTotal) : 0
             };
 
             const submitBtn = document.getElementById('modalSubmitBtn');
@@ -1151,12 +1108,11 @@
                 const data = await res.json();
 
                 // Update Header Badges
-                document.getElementById('headerOmsetVal').textContent = data.todayOmsetFormatted;
-                document.getElementById('headerCountVal').textContent = `(${data.todayCount} Transaksi)`;
-                document.getElementById('headerNotaBadge').textContent = `No. Nota ${data.nextNotaCode}`;
-                document.getElementById('cartNotaTitle').textContent = `Nota POS Walk-in ${data.nextNotaCode}`;
+                if (document.getElementById('headerOmsetVal')) document.getElementById('headerOmsetVal').textContent = data.todayOmsetFormatted;
+                if (document.getElementById('headerCountVal')) document.getElementById('headerCountVal').textContent = `(${data.todayCount} Transaksi)`;
+                if (document.getElementById('cartNotaTitle')) document.getElementById('cartNotaTitle').textContent = `Nota Walk-in ${data.nextNotaCode}`;
                 nextNota = data.nextNotaCode;
-                document.getElementById('trxTableCountBadge').textContent = `${data.todayCount} Transaksi Selesai • Real-time`;
+                if (document.getElementById('trxTableCountBadge')) document.getElementById('trxTableCountBadge').textContent = `${data.todayCount} Transaksi Selesai • Real-time`;
 
                 const queueBadge = document.getElementById('sidebar-queue-badge');
                 if (queueBadge) queueBadge.textContent = data.activeAntreanCount;

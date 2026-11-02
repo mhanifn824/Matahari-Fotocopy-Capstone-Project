@@ -107,11 +107,7 @@
 
             <!-- Topbar Badges & Actions -->
             <div class="flex items-center gap-3 flex-wrap justify-end w-full sm:w-auto">
-                <!-- Shift Capsule -->
-                <div class="flex items-center gap-2 bg-white border border-slate-200/90 shadow-2xs px-3 py-1.5 rounded-full text-xs font-semibold text-slate-700">
-                    <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
-                    <span>Buka • Shift Siang</span>
-                </div>
+
 
                 <!-- Live Clock Capsule -->
                 <div class="flex items-center gap-2 bg-slate-100/80 border border-slate-200 px-3 py-1.5 rounded-full text-xs font-mono font-medium text-slate-700">
@@ -151,14 +147,11 @@
 
         <!-- SUBHEADER & TOP ACTIONS -->
         <div class="px-4 md:px-8 pt-6 pb-4">
-            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
                 
                 <!-- Title & Breadcrumb -->
-                <div>
-                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono">
-                        ADMIN POS GERAI &gt; <span class="text-amber-500">LOYALITAS & PELANGGAN</span>
-                    </div>
-                    <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
+                <div class="min-w-0">
+                    <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
                         Data Member & Program Hadiah Kunjungan
                     </h1>
                     <p class="text-xs text-slate-500 font-medium mt-1 max-w-3xl leading-relaxed">
@@ -166,10 +159,10 @@
                     </p>
                 </div>
 
-                <!-- Top Right Action Buttons -->
-                <div class="flex flex-wrap items-center gap-2.5">
+                <!-- Top Right Action Buttons (Always side-by-side & aligned) -->
+                <div class="flex items-center gap-2.5 shrink-0 flex-nowrap self-start xl:self-center">
                     <!-- Atur Program Hadiah -->
-                    <button type="button" onclick="openModalProgramHadiah()" class="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-2xs transition active:scale-95">
+                    <button type="button" onclick="openModalProgramHadiah()" class="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-2xs transition active:scale-95 whitespace-nowrap h-10">
                         <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
                         </svg>
@@ -177,7 +170,7 @@
                     </button>
 
                     <!-- + Daftarkan Member Baru (Amber Button) -->
-                    <button type="button" onclick="openModalMemberBaru()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow-sm transition active:scale-95">
+                    <button type="button" onclick="openModalMemberBaru()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow-sm transition active:scale-95 whitespace-nowrap h-10">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
                         </svg>
@@ -300,7 +293,7 @@
                             </span>
                         </div>
                         <p class="text-xs text-slate-600 font-medium mt-0.5 max-w-4xl">
-                            Tiap transaksi di loket kasir / kirim WA otomatis tercatat <strong>1 Kunjungan Cetak + Poin (Rp 1.000 = 1 Poin)</strong>. Member berhak klaim hadiah instan di kasir saat mencapai target kunjungan.
+                            Tiap transaksi di loket kasir / online otomatis tercatat <strong>1 Kunjungan Cetak + Poin (1x Transaksi = 1 Poin, &gt; Rp 10.000 = 2 Poin, &gt; Rp 20.000 = 3 Poin, dst)</strong>. Member berhak klaim hadiah instan di kasir saat mencapai target kunjungan.
                         </p>
                     </div>
                 </div>
@@ -637,7 +630,7 @@
                                 <span class="text-base">📋</span>
                                 <div>
                                     <h3 class="text-xs font-black text-slate-900">Log Klaim Hadiah Hari Ini</h3>
-                                    <p class="text-[10px] text-slate-400">Loket A &amp; B • Shift Siang</p>
+                                    <p class="text-[10px] text-slate-400">Loket A &amp; B • Real-time</p>
                                 </div>
                             </div>
                             <span class="w-2.5 h-2.5 rounded-full bg-amber-400 ring-2 ring-amber-100"></span>
@@ -836,38 +829,73 @@
     <div id="modalProgramHadiah" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden transform transition-all">
             <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <span class="text-lg">⚙</span>
-                    <h3 class="text-sm font-extrabold text-slate-900">Konfigurasi Program Hadiah Gerai</h3>
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-sm font-bold">
+                        ⚙️
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-extrabold text-slate-900">Konfigurasi Program Hadiah Gerai</h3>
+                        <p class="text-[11px] text-slate-400">Atur parameter perolehan poin &amp; stamp member</p>
+                    </div>
                 </div>
-                <button type="button" onclick="closeModalProgramHadiah()" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+                <button type="button" onclick="closeModalProgramHadiah()" class="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center font-bold text-xs transition">✕</button>
             </div>
             
-            <div class="p-6 space-y-3.5 text-xs">
-                <p class="text-slate-500 leading-relaxed">
-                    Aturan penambahan stamp &amp; poin saat ini:
-                </p>
-                <div class="space-y-2 bg-slate-50 p-3 rounded-2xl border border-slate-200/80 font-medium">
-                    <div class="flex justify-between">
-                        <span>Konversi Belanja ke Poin:</span>
-                        <strong class="font-mono text-slate-900">Rp 1.000 = 1 Poin</strong>
+            <form action="{{ route('admin.member.update-program-hadiah') }}" method="POST">
+                @csrf
+                <div class="p-6 space-y-4 text-xs">
+                    <!-- Simulasi Aturan Poin -->
+                    <div class="p-3.5 bg-amber-50/80 border border-amber-200/80 rounded-2xl text-xs text-amber-950">
+                        <div class="flex items-center gap-2 font-extrabold text-amber-900 mb-2">
+                            <span>💡</span>
+                            <span>Simulasi Aturan Poin:</span>
+                        </div>
+                        <ul class="space-y-1.5 text-[11px] font-medium text-amber-900 pl-1">
+                            <li class="flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                <span>Belanja &le; Rp 10.000 = <strong>1 Poin</strong></span>
+                            </li>
+                            <li class="flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                <span>Belanja &gt; Rp 10.000 = <strong>2 Poin</strong></span>
+                            </li>
+                            <li class="flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                <span>Belanja &gt; Rp 20.000 = <strong>3 Poin</strong></span>
+                            </li>
+                            <li class="flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                <span>Belanja &gt; Rp 30.000 = <strong>4 Poin</strong>, dan seterusnya.</span>
+                            </li>
+                        </ul>
                     </div>
-                    <div class="flex justify-between">
-                        <span>Stamp Kunjungan per Transaksi:</span>
-                        <strong class="font-mono text-slate-900">1 Transaksi = 1 Stamp</strong>
-                    </div>
-                    <div class="flex justify-between">
-                        <span>Masa Berlaku Poin:</span>
-                        <strong class="font-mono text-slate-900">12 Bulan</strong>
-                    </div>
-                </div>
 
-                <div class="pt-2">
-                    <button type="button" onclick="closeModalProgramHadiah(); alert('Aturan program hadiah aktif.');" class="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold transition">
-                        Tutup
-                    </button>
+                    <!-- Masa Berlaku Poin (Bulan) -->
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">
+                            Masa Berlaku Poin (Bulan)
+                        </label>
+                        <div class="relative">
+                            <input type="number" name="masa_berlaku_bulan" value="{{ $loyaltyConfig['masa_berlaku_bulan'] ?? 12 }}" min="1" max="60" required class="w-full pr-16 pl-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 font-mono font-bold text-slate-800 text-xs">
+                            <span class="absolute right-3.5 top-2.5 font-bold text-slate-400 text-xs">Bulan</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-1">Durasi masa aktif poin sebelum kedaluwarsa (Default: 12 Bulan / 1 Tahun).</p>
+                    </div>
+
+                    <input type="hidden" name="poin_dasar_transaksi" value="1">
+                    <input type="hidden" name="kelipatan_nominal_bonus" value="10000">
+                    <input type="hidden" name="stamp_per_transaksi" value="1">
+
+                    <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+                        <button type="button" onclick="closeModalProgramHadiah()" class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition text-xs">
+                            Batal
+                        </button>
+                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-extrabold transition shadow-md shadow-amber-500/25 text-xs flex items-center gap-1.5">
+                            <span>Simpan Konfigurasi</span>
+                        </button>
+                    </div>
                 </div>
-            </div>
+            </form>
         </div>
     </div>
 

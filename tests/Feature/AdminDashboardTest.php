@@ -9,7 +9,6 @@ use App\Models\InventarisStok;
 use App\Models\Pelanggan;
 use App\Models\Pesanan;
 use App\Models\ProdukLayanan;
-use App\Models\ProgramLoyalitas;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -219,12 +218,8 @@ class AdminDashboardTest extends TestCase
         $response = $this->actingAs($this->admin)->get(route('admin.antrean.index'));
 
         $response->assertStatus(200);
-        $response->assertSee('Manajemen Antrean Mesin', false);
-        $response->assertSee('MESIN KONICA 1 • HEAVY');
-        $response->assertSee('MESIN RICOH 2 • DIGITAL');
-        $response->assertSee('CANON 3 / KASIR A');
-        $response->assertSee('Standby • Siap Order');
-        $response->assertSee('Belum Ada Antrean Mesin Berjalan');
+        $response->assertSee('Manajemen Antrean Online', false);
+        $response->assertSee('Belum Ada Antrean Online Berjalan');
     }
 
     public function test_antrean_live_data_returns_workshop_metrics(): void
@@ -287,7 +282,7 @@ class AdminDashboardTest extends TestCase
             ."4 0 obj << /Type /Page /Parent 2 0 R >> endobj\n"
             ."5 0 obj << /Type /Page /Parent 2 0 R >> endobj\n"
             ."6 0 obj << /Type /Page /Parent 2 0 R >> endobj\n"
-            ."%%EOF";
+            .'%%EOF';
 
         $pdfFile = UploadedFile::fake()->createWithContent('skripsi_4_halaman.pdf', $pdfContent);
 
@@ -314,11 +309,11 @@ class AdminDashboardTest extends TestCase
             'total_harga' => 12000,
         ]);
 
-        // Rp 12.000 => 10 loyalty points added to initial 250 = 260
-        $this->assertSame(260, $this->customer->pelanggan->fresh()->saldo_poin);
+        // Rp 12.000 (> 10k) => 2 loyalty points added to initial 250 = 252
+        $this->assertSame(252, $this->customer->pelanggan->fresh()->saldo_poin);
         $this->assertDatabaseHas('program_loyalitas', [
             'pelanggan_id' => $this->customer->pelanggan->pelanggan_id,
-            'jumlah_poin_masuk' => 10,
+            'jumlah_poin_masuk' => 2,
         ]);
     }
 
@@ -363,11 +358,11 @@ class AdminDashboardTest extends TestCase
         $stokA4 = InventarisStok::where('nama_bahan', 'Kertas HVS A4 70gr')->first();
         $this->assertSame(48, $stokA4->jumlah_stok); // 50 Rim - 2 Rim = 48 Rim
 
-        // Rp 35.000 => 30 loyalty points added to initial 250 = 280
-        $this->assertSame(280, $pelanggan->fresh()->saldo_poin);
+        // Rp 35.000 (> 30k) => 4 loyalty points added to initial 250 = 254
+        $this->assertSame(254, $pelanggan->fresh()->saldo_poin);
         $this->assertDatabaseHas('program_loyalitas', [
             'pelanggan_id' => $pelanggan->pelanggan_id,
-            'jumlah_poin_masuk' => 30,
+            'jumlah_poin_masuk' => 4,
         ]);
     }
 
@@ -480,7 +475,7 @@ class AdminDashboardTest extends TestCase
         $this->assertTrue($berkas->validasiFormat());
         $this->assertSame(5, $berkas->parseJumlahHalaman());
 
-        $pesanan = new Pesanan();
+        $pesanan = new Pesanan;
         $this->assertSame(15000.0, $pesanan->hitungTotalBiaya(5, 300.0, 10));
 
         $antrean = new AntreanMesin(['nomor_tiket' => 7]);
@@ -490,5 +485,167 @@ class AdminDashboardTest extends TestCase
         $this->assertFalse($stok->cekLowStockAlert());
         $stok->potongStok(500); // 1 Rim
         $this->assertSame(49, $stok->fresh()->jumlah_stok);
+    }
+
+    public function test_antrean_action_selesai_removes_it_from_active_list_and_resets_counter(): void
+    {
+        $pesanan = Pesanan::create([
+            'nama_pemesan' => 'Budi Santoso',
+            'judul_dokumen' => 'Laporan Akhir Cetak',
+            'spesifikasi' => 'A4 HVS',
+            'jenis_pesanan' => 'online',
+            'total_harga' => 15000,
+            'status_pesanan' => 'proses',
+            'metode_pembayaran' => 'qris',
+            'waktu_pesan' => now(),
+        ]);
+
+        $antrean = AntreanMesin::create([
+            'pesanan_id' => $pesanan->pesanan_id,
+            'nomor_tiket' => 14,
+            'status_antrean' => 'cetak',
+            'estimasi_waktu' => 15,
+            'status_alur' => 'Sedang Cetak',
+        ]);
+
+        // Prior to finishing, proses tab shows this antrean
+        $activeResponse = $this->actingAs($this->admin)->get(route('admin.antrean.index', ['tab' => 'proses']));
+        $activeResponse->assertStatus(200);
+        $activeResponse->assertSee('Laporan Akhir Cetak');
+
+        // Admin marks as selesai
+        $finishResponse = $this->actingAs($this->admin)->postJson(route('admin.antrean.action', $antrean), [
+            'action' => 'selesai',
+        ]);
+        $finishResponse->assertStatus(200);
+
+        $this->assertSame('selesai', $antrean->fresh()->status_antrean);
+        $this->assertSame('Selesai', $antrean->fresh()->status_alur);
+        $this->assertSame('selesai', $pesanan->fresh()->status_pesanan);
+
+        // After finishing, proses tab no longer shows it
+        $afterResponse = $this->actingAs($this->admin)->get(route('admin.antrean.index', ['tab' => 'proses']));
+        $afterResponse->assertStatus(200);
+        $afterResponse->assertDontSee('Laporan Akhir Cetak');
+
+        // But tab selesai shows it without action button and without Order Web label
+        $selesaiResponse = $this->actingAs($this->admin)->get(route('admin.antrean.index', ['tab' => 'selesai']));
+        $selesaiResponse->assertStatus(200);
+        $selesaiResponse->assertSee('Laporan Akhir Cetak');
+        $selesaiResponse->assertDontSee('Order Web');
+
+        // Test siap diambil status shows only Selesai button, not Proses Cetak
+        $pesanan2 = Pesanan::create([
+            'pelanggan_id' => $this->customer->pelanggan_id,
+            'nama_pemesan' => 'Rina Wijaya',
+            'judul_dokumen' => 'Modul Praktikum',
+            'total_harga' => 25000,
+            'jenis_pesanan' => 'online',
+            'metode_pembayaran' => 'qris',
+            'status_pesanan' => 'proses',
+            'waktu_pesan' => now(),
+        ]);
+
+        $antreanSiap = AntreanMesin::create([
+            'pesanan_id' => $pesanan2->pesanan_id,
+            'nomor_tiket' => 15,
+            'status_antrean' => 'siap',
+            'estimasi_waktu' => 10,
+            'status_alur' => 'Siap Diambil',
+        ]);
+
+        $siapTabResponse = $this->actingAs($this->admin)->get(route('admin.antrean.index', ['tab' => 'siap']));
+        $siapTabResponse->assertStatus(200);
+        $siapTabResponse->assertSee('actionAntrean('.$antreanSiap->antrean_id.", 'selesai')", false);
+        $siapTabResponse->assertDontSee('actionAntrean('.$antreanSiap->antrean_id.", 'proses')", false);
+    }
+
+    public function test_antrean_sequential_status_workflow(): void
+    {
+        $pesanan = Pesanan::create([
+            'pelanggan_id' => $this->customer->pelanggan_id,
+            'nama_pemesan' => 'Bayu Pratama',
+            'judul_dokumen' => 'Proposal Bisnis',
+            'total_harga' => 50000,
+            'jenis_pesanan' => 'online',
+            'metode_pembayaran' => 'qris',
+            'status_pesanan' => 'menunggu',
+            'waktu_pesan' => now(),
+        ]);
+
+        $berkas = BerkasDokumen::create([
+            'pelanggan_id' => $this->customer->pelanggan->pelanggan_id,
+            'nama_file' => 'skripsi_final.pdf',
+            'file_path' => 'berkas_pelanggan/skripsi_final.pdf',
+            'ukuran_file' => 2048,
+            'jumlah_halaman' => 10,
+            'status_validasi' => 'valid (300 DPI)',
+        ]);
+
+        DetailPesanan::create([
+            'pesanan_id' => $pesanan->pesanan_id,
+            'produk_id' => $this->product->produk_id,
+            'berkas_id' => $berkas->berkas_id,
+            'kuantitas' => 10,
+            'sub_total' => 5000,
+        ]);
+
+        $antrean = AntreanMesin::create([
+            'pesanan_id' => $pesanan->pesanan_id,
+            'nomor_tiket' => 16,
+            'status_antrean' => 'menunggu',
+            'estimasi_waktu' => 15,
+            'status_alur' => 'Menunggu',
+        ]);
+
+        // 1. Initial State in Semua: Shows 'Terima' action and 'Unduh' button
+        $resSemua = $this->actingAs($this->admin)->get(route('admin.antrean.index'));
+        $resSemua->assertStatus(200);
+        $resSemua->assertSee('actionAntrean('.$antrean->antrean_id.", 'terima')", false);
+        $resSemua->assertSee('title="Unduh Berkas Asli (skripsi_final.pdf)"', false);
+
+        // 2. Action: Terima -> moves to Diterima
+        $resActionTerima = $this->actingAs($this->admin)->postJson(route('admin.antrean.action', $antrean), ['action' => 'terima']);
+        $resActionTerima->assertStatus(200);
+        $this->assertSame('Diterima', $antrean->fresh()->status_alur);
+
+        // In Diterima tab: shows 'Proses' action and 'Unduh' button
+        $resDiterima = $this->actingAs($this->admin)->get(route('admin.antrean.index', ['tab' => 'diterima']));
+        $resDiterima->assertStatus(200);
+        $resDiterima->assertSee('actionAntrean('.$antrean->antrean_id.", 'proses')", false);
+        $resDiterima->assertSee('title="Unduh Berkas Asli (skripsi_final.pdf)"', false);
+
+        // 3. Action: Proses -> moves to Sedang Diproses
+        $resActionProses = $this->actingAs($this->admin)->postJson(route('admin.antrean.action', $antrean), ['action' => 'proses']);
+        $resActionProses->assertStatus(200);
+        $this->assertSame('Sedang Diproses', $antrean->fresh()->status_alur);
+
+        // In Proses tab: shows 'Siap Diambil' action and 'Unduh' button
+        $resProses = $this->actingAs($this->admin)->get(route('admin.antrean.index', ['tab' => 'proses']));
+        $resProses->assertStatus(200);
+        $resProses->assertSee('actionAntrean('.$antrean->antrean_id.", 'siap')", false);
+        $resProses->assertSee('title="Unduh Berkas Asli (skripsi_final.pdf)"', false);
+
+        // 4. Action: Siap -> moves to Siap Diambil
+        $resActionSiap = $this->actingAs($this->admin)->postJson(route('admin.antrean.action', $antrean), ['action' => 'siap']);
+        $resActionSiap->assertStatus(200);
+        $this->assertSame('Siap Diambil', $antrean->fresh()->status_alur);
+
+        // In Siap tab: shows ONLY 'Selesai' action, 'Unduh' button is hidden
+        $resSiap = $this->actingAs($this->admin)->get(route('admin.antrean.index', ['tab' => 'siap']));
+        $resSiap->assertStatus(200);
+        $resSiap->assertSee('actionAntrean('.$antrean->antrean_id.", 'selesai')", false);
+        $resSiap->assertDontSee('title="Unduh Berkas Asli (skripsi_final.pdf)"', false);
+
+        // 5. Action: Selesai -> moves to Selesai tab, leaving Semua tab
+        $resActionSelesai = $this->actingAs($this->admin)->postJson(route('admin.antrean.action', $antrean), ['action' => 'selesai']);
+        $resActionSelesai->assertStatus(200);
+        $this->assertSame('Selesai', $antrean->fresh()->status_alur);
+
+        // In Selesai tab: shows '—' (no action buttons, no unduh)
+        $resSelesai = $this->actingAs($this->admin)->get(route('admin.antrean.index', ['tab' => 'selesai']));
+        $resSelesai->assertStatus(200);
+        $resSelesai->assertDontSee('actionAntrean('.$antrean->antrean_id, false);
+        $resSelesai->assertDontSee('title="Unduh Berkas Asli (skripsi_final.pdf)"', false);
     }
 }

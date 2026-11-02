@@ -150,8 +150,8 @@ class AuthenticationTest extends TestCase
         $response = $this->actingAs($admin)->get(route('admin.dashboard'));
 
         $response->assertStatus(200);
-        $response->assertSee('Admin / Kasir');
-        $response->assertSee('Hak Akses Terverifikasi');
+        $response->assertSee('Dashboard Operasional Gerai');
+        $response->assertDontSee('Hak Akses Terverifikasi');
     }
 
     public function test_logout_terminates_session(): void

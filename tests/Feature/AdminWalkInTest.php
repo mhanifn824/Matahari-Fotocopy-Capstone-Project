@@ -50,9 +50,9 @@ class AdminWalkInTest extends TestCase
         $response = $this->actingAs($this->admin)->get(route('admin.walkin.index'));
 
         $response->assertStatus(200);
-        $response->assertSee('Kasir POS Walk-in');
-        $response->assertSee('Loket A05 • Kasir Buka');
-        $response->assertSee('No. Nota #W-');
+        $response->assertSee('Kasir Walk-in');
+        $response->assertSee('Nota Walk-in #W-');
+        $response->assertDontSee('POS KASIR');
         $response->assertSee('Transaksi Walk-In Kasir Hari Ini');
         $response->assertSee('Pilihan Cepat Metode Pembayaran', false);
     }

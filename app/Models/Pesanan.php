@@ -109,11 +109,15 @@ class Pesanan extends Model
 
     public function getDisplayTipeAttribute(): string
     {
-        if (! empty($this->tipe_pelanggan)) {
+        if (! empty($this->tipe_pelanggan) && ! str_contains($this->tipe_pelanggan, 'Order Web')) {
             return $this->tipe_pelanggan;
         }
 
-        return $this->jenis_pesanan === 'online' ? 'Order Web (WA)' : 'Walk-in • Reguler';
+        if ($this->pelanggan?->kategori_member) {
+            return $this->pelanggan->kategori_member;
+        }
+
+        return $this->jenis_pesanan === 'online' ? '' : 'Walk-in • Reguler';
     }
 
     public function getDisplayJudulAttribute(): string

@@ -67,7 +67,10 @@ class DashboardController extends Controller
         $user = Auth::user();
         $user->load('adminKasir');
 
-        $filter = $request->query('tab', 'semua');
+        $filter = $request->query('tab', 'masuk');
+        if ($filter === 'semua') {
+            $filter = 'masuk';
+        }
         $search = $request->query('q', '');
 
         $workshopData = $this->calculateWorkshopStats();
@@ -76,14 +79,22 @@ class DashboardController extends Controller
             'pesanan.pelanggan.user',
             'pesanan.detailPesanan.produkLayanan',
             'pesanan.detailPesanan.berkasDokumen',
-        ])->where('status_antrean', '!=', 'selesai');
+        ]);
 
-        if ($filter === 'diterima') {
-            $query->whereIn('status_alur', ['Diterima', 'diterima', 'menunggu']);
-        } elseif ($filter === 'proses') {
-            $query->whereIn('status_alur', ['Sedang Cetak', 'Sedang Jilid', 'Menunggu Bahan', 'cetak', 'salin', 'finishing']);
+        if ($filter === 'selesai') {
+            $query->where(function ($q) {
+                $q->where('status_antrean', 'selesai')
+                    ->orWhere('status_alur', 'Selesai');
+            });
         } elseif ($filter === 'siap') {
             $query->whereIn('status_alur', ['Siap Diambil', 'siap', 'siap_pickup']);
+        } elseif ($filter === 'proses') {
+            $query->whereIn('status_alur', ['Sedang Diproses', 'Sedang Cetak', 'Sedang Jilid', 'Menunggu Bahan', 'cetak', 'salin', 'finishing', 'proses']);
+        } elseif ($filter === 'diterima') {
+            $query->whereIn('status_alur', ['Diterima', 'diterima']);
+        } else {
+            $query->whereIn('status_alur', ['Menunggu', 'menunggu', 'order masuk'])
+                ->where('status_antrean', '!=', 'selesai');
         }
 
         if (! empty($search)) {
@@ -352,7 +363,7 @@ class DashboardController extends Controller
     public function updateAntreanAlur(Request $request, AntreanMesin $antrean): JsonResponse|RedirectResponse
     {
         $validated = $request->validate([
-            'action' => 'required|string|in:proses_cetak,selesai,serahkan,tunggu_bahan',
+            'action' => 'required|string|in:terima,proses,proses_cetak,siap,selesai,serahkan,tunggu_bahan',
         ]);
 
         return DB::transaction(function () use ($validated, $request, $antrean) {
@@ -362,24 +373,62 @@ class DashboardController extends Controller
                 || $pesanan?->status_pesanan === 'selesai';
 
             switch ($validated['action']) {
+                case 'terima':
+                    $antrean->update([
+                        'status_alur' => 'Diterima',
+                        'status_antrean' => 'diterima',
+                    ]);
+                    if ($pesanan) {
+                        $pesanan->update(['status_pesanan' => 'diterima']);
+                    }
+                    $msg = 'Antrean '.$antrean->kode_antrean.' telah diterima.';
+                    break;
+                case 'proses':
+                    $antrean->update([
+                        'status_alur' => 'Sedang Diproses',
+                        'status_antrean' => 'cetak',
+                    ]);
+                    if ($pesanan) {
+                        $pesanan->update(['status_pesanan' => 'proses']);
+                    }
+                    $msg = 'Antrean '.$antrean->kode_antrean.' mulai diproses.';
+                    break;
                 case 'proses_cetak':
                     $antrean->update([
                         'status_alur' => 'Sedang Cetak',
                         'status_antrean' => 'cetak',
                     ]);
+                    if ($pesanan) {
+                        $pesanan->update(['status_pesanan' => 'proses']);
+                    }
                     $msg = 'Antrean '.$antrean->kode_antrean.' mulai diproses cetak.';
                     break;
-                case 'selesai':
+                case 'siap':
                     $antrean->update([
                         'status_alur' => 'Siap Diambil',
                         'status_antrean' => 'siap',
                         'status_pembayaran' => 'lunas',
                     ]);
+                    if ($pesanan) {
+                        $pesanan->update(['status_pesanan' => 'siap']);
+                    }
+                    $msg = 'Antrean '.$antrean->kode_antrean.' telah siap diambil.';
+                    break;
+                case 'selesai':
+                    $antrean->update([
+                        'status_alur' => 'Selesai',
+                        'status_antrean' => 'selesai',
+                        'status_pembayaran' => 'lunas',
+                    ]);
+                    if ($pesanan) {
+                        $pesanan->update(['status_pesanan' => 'selesai']);
+                    }
                     if (! $wasAlreadyCompleted && $pesanan) {
                         $this->deductInventoryStockForOrder($pesanan);
                         $this->allocateLoyaltyPointsForOrder($pesanan);
                     }
-                    $msg = 'Antrean '.$antrean->kode_antrean.' selesai proses dan siap diambil di loket.';
+                    $this->purgeOrderFiles($pesanan);
+                    $msg = 'Antrean '.$antrean->kode_antrean.' telah selesai.';
                     break;
                 case 'serahkan':
                     $antrean->update([
@@ -708,7 +757,7 @@ class DashboardController extends Controller
                     'tiket' => 6,
                     'nota' => '#MF-2406',
                     'nama' => 'Anisa Rahma',
-                    'tipe' => '🌐 Order Web (WA)',
+                    'tipe' => 'Member Umum',
                     'judul' => 'Cetak Sertifikat Seminar',
                     'spesifikasi' => 'Art Carton 260g • Full Color',
                     'mesin' => 'Mesin Konica 1',
@@ -750,7 +799,7 @@ class DashboardController extends Controller
                     'tiket' => 8,
                     'nota' => '#MF-2408',
                     'nama' => 'Rini Septiani',
-                    'tipe' => '🌐 Order Web (WA)',
+                    'tipe' => 'Member Umum',
                     'judul' => 'Cetak E-Book Resep Masakan',
                     'spesifikasi' => 'A4 70g • Jilid Spiral',
                     'mesin' => 'Mesin Canon 3',
@@ -963,6 +1012,7 @@ class DashboardController extends Controller
             'spesifikasi' => 'required|string',
             'produk_id' => 'required|exists:produk_layanan,produk_id',
             'kuantitas' => 'required|integer|min:1',
+            'jumlah_halaman' => 'nullable|integer|min:1',
             'metode_pembayaran' => 'required|string|in:qris,transfer',
             'berkas' => 'nullable|file|max:20480', // 20MB max
         ]);
@@ -978,7 +1028,7 @@ class DashboardController extends Controller
 
             $produk = ProdukLayanan::findOrFail($validated['produk_id']);
             $kuantitas = (int) $validated['kuantitas'];
-            $jumlahHalaman = 1;
+            $jumlahHalaman = max(1, (int) ($validated['jumlah_halaman'] ?? 1));
 
             $berkasId = null;
             if ($request->hasFile('berkas')) {
@@ -992,7 +1042,10 @@ class DashboardController extends Controller
                 }
 
                 if ($this->isPdfFile($file, $path)) {
-                    $jumlahHalaman = $this->parsePdfPageCount($file, $path);
+                    $detectedPages = $this->parsePdfPageCount($file, $path);
+                    if ($detectedPages > 0) {
+                        $jumlahHalaman = $detectedPages;
+                    }
                 }
 
                 $berkas = BerkasDokumen::create([
@@ -1011,14 +1064,14 @@ class DashboardController extends Controller
             $pesanan = Pesanan::create([
                 'pelanggan_id' => $pelanggan->pelanggan_id,
                 'nama_pemesan' => $user->nama,
-                'tipe_pelanggan' => '🌐 Order Web (WA)',
+                'tipe_pelanggan' => $pelanggan->kategori_member ?? null,
                 'judul_dokumen' => $validated['judul_dokumen'],
                 'spesifikasi' => $validated['spesifikasi'],
                 'tenggat_waktu' => now()->addMinutes(45)->format('H:i').' WIB',
                 'jenis_pesanan' => 'online',
                 'total_harga' => $totalHarga,
                 'volume_halaman' => $jumlahHalaman,
-                'status_pesanan' => 'proses',
+                'status_pesanan' => 'menunggu',
                 'metode_pembayaran' => $validated['metode_pembayaran'],
                 'waktu_pesan' => now(),
             ]);
@@ -1044,7 +1097,7 @@ class DashboardController extends Controller
                 'estimasi_waktu' => 25,
                 'nama_mesin' => $namaMesin,
                 'nama_operator' => $operator,
-                'status_alur' => 'Diterima',
+                'status_alur' => 'Menunggu',
                 'status_pembayaran' => 'lunas',
                 'keterangan_tenggat' => 'Est. 45 mnt',
             ]);
@@ -1061,7 +1114,7 @@ class DashboardController extends Controller
                 ]);
             }
 
-            return redirect()->route('customer.home')
+            return redirect()->to(route('customer.home').'#pesanan-saya')
                 ->with('success', 'Pesanan Anda berhasil dikirim ke antrean mesin workshop gerai!');
         });
     }
@@ -1199,9 +1252,32 @@ class DashboardController extends Controller
         return $stok->fresh();
     }
 
+    public function getLoyaltyProgramConfig(): array
+    {
+        $default = [
+            'poin_dasar_transaksi' => 1,
+            'kelipatan_nominal_bonus' => 10000,
+            'nominal_per_poin' => 10000,
+            'stamp_per_transaksi' => 1,
+            'masa_berlaku_bulan' => 12,
+        ];
+
+        $filePath = storage_path('app/loyalty_program_config.json');
+        if (file_exists($filePath)) {
+            $saved = json_decode((string) @file_get_contents($filePath), true);
+            if (is_array($saved)) {
+                return array_merge($default, $saved);
+            }
+        }
+
+        return $default;
+    }
+
     /**
      * Automatically allocate loyalty points when a registered customer's order is paid/completed (KF-15).
-     * Grants 10 points for every Rp 10.000 of total_harga.
+     * Grants loyalty points based on tiered policy:
+     * - Base: 1 transaction = 1 point
+     * - Tier bonus: > 10k gets 2, > 20k gets 3, > 30k gets 4, etc.
      */
     protected function allocateLoyaltyPointsForOrder(Pesanan $pesanan): int
     {
@@ -1214,7 +1290,19 @@ class DashboardController extends Controller
             return 0;
         }
 
-        $poinMasuk = (int) floor(((float) $pesanan->total_harga) / 10000) * 10;
+        $totalHarga = (float) $pesanan->total_harga;
+        if ($totalHarga <= 0) {
+            return 0;
+        }
+
+        $config = $this->getLoyaltyProgramConfig();
+        $poinDasar = max(1, (int) ($config['poin_dasar_transaksi'] ?? 1));
+        $kelipatan = max(1000, (int) ($config['kelipatan_nominal_bonus'] ?? ($config['nominal_per_poin'] ?? 10000)));
+
+        // 1 poin dasar transaksi + 1 poin tiap melampaui kelipatan nominal
+        $bonus = (int) floor(($totalHarga - 1) / $kelipatan);
+        $poinMasuk = $poinDasar + max(0, $bonus);
+
         if ($poinMasuk <= 0) {
             return 0;
         }
@@ -1349,12 +1437,14 @@ class DashboardController extends Controller
     {
         $activeQueues = AntreanMesin::with('pesanan')
             ->where('status_antrean', '!=', 'selesai')
+            ->where('status_alur', '!=', 'Selesai')
             ->get();
 
         $totalCount = $activeQueues->count();
 
-        $diterimaCount = $activeQueues->filter(fn ($q) => in_array(strtolower($q->status_alur ?? $q->status_antrean), ['diterima', 'menunggu']))->count();
-        $prosesCount = $activeQueues->filter(fn ($q) => in_array(strtolower($q->status_alur ?? $q->status_antrean), ['sedang cetak', 'sedang jilid', 'menunggu bahan', 'cetak', 'salin', 'finishing']))->count();
+        $masukCount = $activeQueues->filter(fn ($q) => in_array(strtolower($q->status_alur ?? $q->status_antrean), ['menunggu', 'order masuk']))->count();
+        $diterimaCount = $activeQueues->filter(fn ($q) => in_array(strtolower($q->status_alur ?? $q->status_antrean), ['diterima']))->count();
+        $prosesCount = $activeQueues->filter(fn ($q) => in_array(strtolower($q->status_alur ?? $q->status_antrean), ['sedang diproses', 'sedang cetak', 'sedang jilid', 'menunggu bahan', 'cetak', 'salin', 'finishing', 'proses']))->count();
         $siapCount = $activeQueues->filter(fn ($q) => in_array(strtolower($q->status_alur ?? $q->status_antrean), ['siap diambil', 'siap', 'siap_pickup']))->count();
 
         $konicaQueues = $activeQueues->filter(fn ($q) => str_contains(strtolower($q->nama_mesin ?? ''), 'konica 1') || str_contains(strtolower($q->pesanan?->judul_dokumen ?? ''), 'skripsi'))->count();
@@ -1389,9 +1479,11 @@ class DashboardController extends Controller
 
         return [
             'total' => $totalCount,
+            'masuk' => $masukCount,
             'diterima' => $diterimaCount,
             'proses' => $prosesCount,
             'siap' => $siapCount,
+            'selesai' => AntreanMesin::where('status_antrean', 'selesai')->orWhere('status_alur', 'Selesai')->count(),
             'machines' => [
                 'konica' => [
                     'nama' => 'MESIN KONICA 1 • HEAVY',
@@ -2511,6 +2603,8 @@ class DashboardController extends Controller
         // Today's claim logs
         $todayClaims = LogKlaimHadiah::orderBy('waktu_klaim', 'desc')->take(6)->get();
 
+        $loyaltyConfig = $this->getLoyaltyProgramConfig();
+
         return view('admin.member', compact(
             'user',
             'members',
@@ -2527,8 +2621,39 @@ class DashboardController extends Controller
             'countUmum',
             'countSiapKlaim',
             'todayClaims',
-            'activeAntreanCount'
+            'activeAntreanCount',
+            'loyaltyConfig'
         ));
+    }
+
+    /**
+     * Update rules for the loyalty program and stamps (KF-15).
+     */
+    public function updateProgramHadiahConfig(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'poin_dasar_transaksi' => 'nullable|integer|min:1|max:100',
+            'kelipatan_nominal_bonus' => 'nullable|integer|min:1000|max:1000000',
+            'nominal_per_poin' => 'nullable|integer|min:100|max:1000000',
+            'stamp_per_transaksi' => 'nullable|integer|min:1|max:10',
+            'masa_berlaku_bulan' => 'required|integer|min:1|max:60',
+        ]);
+
+        if (empty($validated['poin_dasar_transaksi'])) {
+            $validated['poin_dasar_transaksi'] = 1;
+        }
+        if (empty($validated['kelipatan_nominal_bonus'])) {
+            $validated['kelipatan_nominal_bonus'] = $validated['nominal_per_poin'] ?? 10000;
+        }
+        $validated['nominal_per_poin'] = $validated['kelipatan_nominal_bonus'];
+        if (empty($validated['stamp_per_transaksi'])) {
+            $validated['stamp_per_transaksi'] = 1;
+        }
+
+        $filePath = storage_path('app/loyalty_program_config.json');
+        @file_put_contents($filePath, json_encode($validated, JSON_PRETTY_PRINT));
+
+        return redirect()->back()->with('success', 'Konfigurasi aturan program hadiah gerai berhasil diperbarui dan aktif.');
     }
 
     /**
@@ -2858,6 +2983,11 @@ class DashboardController extends Controller
         $rataRataTransaksi = $totalNotaPesanan > 0 ? round($totalOmzet7Hari / $totalNotaPesanan) : 0;
         $highestNota = (float) (Pesanan::where('waktu_pesan', '>=', $startDate)->where('status_pesanan', '!=', 'dibatalkan')->max('total_harga') ?? 0);
         $totalShiftSaatIni = (float) Pesanan::whereDate('waktu_pesan', Carbon::today())->where('status_pesanan', '!=', 'dibatalkan')->sum('total_harga');
+        $selesaiCount = Pesanan::where('waktu_pesan', '>=', $startDate)->where('status_pesanan', 'selesai')->count();
+        $rataRataNotaPerHari = round($totalNotaPesanan / 7, 1);
+        $rataRataOmzetPerHari = round($totalOmzet7Hari / 7);
+        $persenSelesai = $totalNotaPesanan > 0 ? round(($selesaiCount / $totalNotaPesanan) * 100, 1) : 100;
+        $rentangTanggalLabel = Carbon::today()->subDays(6)->translatedFormat('d M').' - '.Carbon::today()->translatedFormat('d M Y');
 
         // Dynamic 7-day revenue trend
         $trend7Hari = [];
@@ -2957,7 +3087,12 @@ class DashboardController extends Controller
             'trend7Hari',
             'serviceBreakdown',
             'hourlyDistribution',
-            'activeAntreanCount'
+            'activeAntreanCount',
+            'selesaiCount',
+            'rataRataNotaPerHari',
+            'rataRataOmzetPerHari',
+            'persenSelesai',
+            'rentangTanggalLabel'
         ));
     }
 

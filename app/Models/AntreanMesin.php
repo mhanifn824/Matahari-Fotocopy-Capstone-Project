@@ -111,12 +111,12 @@ class AntreanMesin extends Model
 
     public function getBadgeAlurColorAttribute(): array
     {
-        return match (strtolower((string) ($this->status_alur ?? 'diterima'))) {
-            'sedang cetak', 'cetak' => [
-                'bg' => 'bg-blue-50',
-                'text' => 'text-blue-700',
-                'border' => 'border-blue-200',
-                'dot' => 'bg-blue-600',
+        return match (strtolower((string) ($this->status_alur ?? 'menunggu'))) {
+            'sedang diproses', 'sedang cetak', 'cetak', 'proses' => [
+                'bg' => 'bg-amber-50',
+                'text' => 'text-amber-800',
+                'border' => 'border-amber-200',
+                'dot' => 'bg-amber-600',
             ],
             'sedang jilid', 'finishing' => [
                 'bg' => 'bg-amber-50',
@@ -130,17 +130,23 @@ class AntreanMesin extends Model
                 'border' => 'border-indigo-200',
                 'dot' => 'bg-indigo-600',
             ],
-            'menunggu bahan', 'menunggu' => [
+            'selesai' => [
+                'bg' => 'bg-emerald-50',
+                'text' => 'text-emerald-800',
+                'border' => 'border-emerald-200',
+                'dot' => 'bg-emerald-600',
+            ],
+            'diterima' => [
+                'bg' => 'bg-blue-50',
+                'text' => 'text-blue-800',
+                'border' => 'border-blue-200',
+                'dot' => 'bg-blue-600',
+            ],
+            'menunggu', 'order masuk', 'menunggu bahan' => [
                 'bg' => 'bg-orange-50',
                 'text' => 'text-orange-800',
                 'border' => 'border-orange-200',
                 'dot' => 'bg-orange-500',
-            ],
-            'diterima' => [
-                'bg' => 'bg-slate-100',
-                'text' => 'text-slate-700',
-                'border' => 'border-slate-200',
-                'dot' => 'bg-slate-500',
             ],
             default => [
                 'bg' => 'bg-slate-100',

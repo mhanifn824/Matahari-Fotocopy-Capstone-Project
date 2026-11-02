@@ -68,6 +68,7 @@ Route::middleware(['auth', 'admin.only'])->prefix('admin')->name('admin.')->grou
     Route::post('/member/store', [DashboardController::class, 'storeMember'])->name('member.store');
     Route::post('/member/klaim-hadiah', [DashboardController::class, 'storeKlaimHadiah'])->name('member.klaim-hadiah');
     Route::get('/member/scan-ajax', [DashboardController::class, 'scanMemberAjax'])->name('member.scan-ajax');
+    Route::post('/member/update-program-hadiah', [DashboardController::class, 'updateProgramHadiahConfig'])->name('member.update-program-hadiah');
 
     // Laporan Penjualan & Analitik Gerai Routes
     Route::get('/laporan', [DashboardController::class, 'laporanIndex'])->name('laporan.index');

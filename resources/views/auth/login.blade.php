@@ -655,7 +655,7 @@
 
                 accessBadgeText.textContent = 'ADMIN & CASHIER ACCESS';
                 formTitle.textContent = 'Masuk ke Dashboard Admin / Kasir';
-                formSubtitle.textContent = 'Akses monitoring antrean mesin cetak, kasir pesanan, dan manajemen berkas pelanggan.';
+                formSubtitle.textContent = 'Akses monitoring antrean online cetak, kasir pesanan, dan manajemen berkas pelanggan.';
                 submitButtonText.textContent = 'Masuk ke Dashboard Admin';
                 leftRoleText.textContent = 'Internal Staff & Cashier Panel';
 

@@ -53,6 +53,30 @@
         .banner-glow {
             background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
         }
+        /* Custom slim sleek scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        /* Remove default number arrows for clean steppers */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
     </style>
 </head>
 <body class="text-slate-800 antialiased min-h-screen flex flex-col selection:bg-blue-100 selection:text-blue-900">
@@ -74,20 +98,20 @@
                 </a>
 
                 <!-- Nav Menu Links -->
-                <nav class="hidden lg:flex items-center gap-1 text-xs font-bold text-slate-600">
-                    <a href="{{ route('customer.home') }}" class="px-3.5 py-2 rounded-xl text-blue-600 bg-blue-50 font-extrabold flex items-center gap-1.5 transition">
+                <nav class="hidden lg:flex items-center gap-1 text-xs font-bold text-slate-600" id="customerNav">
+                    <a href="#home" data-target="home" class="nav-item px-3.5 py-2 rounded-xl text-blue-600 bg-blue-50 font-extrabold flex items-center gap-1.5 transition">
                         <span>Home</span>
                     </a>
-                    <a href="#katalog-print" class="px-3.5 py-2 rounded-xl hover:text-blue-600 hover:bg-slate-50 transition">
-                        Digital Printing
+                    <a href="#katalog-print" data-target="katalog-print" class="nav-item px-3.5 py-2 rounded-xl text-slate-600 font-bold hover:text-blue-600 hover:bg-slate-50 transition">
+                        <span>Digital Printing</span>
                     </a>
-                    <a href="#katalog-atk" class="px-3.5 py-2 rounded-xl hover:text-blue-600 hover:bg-slate-50 transition">
-                        Katalog ATK
+                    <a href="#katalog-atk" data-target="katalog-atk" class="nav-item px-3.5 py-2 rounded-xl text-slate-600 font-bold hover:text-blue-600 hover:bg-slate-50 transition">
+                        <span>Katalog ATK</span>
                     </a>
-                    <a href="#promo-section" class="px-3.5 py-2 rounded-xl hover:text-blue-600 hover:bg-slate-50 transition">
-                        Promo &amp; Paket
+                    <a href="#promo-section" data-target="promo-section" class="nav-item px-3.5 py-2 rounded-xl text-slate-600 font-bold hover:text-blue-600 hover:bg-slate-50 transition">
+                        <span>Promo &amp; Paket</span>
                     </a>
-                    <a href="#pesanan-saya" class="px-3.5 py-2 rounded-xl hover:text-blue-600 hover:bg-slate-50 transition flex items-center gap-1.5">
+                    <a href="#pesanan-saya" data-target="pesanan-saya" class="nav-item px-3.5 py-2 rounded-xl text-slate-600 font-bold hover:text-blue-600 hover:bg-slate-50 transition flex items-center gap-1.5">
                         <span>Pesanan Saya</span>
                         @if($customerOrders->where('status_pesanan', '!=', 'selesai')->count() > 0)
                             <span class="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
@@ -147,7 +171,7 @@
     <!-- ======================================================== -->
     <!-- SECTION 1: HERO HEADER                                  -->
     <!-- ======================================================== -->
-    <section class="hero-glow pt-14 pb-20 px-4 sm:px-6 lg:px-8 text-center border-b border-slate-100">
+    <section id="home" class="hero-glow pt-14 pb-20 px-4 sm:px-6 lg:px-8 text-center border-b border-slate-100">
         <div class="max-w-4xl mx-auto space-y-6">
             
             <!-- Top Solusi Capsule Pill -->
@@ -656,55 +680,246 @@
     <!-- ======================================================== -->
     <!-- SECTION 7: PESANAN SAYA & LIVE TRACKING ANTREAN          -->
     <!-- ======================================================== -->
-    <section id="pesanan-saya" class="py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
-        <div class="bg-slate-50 rounded-3xl p-6 sm:p-8 border border-slate-200/90 space-y-4">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                    <h3 class="text-base font-extrabold text-slate-900">Pesanan &amp; Antrean Cetak Saya</h3>
-                    <p class="text-xs text-slate-500">Pantau proses cetak berkas Anda langsung dari workshop gerai</p>
+    <section id="pesanan-saya" class="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+        <div id="pesanan-saya-container" class="bg-slate-50/80 rounded-3xl p-6 sm:p-8 border border-slate-200/90 space-y-6 shadow-xs">
+            
+            <!-- Section Header -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200/80">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center shadow-md shadow-blue-500/20 shrink-0">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-base sm:text-lg font-black text-slate-900 tracking-tight">Pesanan &amp; Antrean Cetak Saya</h3>
+                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 shadow-2xs">
+                                <span class="w-1.5 h-1.5 rounded-full bg-blue-600 animate-ping"></span>
+                                Live Tracking
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-0.5">Lacak status berkas secara waktu nyata: <strong class="text-slate-700">Diterima &rarr; Diproses &rarr; Selesai</strong></p>
+                    </div>
                 </div>
-                <button type="button" onclick="openCustomerOrderModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-2xs transition self-start sm:self-auto">
-                    + Buat Pesanan Baru
-                </button>
+
+                <div class="flex items-center gap-2 shrink-0">
+                    <button type="button" onclick="refreshCustomerOrders(this)" title="Perbarui status antrean terkini" class="px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl shadow-2xs transition flex items-center gap-1.5 active:scale-95">
+                        <svg id="refreshIcon" class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        <span>Perbarui Status</span>
+                    </button>
+                    <button type="button" onclick="openCustomerOrderModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md shadow-blue-500/20 transition flex items-center gap-1.5 active:scale-95">
+                        <span>+ Buat Pesanan Baru</span>
+                    </button>
+                </div>
             </div>
 
             @if($customerOrders->isEmpty())
-                <div class="bg-white rounded-2xl p-8 border border-slate-200 text-center space-y-3">
-                    <div class="w-12 h-12 rounded-full bg-blue-50 text-blue-600 mx-auto flex items-center justify-center text-lg">
+                <div class="bg-white rounded-2xl p-10 border border-slate-200 text-center space-y-3.5">
+                    <div class="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 mx-auto flex items-center justify-center text-2xl shadow-2xs">
                         📄
                     </div>
-                    <p class="text-xs font-bold text-slate-700">Belum ada riwayat pesanan aktif.</p>
-                    <p class="text-[11px] text-slate-400 max-w-sm mx-auto">
-                        Klik tombol <strong>"Mulai Pesan Cetak"</strong> untuk mengirim dokumen skripsi, modul, spanduk, atau membeli ATK tanpa antre.
-                    </p>
+                    <div>
+                        <p class="text-sm font-black text-slate-800">Belum Ada Riwayat Pesanan Aktif</p>
+                        <p class="text-xs text-slate-500 max-w-sm mx-auto mt-1">
+                            Kirim berkas dokumen, skripsi, materi pelatihan, atau beli ATK Anda langsung secara online tanpa perlu antre di toko.
+                        </p>
+                    </div>
+                    <button type="button" onclick="openCustomerOrderModal()" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 transition active:scale-95">
+                        <span>Mulai Buat Pesanan Sekarang</span>
+                    </button>
                 </div>
             @else
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    @foreach($customerOrders->take(4) as $order)
-                        <div class="bg-white rounded-2xl p-4.5 border border-slate-200 shadow-2xs space-y-3">
-                            <div class="flex items-center justify-between">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    @foreach($customerOrders->take(6) as $order)
+                        @php
+                            $alurRaw = strtolower((string) ($order->antreanMesin?->status_alur ?? $order->antreanMesin?->status_antrean ?? $order->status_pesanan ?? 'diterima'));
+                            $statusPesananRaw = strtolower((string) $order->status_pesanan);
+
+                            if (in_array($alurRaw, ['selesai'], true) || $statusPesananRaw === 'selesai') {
+                                $currentStep = 3;
+                                $statusStepLabel = 'Selesai';
+                                $statusBadgeBg = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                                $statusDotBg = 'bg-emerald-500';
+                                $statusDesc = 'Pesanan telah selesai diproses & diserahkan. Terima kasih atas pesanan Anda!';
+                            } elseif (in_array($alurRaw, ['siap diambil', 'siap', 'siap_pickup'], true) || $statusPesananRaw === 'siap') {
+                                $currentStep = 3;
+                                $statusStepLabel = 'Siap Diambil';
+                                $statusBadgeBg = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                                $statusDotBg = 'bg-emerald-500';
+                                $statusDesc = 'Hasil cetak Anda telah selesai diproses & siap diambil di loket kasir gerai Bintaro Sektor 7.';
+                            } elseif (in_array($alurRaw, ['diterima', 'menunggu', 'antrean'], true) || in_array($statusPesananRaw, ['menunggu', 'diterima'], true)) {
+                                $currentStep = 1;
+                                $statusStepLabel = ($alurRaw === 'menunggu' || $statusPesananRaw === 'menunggu') ? 'Menunggu Konfirmasi' : 'Diterima di Antrean';
+                                $statusBadgeBg = ($alurRaw === 'menunggu' || $statusPesananRaw === 'menunggu') ? 'bg-orange-50 text-orange-800 border-orange-200' : 'bg-blue-50 text-blue-700 border-blue-200';
+                                $statusDotBg = ($alurRaw === 'menunggu' || $statusPesananRaw === 'menunggu') ? 'bg-orange-500' : 'bg-blue-500';
+                                $statusDesc = ($alurRaw === 'menunggu' || $statusPesananRaw === 'menunggu')
+                                    ? 'Pesanan telah masuk antrean workshop gerai. Menunggu konfirmasi & pengecekan berkas oleh admin/kasir.'
+                                    : 'Pesanan telah diterima gerai. Berkas siap dijadwalkan masuk mesin cetak.';
+                            } elseif (in_array($alurRaw, ['sedang diproses', 'sedang cetak', 'sedang jilid', 'menunggu bahan', 'cetak', 'salin', 'finishing', 'proses'], true) || $statusPesananRaw === 'proses') {
+                                $currentStep = 2;
+                                $statusStepLabel = $order->antreanMesin?->status_alur ?: 'Sedang Diproses';
+                                $statusBadgeBg = 'bg-amber-50 text-amber-800 border-amber-200';
+                                $statusDotBg = 'bg-amber-500';
+                                $statusDesc = 'Berkas Anda sedang dikerjakan di workshop (' . ($order->antreanMesin?->nama_mesin ?? 'Mesin Cetak Presisi') . '). Estimasi segera selesai.';
+                            } else {
+                                $currentStep = 1;
+                                $statusStepLabel = 'Diterima di Antrean';
+                                $statusBadgeBg = 'bg-blue-50 text-blue-700 border-blue-200';
+                                $statusDotBg = 'bg-blue-500';
+                                $statusDesc = 'Pesanan telah masuk antrean workshop gerai. Menunggu giliran mesin cetak & pengecekan berkas.';
+                            }
+                        @endphp
+
+                        <div class="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-xs hover:shadow-md transition duration-200 space-y-4 flex flex-col justify-between">
+                            
+                            <!-- Card Header: Nota & Status Badge -->
+                            <div class="flex items-center justify-between gap-2 pb-3 border-b border-slate-100 flex-wrap">
                                 <div class="flex items-center gap-2">
-                                    <span class="font-mono text-xs font-extrabold text-slate-900">{{ $order->nomor_nota }}</span>
+                                    <span class="font-mono text-xs font-black text-slate-900 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
+                                        {{ $order->nomor_nota }}
+                                    </span>
                                     @if($order->antreanMesin)
-                                        <span class="px-2 py-0.5 rounded-md bg-slate-900 text-white text-[10px] font-mono font-bold">
-                                            Tiket {{ $order->antreanMesin->kode_antrean }}
+                                        <span class="px-2.5 py-1 rounded-lg bg-slate-900 text-white text-[11px] font-mono font-extrabold flex items-center gap-1 shadow-2xs">
+                                            <span>Tiket</span>
+                                            <span class="text-amber-400">{{ $order->antreanMesin->kode_antrean }}</span>
                                         </span>
                                     @endif
                                 </div>
-                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase font-mono {{ $order->status_pesanan === 'selesai' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-blue-50 text-blue-700 border border-blue-200' }}">
-                                    ● {{ $order->antreanMesin ? $order->antreanMesin->status_alur : $order->status_pesanan }}
+                                <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase font-mono border flex items-center gap-1.5 shrink-0 {{ $statusBadgeBg }}">
+                                    <span class="w-2 h-2 rounded-full {{ $statusDotBg }} animate-pulse"></span>
+                                    <span>{{ $statusStepLabel }}</span>
                                 </span>
                             </div>
 
-                            <div>
-                                <h4 class="text-xs font-bold text-slate-900">{{ $order->display_judul }}</h4>
-                                <p class="text-[11px] text-slate-500 mt-0.5">{{ $order->display_spesifikasi }}</p>
+                            <!-- Document Details & Pricing -->
+                            <div class="space-y-1.5">
+                                <div class="flex items-start justify-between gap-3">
+                                    <h4 class="text-sm font-black text-slate-900 leading-snug tracking-tight">
+                                        {{ $order->display_judul }}
+                                    </h4>
+                                    <span class="font-mono text-xs font-black text-blue-600 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-lg shrink-0">
+                                        Rp {{ number_format($order->total_harga, 0, ',', '.') }}
+                                    </span>
+                                </div>
+                                <p class="text-xs text-slate-500 font-medium flex items-center gap-1.5">
+                                    <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    <span>{{ $order->display_spesifikasi }}</span>
+                                </p>
+                                @if($order->antreanMesin && $order->antreanMesin->nama_mesin)
+                                    <div class="flex items-center gap-2 pt-1 text-[11px] font-mono text-slate-500">
+                                        <span class="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 font-bold text-slate-700">
+                                            ⚙️ {{ $order->antreanMesin->nama_mesin }}
+                                        </span>
+                                        @if($order->antreanMesin->keterangan_tenggat)
+                                            <span class="text-slate-400 font-medium">⏳ {{ $order->antreanMesin->keterangan_tenggat }}</span>
+                                        @endif
+                                    </div>
+                                @endif
                             </div>
 
-                            <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
-                                <span class="font-mono font-bold text-blue-600">Rp {{ number_format($order->total_harga, 0, ',', '.') }}</span>
-                                <span class="text-[11px] text-slate-400 font-mono">{{ $order->waktu_pesan ? $order->waktu_pesan->format('d M H:i') : '' }} WIB</span>
+                            <!-- Visual Tracking Stepper Bar (Diterima -> Diproses -> Selesai) -->
+                            <div class="py-3 px-3 sm:px-4 bg-slate-50/90 rounded-2xl border border-slate-200/80 space-y-3">
+                                <div class="flex items-center justify-between text-[11px] font-bold text-slate-500">
+                                    <span class="flex items-center gap-1.5 text-slate-800">
+                                        <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                        </svg>
+                                        <span>Progres Pengerjaan Berkas</span>
+                                    </span>
+                                    <span class="text-[10px] font-mono text-slate-400">Tahap {{ $currentStep }} dari 3</span>
+                                </div>
+
+                                <!-- Stepper Graphic -->
+                                <div class="relative flex items-center justify-between px-3 sm:px-6">
+                                    <!-- Connecting Line Background -->
+                                    <div class="absolute left-7 right-7 top-4 h-1 bg-slate-200 rounded-full z-0"></div>
+                                    <!-- Active Progress Line -->
+                                    <div class="absolute left-7 top-4 h-1 rounded-full transition-all duration-500 z-0 {{ $currentStep === 1 ? 'w-0' : ($currentStep === 2 ? 'w-1/2 bg-gradient-to-r from-blue-500 to-amber-500' : 'right-7 bg-emerald-500') }}"></div>
+
+                                    <!-- Step 1: Diterima -->
+                                    <div class="relative z-10 flex flex-col items-center text-center">
+                                        <div class="w-8 h-8 rounded-full flex items-center justify-center font-black text-xs transition {{ $currentStep >= 1 ? ($currentStep === 1 ? 'bg-blue-600 text-white ring-4 ring-blue-100 shadow-md shadow-blue-500/30' : 'bg-emerald-500 text-white shadow-xs') : 'bg-white border-2 border-slate-300 text-slate-400' }}">
+                                            @if($currentStep > 1)
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                            @else
+                                                <span>1</span>
+                                            @endif
+                                        </div>
+                                        <span class="mt-1.5 text-[11px] {{ $currentStep >= 1 ? 'font-black text-slate-900' : 'font-semibold text-slate-400' }}">Diterima</span>
+                                        <span class="text-[9px] text-slate-400 hidden sm:block">Masuk Antrean</span>
+                                    </div>
+
+                                    <!-- Step 2: Diproses -->
+                                    <div class="relative z-10 flex flex-col items-center text-center">
+                                        <div class="w-8 h-8 rounded-full flex items-center justify-center font-black text-xs transition {{ $currentStep === 2 ? 'bg-amber-500 text-white ring-4 ring-amber-100 shadow-md shadow-amber-500/30 animate-pulse' : ($currentStep > 2 ? 'bg-emerald-500 text-white shadow-xs' : 'bg-white border-2 border-slate-300 text-slate-400') }}">
+                                            @if($currentStep > 2)
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                            @else
+                                                <span>2</span>
+                                            @endif
+                                        </div>
+                                        <span class="mt-1.5 text-[11px] {{ $currentStep >= 2 ? 'font-black text-slate-900' : 'font-semibold text-slate-400' }}">Diproses</span>
+                                        <span class="text-[9px] text-slate-400 hidden sm:block">Cetak / Jilid</span>
+                                    </div>
+
+                                    <!-- Step 3: Selesai -->
+                                    <div class="relative z-10 flex flex-col items-center text-center">
+                                        <div class="w-8 h-8 rounded-full flex items-center justify-center font-black text-xs transition {{ $currentStep === 3 ? 'bg-emerald-500 text-white ring-4 ring-emerald-100 shadow-md shadow-emerald-500/30' : 'bg-white border-2 border-slate-300 text-slate-400' }}">
+                                            @if($currentStep === 3)
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                            @else
+                                                <span>3</span>
+                                            @endif
+                                        </div>
+                                        <span class="mt-1.5 text-[11px] {{ $currentStep === 3 ? 'font-black text-emerald-700' : 'font-semibold text-slate-400' }}">Selesai</span>
+                                        <span class="text-[9px] text-slate-400 hidden sm:block">Siap Diambil</span>
+                                    </div>
+                                </div>
+
+                                <!-- Status Explanation Alert -->
+                                <div class="p-2.5 rounded-xl border text-[11px] leading-relaxed flex items-start gap-2.5 {{ $currentStep === 3 ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : ($currentStep === 2 ? 'bg-amber-50 border-amber-200 text-amber-950' : 'bg-blue-50 border-blue-200 text-blue-950') }}">
+                                    <span class="text-base shrink-0 leading-none mt-0.5">
+                                        @if($currentStep === 3)
+                                            🎉
+                                        @elseif($currentStep === 2)
+                                            🖨️
+                                        @else
+                                            📥
+                                        @endif
+                                    </span>
+                                    <div>
+                                        <strong class="font-extrabold block">
+                                            @if($currentStep === 3)
+                                                Pesanan Selesai &amp; Siap Diambil di Loket!
+                                            @elseif($currentStep === 2)
+                                                Sedang Dikerjakan di Workshop!
+                                            @else
+                                                Pesanan Telah Diterima di Antrean!
+                                            @endif
+                                        </strong>
+                                        <p class="text-[10px] opacity-90 mt-0.5">{{ $statusDesc }}</p>
+                                    </div>
+                                </div>
                             </div>
+
+                            <!-- Card Footer: Time, Payment & WhatsApp Help Button -->
+                            <div class="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs text-slate-500">
+                                <div class="flex items-center gap-2 text-[11px] font-mono">
+                                    <span>🕒 {{ $order->waktu_pesan ? $order->waktu_pesan->format('d M H:i') : '' }} WIB</span>
+                                    <span class="text-slate-300">•</span>
+                                    <span class="capitalize">💳 {{ strtoupper($order->metode_pembayaran ?: 'QRIS') }}</span>
+                                </div>
+                                <a href="https://wa.me/6281277119030?text={{ urlencode('Halo Matahari Fotocopy, saya ingin tanya pesanan saya nomor: ' . $order->nomor_nota . ' (' . ($order->antreanMesin?->kode_antrean ?? '') . ')') }}" target="_blank" class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-[11px] font-bold transition shadow-2xs active:scale-95 self-start sm:self-auto">
+                                    <svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.587 1.761.889 2.796.889 3.182 0 5.768-2.587 5.768-5.766.001-3.18-2.585-5.766-5.768-5.766zm9.969 5.766c0 5.503-4.469 9.972-9.972 9.972-1.748 0-3.385-.45-4.819-1.236l-5.209 1.366 1.39-5.083c-.88-1.488-1.39-3.23-1.39-5.019 0-5.503 4.469-9.972 9.972-9.972 5.503 0 10.028 4.469 10.028 9.972z"/></svg>
+                                    <span>Tanya Kasir WA</span>
+                                </a>
+                            </div>
+
                         </div>
                     @endforeach
                 </div>
@@ -740,7 +955,6 @@
     <!-- ======================================================== -->
     <footer class="bg-slate-50 border-t border-slate-200/80 py-8 text-center text-xs text-slate-400 mt-auto">
         <div class="max-w-7xl mx-auto px-4 space-y-2">
-            <p class="font-semibold text-slate-600">&copy; 2026 Matahari Fotocopy &amp; Percetakan Modern Bintaro. Hak Cipta Dilindungi.</p>
             <p class="text-[11px] text-slate-400">Layanan Cetak Cepat, Jilid Skripsi, Digital Offset, Spanduk, dan Distributor Alat Tulis Kantor (ATK).</p>
         </div>
     </footer>
@@ -748,18 +962,20 @@
     <!-- ======================================================== -->
     <!-- MODAL 1: ORDER CETAK & ATK CUSTOMER                      -->
     <!-- ======================================================== -->
-    <div id="modalCustomerOrder" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
-            <div class="flex items-center justify-between pb-4 border-b border-slate-100">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-9 h-9 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+    <div id="modalCustomerOrder" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3 sm:p-4 transition-all">
+        <div class="bg-white rounded-3xl max-w-xl w-full shadow-2xl border border-slate-100 max-h-[92vh] flex flex-col overflow-hidden">
+            
+            <!-- Modal Header (Fixed) -->
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center shadow-md shadow-blue-500/20">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                         </svg>
                     </div>
                     <div>
-                        <h3 class="font-black text-slate-900 text-base" id="orderModalTitle">Kirim Berkas &amp; Buat Pesanan</h3>
-                        <p class="text-xs text-slate-400">Pesanan otomatis masuk ke antrean workshop kasir</p>
+                        <h3 class="font-extrabold text-slate-900 text-base tracking-tight" id="orderModalTitle">Kirim Berkas &amp; Buat Pesanan</h3>
+                        <p class="text-xs text-slate-400 font-medium">Pesanan otomatis masuk ke antrean workshop kasir</p>
                     </div>
                 </div>
                 <button type="button" onclick="closeCustomerOrderModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition">
@@ -767,61 +983,185 @@
                 </button>
             </div>
 
-            <form action="{{ route('customer.order.store') }}" method="POST" enctype="multipart/form-data" class="mt-5 space-y-4 text-xs">
+            <!-- Modal Body (Scrollable with Slim Scrollbar) -->
+            <form id="custOrderForm" action="{{ route('customer.order.store') }}" method="POST" enctype="multipart/form-data" class="flex flex-col flex-1 overflow-hidden">
                 @csrf
-                <div>
-                    <label class="block font-bold text-slate-700 mb-1">Judul Dokumen / Nama Pesanan <span class="text-rose-500">*</span></label>
-                    <input type="text" name="judul_dokumen" id="orderModalJudul" required placeholder="Contoh: Modul Pelatihan atau Paket Cetak Brosur" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-medium">
-                </div>
+                <div class="px-6 py-4 overflow-y-auto space-y-3.5 custom-scrollbar text-xs flex-1">
+                    
+                    <!-- Row 1: Judul Dokumen & Pilih Produk -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1.5 text-xs">
+                                Judul Dokumen / Nama Pesanan <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="text" name="judul_dokumen" id="orderModalJudul" required placeholder="Contoh: Modul Pelatihan / Brosur" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-xs font-medium placeholder:text-slate-400 bg-slate-50/50 hover:bg-white focus:bg-white transition">
+                        </div>
 
-                <div>
-                    <label class="block font-bold text-slate-700 mb-1">Pilih Produk Layanan <span class="text-rose-500">*</span></label>
-                    <select name="produk_id" id="cust-prod-select" onchange="calculateCustPrice()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-medium">
-                        @foreach($availableProducts as $prod)
-                            <option value="{{ $prod->produk_id }}" data-price="{{ $prod->harga_dasar }}">{{ $prod->nama_item }} - Rp {{ number_format($prod->harga_dasar, 0, ',', '.') }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block font-bold text-slate-700 mb-1">Spesifikasi Kertas &amp; Finishing <span class="text-rose-500">*</span></label>
-                    <input type="text" name="spesifikasi" id="orderModalSpesifikasi" required placeholder="Contoh: A4 70g • Full Color Cover • Jilid Lakban" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-medium">
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block font-bold text-slate-700 mb-1">Kuantitas / Jumlah Halaman</label>
-                        <input type="number" name="kuantitas" id="cust-qty" value="50" min="1" oninput="calculateCustPrice()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-mono font-bold">
-                    </div>
-                    <div>
-                        <label class="block font-bold text-slate-700 mb-1">Estimasi Biaya</label>
-                        <div class="w-full px-3.5 py-2.5 rounded-xl border border-blue-200 bg-blue-50 text-blue-700 font-extrabold font-mono text-xs flex items-center">
-                            <span id="cust-price-display">Rp 15.000</span>
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1.5 text-xs">
+                                Pilih Produk Layanan <span class="text-rose-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <select name="produk_id" id="cust-prod-select" onchange="calculateCustPrice()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-xs font-semibold text-slate-700 bg-slate-50/50 hover:bg-white focus:bg-white transition appearance-none pr-8">
+                                    @foreach($availableProducts as $prod)
+                                        <option value="{{ $prod->produk_id }}" data-price="{{ $prod->harga_dasar }}">{{ $prod->nama_item }} - Rp {{ number_format($prod->harga_dasar, 0, ',', '.') }}</option>
+                                    @endforeach
+                                </select>
+                                <div class="absolute right-3 top-3 pointer-events-none text-slate-400">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                                </div>
+                            </div>
                         </div>
                     </div>
+
+                    <!-- Row 2: Modern Upload Dropzone Card -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="font-bold text-slate-700 text-xs">Upload Berkas PDF / Dokumen</label>
+                            <span class="text-[11px] text-slate-400 font-medium">Opsional jika ATK</span>
+                        </div>
+                        
+                        <div id="dropzone-cust-file" onclick="document.getElementById('cust-file-input').click()" class="border-2 border-dashed border-blue-200 hover:border-blue-400 bg-blue-50/30 hover:bg-blue-50/60 rounded-2xl p-3.5 text-center cursor-pointer transition group relative">
+                            <input type="file" name="berkas" id="cust-file-input" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onchange="handleCustFileSelect(this)" class="hidden">
+                            
+                            <!-- Placeholder State -->
+                            <div id="cust-file-empty-state" class="flex flex-col items-center justify-center space-y-1">
+                                <div class="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center group-hover:scale-110 group-hover:bg-blue-200/80 transition duration-200">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                                    </svg>
+                                </div>
+                                <p class="text-xs font-bold text-slate-700">
+                                    <span class="text-blue-600 underline underline-offset-2">Klik untuk pilih file</span> atau seret dokumen ke sini
+                                </p>
+                                <p class="text-[10px] text-slate-400">PDF, DOC, DOCX, JPG, PNG (Maksimal 20MB)</p>
+                            </div>
+
+                            <!-- Selected File State -->
+                            <div id="cust-file-selected-state" class="hidden flex items-center justify-between bg-white p-2.5 rounded-xl border border-blue-200 shadow-2xs">
+                                <div class="flex items-center gap-2.5 text-left truncate">
+                                    <div class="w-8 h-8 rounded-lg bg-red-100 text-red-600 font-black text-[10px] flex items-center justify-center shrink-0">
+                                        PDF
+                                    </div>
+                                    <div class="truncate">
+                                        <p id="cust-file-name" class="font-bold text-slate-800 text-xs truncate">nama_file.pdf</p>
+                                        <p id="cust-file-info" class="text-[11px] text-emerald-600 font-semibold">✓ 63 Halaman terdeteksi otomatis</p>
+                                    </div>
+                                </div>
+                                <button type="button" onclick="event.stopPropagation(); removeCustSelectedFile();" class="text-[11px] font-bold text-slate-400 hover:text-rose-600 px-2 py-1 rounded-lg hover:bg-rose-50 transition shrink-0">
+                                    Ganti Berkas
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 3: 3 Kolom Sejajar Rapi: Halaman, Rangkap, Estimasi -->
+                    <div class="grid grid-cols-3 gap-2.5 items-end">
+                        <!-- Kolom 1: Halaman -->
+                        <div>
+                            <label class="block font-bold text-slate-700 text-xs mb-1.5 h-4 leading-4 truncate">
+                                Jml Halaman
+                            </label>
+                            <div class="flex items-center border border-slate-200 rounded-xl overflow-hidden bg-white shadow-2xs focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500">
+                                <button type="button" onclick="adjustCustPages(-1)" class="w-7 h-10 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50/50 transition font-black text-sm select-none">−</button>
+                                <input type="number" name="jumlah_halaman" id="cust-pages" value="1" min="1" oninput="calculateCustPrice()" class="w-full h-10 text-center font-bold font-mono text-xs text-slate-800 focus:outline-none bg-transparent">
+                                <button type="button" onclick="adjustCustPages(1)" class="w-7 h-10 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50/50 transition font-black text-sm select-none">+</button>
+                            </div>
+                        </div>
+
+                        <!-- Kolom 2: Rangkap -->
+                        <div>
+                            <label class="block font-bold text-slate-700 text-xs mb-1.5 h-4 leading-4 truncate">
+                                Jml Rangkap
+                            </label>
+                            <div class="flex items-center border border-slate-200 rounded-xl overflow-hidden bg-white shadow-2xs focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500">
+                                <button type="button" onclick="adjustCustQty(-1)" class="w-7 h-10 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50/50 transition font-black text-sm select-none">−</button>
+                                <input type="number" name="kuantitas" id="cust-qty" value="1" min="1" oninput="calculateCustPrice()" class="w-full h-10 text-center font-bold font-mono text-xs text-slate-800 focus:outline-none bg-transparent">
+                                <button type="button" onclick="adjustCustQty(1)" class="w-7 h-10 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50/50 transition font-black text-sm select-none">+</button>
+                            </div>
+                        </div>
+
+                        <!-- Kolom 3: Estimasi Biaya Highlight Card -->
+                        <div>
+                            <label class="block font-bold text-slate-700 text-xs mb-1.5 h-4 leading-4 truncate">
+                                Estimasi Biaya
+                            </label>
+                            <div class="w-full h-10 px-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-extrabold font-mono text-xs flex items-center justify-center shadow-md shadow-blue-500/20">
+                                <span id="cust-price-display">Rp 300</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 4: Rincian Hitungan Bersih, Terstruktur & Rapih -->
+                    <div id="cust-price-formula-box" class="p-3 rounded-2xl bg-blue-50/70 border border-blue-200/80 text-xs space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-slate-800 flex items-center gap-1.5 text-xs">
+                                <span>💡</span>
+                                <span>Rincian Perhitungan Biaya</span>
+                            </span>
+                            <span id="cust-formula-total-lembar" class="text-[11px] font-bold text-blue-700 bg-white border border-blue-200 px-2.5 py-0.5 rounded-full shadow-2xs">
+                                Total 1 Lembar Cetak
+                            </span>
+                        </div>
+                        
+                        <div class="grid grid-cols-5 items-center p-2.5 rounded-xl bg-white border border-blue-100/90 text-center shadow-2xs">
+                            <div class="col-span-1">
+                                <span class="text-[10px] text-slate-400 block font-semibold leading-tight">Halaman</span>
+                                <span id="cust-breakdown-pages" class="font-mono font-black text-slate-800 text-xs mt-0.5 block">1 Hal</span>
+                            </div>
+                            <div class="col-span-1 text-slate-300 font-bold text-sm">×</div>
+                            <div class="col-span-1">
+                                <span class="text-[10px] text-slate-400 block font-semibold leading-tight">Tarif</span>
+                                <span id="cust-breakdown-price" class="font-mono font-black text-slate-800 text-xs mt-0.5 block">Rp 300</span>
+                            </div>
+                            <div class="col-span-1 text-slate-300 font-bold text-sm">×</div>
+                            <div class="col-span-1">
+                                <span class="text-[10px] text-slate-400 block font-semibold leading-tight">Rangkap</span>
+                                <span id="cust-breakdown-qty" class="font-mono font-black text-slate-800 text-xs mt-0.5 block">1 Buku</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 5: Spesifikasi & Pembayaran (2 Kolom) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1.5 text-xs">
+                                Spesifikasi Kertas &amp; Finishing <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="text" name="spesifikasi" id="orderModalSpesifikasi" required placeholder="Contoh: A4 70g • Full Color • Jilid Lakban" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-xs font-medium placeholder:text-slate-400 bg-slate-50/50 hover:bg-white focus:bg-white transition">
+                        </div>
+
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1.5 text-xs">Metode Pembayaran Online</label>
+                            <div class="relative">
+                                <select name="metode_pembayaran" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-xs font-semibold text-slate-700 bg-slate-50/50 hover:bg-white focus:bg-white transition appearance-none pr-8">
+                                    <option value="qris">🟡 QRIS Dinamis (Instan Semua E-Wallet &amp; Bank)</option>
+                                    <option value="transfer">🟣 Transfer Bank BCA / Mandiri</option>
+                                </select>
+                                <div class="absolute right-3 top-3 pointer-events-none text-slate-400">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
 
-                <div>
-                    <label class="block font-bold text-slate-700 mb-1">Upload Berkas PDF / Dokumen (Opsional jika ATK)</label>
-                    <input type="file" name="berkas" id="cust-file-input" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onchange="handleCustFileSelect(this)" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition">
-                    <p id="cust-pdf-pages-badge" class="hidden mt-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-1"></p>
-                </div>
-
-                <div>
-                    <label class="block font-bold text-slate-700 mb-1">Metode Pembayaran Online</label>
-                    <select name="metode_pembayaran" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-medium">
-                        <option value="qris">🟡 QRIS Dinamis (Instan Semua Bank &amp; E-Wallet)</option>
-                        <option value="transfer">🟣 Transfer Bank BCA / Mandiri</option>
-                    </select>
-                </div>
-
-                <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
-                    <button type="button" onclick="closeCustomerOrderModal()" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition">
-                        Batal
-                    </button>
-                    <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition shadow-xs">
-                        Kirim Pesanan Sekarang
-                    </button>
+                <!-- Sticky Footer: Always visible, never cut off! -->
+                <div class="px-6 py-3.5 bg-slate-50/90 border-t border-slate-100 flex items-center justify-between gap-3 shrink-0 rounded-b-3xl">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider hidden sm:inline">Total:</span>
+                        <span id="cust-footer-price" class="text-base font-black font-mono text-blue-700">Rp 300</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="closeCustomerOrderModal()" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-white hover:border-slate-300 transition text-xs">
+                            Batal
+                        </button>
+                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold transition shadow-md shadow-blue-500/25 flex items-center gap-2 text-xs hover:scale-[1.02] active:scale-[0.98]">
+                            <span>Kirim Pesanan Sekarang</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -875,15 +1215,55 @@
 
         let detectedPdfPages = null;
 
+        function adjustCustPages(delta) {
+            const input = document.getElementById('cust-pages');
+            if (!input) return;
+            const current = parseInt(input.value || 1);
+            const next = Math.max(1, current + delta);
+            input.value = next;
+            calculateCustPrice();
+        }
+
+        function adjustCustQty(delta) {
+            const input = document.getElementById('cust-qty');
+            if (!input) return;
+            const current = parseInt(input.value || 1);
+            const next = Math.max(1, current + delta);
+            input.value = next;
+            calculateCustPrice();
+        }
+
+        function removeCustSelectedFile() {
+            const input = document.getElementById('cust-file-input');
+            if (input) input.value = '';
+            handleCustFileSelect(input);
+        }
+
         function handleCustFileSelect(input) {
-            const badge = document.getElementById('cust-pdf-pages-badge');
-            const file = input.files && input.files[0];
+            const file = input && input.files && input.files[0];
+            const pagesInput = document.getElementById('cust-pages');
+            const emptyState = document.getElementById('cust-file-empty-state');
+            const selectedState = document.getElementById('cust-file-selected-state');
+            const fileNameEl = document.getElementById('cust-file-name');
+            const fileInfoEl = document.getElementById('cust-file-info');
+
             if (!file) {
                 detectedPdfPages = null;
-                if (badge) badge.classList.add('hidden');
+                if (emptyState) emptyState.classList.remove('hidden');
+                if (selectedState) selectedState.classList.add('hidden');
+                if (pagesInput) pagesInput.value = 1;
                 calculateCustPrice();
                 return;
             }
+
+            if (emptyState) emptyState.classList.add('hidden');
+            if (selectedState) selectedState.classList.remove('hidden');
+            if (fileNameEl) fileNameEl.textContent = file.name;
+
+            const sizeFormatted = (file.size / 1024 / 1024 >= 1) 
+                ? (file.size / 1024 / 1024).toFixed(1) + ' MB'
+                : Math.max(1, Math.round(file.size / 1024)) + ' KB';
+
             if (file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf') {
                 const reader = new FileReader();
                 reader.onload = function(e) {
@@ -891,18 +1271,23 @@
                     const matches = text.match(/\/Type\s*\/Page\b(?!s)/g);
                     const pages = matches && matches.length > 0 ? matches.length : 1;
                     detectedPdfPages = pages;
-                    if (badge) {
-                        badge.textContent = '✓ File PDF terdeteksi otomatis: ' + pages + ' halaman';
-                        badge.classList.remove('hidden');
+
+                    if (pagesInput) {
+                        pagesInput.value = pages;
+                    }
+                    if (fileInfoEl) {
+                        fileInfoEl.textContent = `✓ ${pages} Halaman PDF terdeteksi otomatis (${sizeFormatted})`;
                     }
                     calculateCustPrice();
                 };
                 reader.readAsBinaryString(file);
             } else {
                 detectedPdfPages = 1;
-                if (badge) {
-                    badge.textContent = '✓ Dokumen terdeteksi: ' + file.name;
-                    badge.classList.remove('hidden');
+                if (pagesInput && !pagesInput.value) {
+                    pagesInput.value = 1;
+                }
+                if (fileInfoEl) {
+                    fileInfoEl.textContent = `✓ Berkas terlampir (${sizeFormatted})`;
                 }
                 calculateCustPrice();
             }
@@ -912,33 +1297,76 @@
             const select = document.getElementById('cust-prod-select');
             if (!select) return;
             const price = parseFloat(select.options[select.selectedIndex]?.getAttribute('data-price') || 300);
-            const qty = parseInt(document.getElementById('cust-qty')?.value || 1);
-            const pages = detectedPdfPages ? detectedPdfPages : 1;
+            const pagesInput = document.getElementById('cust-pages');
+            const qtyInput = document.getElementById('cust-qty');
+
+            const pages = Math.max(1, parseInt(pagesInput?.value || detectedPdfPages || 1));
+            const qty = Math.max(1, parseInt(qtyInput?.value || 1));
             const total = pages * price * qty;
-            document.getElementById('cust-price-display').textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(total);
+
+            const formattedPrice = new Intl.NumberFormat('id-ID').format(price);
+            const formattedTotal = new Intl.NumberFormat('id-ID').format(total);
+
+            const displayEl = document.getElementById('cust-price-display');
+            if (displayEl) {
+                displayEl.textContent = 'Rp ' + formattedTotal;
+            }
+
+            const footerPriceEl = document.getElementById('cust-footer-price');
+            if (footerPriceEl) {
+                footerPriceEl.textContent = 'Rp ' + formattedTotal;
+            }
+
+            const breakdownPages = document.getElementById('cust-breakdown-pages');
+            const breakdownPrice = document.getElementById('cust-breakdown-price');
+            const breakdownQty = document.getElementById('cust-breakdown-qty');
+            const totalLembarBadge = document.getElementById('cust-formula-total-lembar');
+
+            if (breakdownPages) breakdownPages.textContent = `${pages} Hal`;
+            if (breakdownPrice) breakdownPrice.textContent = `Rp ${formattedPrice}`;
+            if (breakdownQty) breakdownQty.textContent = `${qty} ${qty > 1 ? 'Rangkap' : 'Buku'}`;
+            if (totalLembarBadge) totalLembarBadge.textContent = `Total ${pages * qty} Lembar Cetak`;
+        }
+
+        function resetCustOrderModalState() {
+            removeCustSelectedFile();
+            const pagesInput = document.getElementById('cust-pages');
+            if (pagesInput) pagesInput.value = 1;
+            const qtyInput = document.getElementById('cust-qty');
+            if (qtyInput) qtyInput.value = 1;
+            detectedPdfPages = null;
         }
 
         function openOrderForProduct(namaItem, hargaDasar) {
+            resetCustOrderModalState();
             document.getElementById('orderModalTitle').textContent = 'Pesan Layanan: ' + namaItem;
             document.getElementById('orderModalJudul').value = 'Pesanan ' + namaItem;
             document.getElementById('orderModalSpesifikasi').value = namaItem + ' • Kualitas High-Res Cetak Presisi';
-            document.getElementById('cust-qty').value = 1;
+            const select = document.getElementById('cust-prod-select');
+            if (select) {
+                for (let i = 0; i < select.options.length; i++) {
+                    if (select.options[i].text.toLowerCase().includes(namaItem.toLowerCase())) {
+                        select.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
             openCustomerOrderModal();
         }
 
         function orderPromoDirect(namaPromo, hargaPromo) {
+            resetCustOrderModalState();
             document.getElementById('orderModalTitle').textContent = 'Ambil Promo: ' + namaPromo;
             document.getElementById('orderModalJudul').value = namaPromo + ' (Flash Sale)';
             document.getElementById('orderModalSpesifikasi').value = 'Paket Promo Hemat Spesial Bulan Ini';
-            document.getElementById('cust-qty').value = 1;
             openCustomerOrderModal();
         }
 
         function orderAtkItem(namaItem, harga, satuan) {
+            resetCustOrderModalState();
             document.getElementById('orderModalTitle').textContent = 'Beli ATK: ' + namaItem;
             document.getElementById('orderModalJudul').value = 'Beli ATK: ' + namaItem;
             document.getElementById('orderModalSpesifikasi').value = 'Produk ATK Retail • Satuan: ' + satuan;
-            document.getElementById('cust-qty').value = 1;
             openCustomerOrderModal();
         }
 
@@ -996,6 +1424,155 @@
             document.getElementById('cd-minutes').textContent = String(m).padStart(2, '0');
             document.getElementById('cd-seconds').textContent = String(s).padStart(2, '0');
         }, 1000);
+
+        // ========================================================
+        // DYNAMIC ACTIVE NAVBAR HIGHLIGHT & SCROLLSPY
+        // ========================================================
+        const trackedNavItems = document.querySelectorAll('#customerNav .nav-item');
+        const trackedSectionIds = ['home', 'promo-section', 'katalog-print', 'katalog-atk', 'pesanan-saya'];
+
+        function setActiveCustomerNav(targetId) {
+            if (!targetId) return;
+            trackedNavItems.forEach(item => {
+                const itemTarget = item.getAttribute('data-target');
+                if (itemTarget === targetId) {
+                    item.classList.add('text-blue-600', 'bg-blue-50', 'font-extrabold');
+                    item.classList.remove('text-slate-600', 'font-bold');
+                } else {
+                    item.classList.remove('text-blue-600', 'bg-blue-50', 'font-extrabold');
+                    item.classList.add('text-slate-600', 'font-bold');
+                }
+            });
+        }
+
+        // On Click Navbar Item
+        trackedNavItems.forEach(link => {
+            link.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-target');
+                if (targetId) {
+                    setActiveCustomerNav(targetId);
+                }
+            });
+        });
+
+        // Scrollspy to automatically switch active highlight while scrolling
+        function syncNavOnScroll() {
+            const scrollY = window.scrollY;
+            const windowHeight = window.innerHeight;
+            const docHeight = document.documentElement.scrollHeight;
+
+            // When scrolled near bottom, activate last section
+            if (scrollY + windowHeight >= docHeight - 80) {
+                setActiveCustomerNav('pesanan-saya');
+                return;
+            }
+
+            // Check sections from bottom to top
+            for (let i = trackedSectionIds.length - 1; i >= 0; i--) {
+                const secId = trackedSectionIds[i];
+                const sec = document.getElementById(secId);
+                if (sec) {
+                    const rect = sec.getBoundingClientRect();
+                    // When section top is scrolled past header threshold (150px)
+                    if (rect.top <= 150) {
+                        setActiveCustomerNav(secId);
+                        return;
+                    }
+                }
+            }
+
+            setActiveCustomerNav('home');
+        }
+
+        let navScrollThrottle;
+        window.addEventListener('scroll', function() {
+            if (!navScrollThrottle) {
+                navScrollThrottle = setTimeout(function() {
+                    syncNavOnScroll();
+                    navScrollThrottle = null;
+                }, 40);
+            }
+        }, { passive: true });
+
+        // Set active on load or initial hash
+        window.addEventListener('DOMContentLoaded', function() {
+            const hash = window.location.hash.replace('#', '');
+            if (hash && trackedSectionIds.includes(hash)) {
+                setActiveCustomerNav(hash);
+            } else {
+                syncNavOnScroll();
+            }
+
+            // Setup modern drag and drop for modal file upload
+            const dropzone = document.getElementById('dropzone-cust-file');
+            const fileInput = document.getElementById('cust-file-input');
+            if (dropzone && fileInput) {
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    dropzone.addEventListener(eventName, function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        dropzone.classList.add('border-blue-500', 'bg-blue-100/60');
+                    }, false);
+                });
+                ['dragleave', 'drop'].forEach(eventName => {
+                    dropzone.addEventListener(eventName, function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        dropzone.classList.remove('border-blue-500', 'bg-blue-100/60');
+                    }, false);
+                });
+                dropzone.addEventListener('drop', function(e) {
+                    const dt = e.dataTransfer;
+                    const files = dt && dt.files;
+                    if (files && files.length > 0) {
+                        fileInput.files = files;
+                        handleCustFileSelect(fileInput);
+                    }
+                }, false);
+            }
+        });
+
+        window.addEventListener('hashchange', function() {
+            const hash = window.location.hash.replace('#', '');
+            if (hash && trackedSectionIds.includes(hash)) {
+                setActiveCustomerNav(hash);
+            }
+        });
+
+        // ========================================================
+        // LIVE TRACKING REFRESH & AUTO-POLLING
+        // ========================================================
+        function refreshCustomerOrders(btn) {
+            const icon = document.getElementById('refreshIcon');
+            if (icon) icon.classList.add('animate-spin');
+
+            fetch(window.location.href, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => res.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newContent = doc.getElementById('pesanan-saya-container');
+                const currentContent = document.getElementById('pesanan-saya-container');
+                if (newContent && currentContent) {
+                    currentContent.innerHTML = newContent.innerHTML;
+                }
+            })
+            .catch(err => {
+                console.warn('Gagal sinkronisasi antrean:', err);
+            })
+            .finally(() => {
+                if (icon) {
+                    setTimeout(() => icon.classList.remove('animate-spin'), 400);
+                }
+            });
+        }
+
+        // Auto polling every 15 seconds so customer sees status updates in real time
+        setInterval(() => {
+            refreshCustomerOrders();
+        }, 15000);
     </script>
 </body>
 </html>

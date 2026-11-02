@@ -2,10 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\DashboardController;
 use App\Models\Pelanggan;
+use App\Models\Pesanan;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use ReflectionMethod;
 use Tests\TestCase;
 
 class AdminMemberTest extends TestCase
@@ -35,6 +38,16 @@ class AdminMemberTest extends TestCase
             'nomor_telepon' => '0812-9876-5432',
             'role' => 'user',
         ]);
+    }
+
+    protected function tearDown(): void
+    {
+        $filePath = storage_path('app/loyalty_program_config.json');
+        if (file_exists($filePath)) {
+            @unlink($filePath);
+        }
+
+        parent::tearDown();
     }
 
     public function test_admin_member_page_renders_successfully_for_authenticated_admin(): void
@@ -163,5 +176,59 @@ class AdminMemberTest extends TestCase
                 'kode_member' => 'MTH-7788',
             ],
         ]);
+    }
+
+    public function test_admin_can_update_loyalty_program_config(): void
+    {
+        $response = $this->actingAs($this->admin)->post(route('admin.member.update-program-hadiah'), [
+            'poin_dasar_transaksi' => 1,
+            'kelipatan_nominal_bonus' => 10000,
+            'stamp_per_transaksi' => 2,
+            'masa_berlaku_bulan' => 6,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $filePath = storage_path('app/loyalty_program_config.json');
+        $this->assertFileExists($filePath);
+        $data = json_decode((string) file_get_contents($filePath), true);
+        $this->assertSame(1, $data['poin_dasar_transaksi']);
+        $this->assertSame(10000, $data['kelipatan_nominal_bonus']);
+        $this->assertSame(2, $data['stamp_per_transaksi']);
+        $this->assertSame(6, $data['masa_berlaku_bulan']);
+    }
+
+    public function test_loyalty_point_allocation_follows_tiered_rules(): void
+    {
+        $pelanggan = Pelanggan::create([
+            'user_id' => $this->customer->user_id,
+            'kode_member' => 'MTH-TEST',
+            'kategori_member' => 'Member Umum',
+            'saldo_poin' => 0,
+        ]);
+
+        $controller = app(DashboardController::class);
+        $method = new ReflectionMethod(DashboardController::class, 'allocateLoyaltyPointsForOrder');
+
+        // Belanja < 10k => 1 poin
+        $p1 = new Pesanan(['pelanggan_id' => $pelanggan->pelanggan_id, 'total_harga' => 5000]);
+        $this->assertSame(1, $method->invoke($controller, $p1));
+
+        // Belanja pas 10k => 1 poin
+        $p2 = new Pesanan(['pelanggan_id' => $pelanggan->pelanggan_id, 'total_harga' => 10000]);
+        $this->assertSame(1, $method->invoke($controller, $p2));
+
+        // Belanja > 10k (misal 12.000) => 2 poin
+        $p3 = new Pesanan(['pelanggan_id' => $pelanggan->pelanggan_id, 'total_harga' => 12000]);
+        $this->assertSame(2, $method->invoke($controller, $p3));
+
+        // Belanja > 20k (misal 25.000) => 3 poin
+        $p4 = new Pesanan(['pelanggan_id' => $pelanggan->pelanggan_id, 'total_harga' => 25000]);
+        $this->assertSame(3, $method->invoke($controller, $p4));
+
+        // Belanja > 30k (misal 35.000) => 4 poin
+        $p5 = new Pesanan(['pelanggan_id' => $pelanggan->pelanggan_id, 'total_harga' => 35000]);
+        $this->assertSame(4, $method->invoke($controller, $p5));
     }
 }

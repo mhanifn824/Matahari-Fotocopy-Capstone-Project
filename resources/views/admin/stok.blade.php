@@ -97,11 +97,7 @@
             <!-- Topbar Badges & Actions -->
             <div class="flex items-center gap-3 flex-wrap justify-end w-full sm:w-auto">
                 
-                <!-- Shift Capsule -->
-                <div class="flex items-center gap-2 bg-white border border-slate-200/90 shadow-2xs px-3 py-1.5 rounded-full text-xs font-semibold text-slate-700">
-                    <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
-                    <span>Buka • Shift Siang</span>
-                </div>
+
 
                 <!-- Live Clock Capsule -->
                 <div class="flex items-center gap-2 bg-slate-100/80 border border-slate-200 px-3 py-1.5 rounded-full text-xs font-mono font-medium text-slate-700">
@@ -149,10 +145,7 @@
                 
                 <!-- Title & Breadcrumb -->
                 <div>
-                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono">
-                        LOGISTIK & OPERASIONAL • <span class="text-amber-500">GUDANG UTAMA BINTARO</span>
-                    </div>
-                    <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
+                    <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
                         Inventaris Bahan & Stok Gerai
                     </h1>
                     <p class="text-xs text-slate-500 font-medium mt-1">

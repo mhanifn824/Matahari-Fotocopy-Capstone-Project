@@ -93,13 +93,7 @@
             <!-- Right Info & Actions -->
             <div class="flex items-center gap-3 sm:gap-4">
                 
-                <!-- Shift Status Capsule & Role Badge -->
-                <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-slate-200/90 shadow-2xs text-xs font-bold text-slate-700">
-                    <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
-                    <span>Buka • Shift Siang</span>
-                    <span class="text-slate-300">|</span>
-                    <span class="text-[10px] font-mono font-semibold text-slate-500">Hak Akses Terverifikasi: Admin / Kasir</span>
-                </div>
+
 
                 <!-- Live Clock & Date -->
                 <div class="flex items-center gap-2 text-xs font-semibold text-slate-600 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-200/60 font-mono">
@@ -158,15 +152,11 @@
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 
                 <div>
-                    <div class="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-amber-600 font-mono">
-                        <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-                        <span>PUSAT KENDALI KASIR & PRODUKSI</span>
-                    </div>
-                    <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
+                    <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
                         Dashboard Operasional Gerai
                     </h1>
                     <p class="text-xs text-slate-500 mt-0.5 leading-relaxed">
-                        Pantau kinerja pesanan harian, omzet, antrean mesin, dan inventaris gerai Bintaro Sektor 7 secara waktu nyata.
+                        Pantau kinerja pesanan harian, omzet, antrean online, dan inventaris gerai Bintaro Sektor 7 secara waktu nyata.
                     </p>
                 </div>
 
@@ -179,7 +169,7 @@
                         </svg>
                         <div>
                             <p class="font-bold text-slate-800 leading-tight">Hari Ini: <span id="header-date-text">{{ now()->format('d M Y') }}</span></p>
-                            <p class="text-[10px] text-slate-400 font-medium">Shift Siang • {{ $user->nama ?? 'Feri Anto' }}</p>
+                            <p class="text-[10px] text-slate-400 font-medium">Petugas: {{ $user->nama ?? 'Feri Anto' }}</p>
                         </div>
                     </div>
                 </div>
@@ -632,7 +622,7 @@
                                 KONSUMSI BAHAN HARI INI
                             </span>
                             <span class="text-[10px] font-bold font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
-                                Shift Siang
+                                Hari Ini
                             </span>
                         </div>
 

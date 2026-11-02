@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Manajemen Antrean Mesin & Workshop - Matahari Fotocopy</title>
+    <title>Manajemen Antrean Online - Matahari Fotocopy</title>
     
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
@@ -89,11 +89,7 @@
             <!-- Right Info & Actions -->
             <div class="flex items-center gap-3 sm:gap-4">
                 
-                <!-- Shift Status Capsule -->
-                <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-slate-200/90 shadow-2xs text-xs font-bold text-slate-700">
-                    <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
-                    <span>Buka • Shift Siang</span>
-                </div>
+
 
                 <!-- Live Clock & Date -->
                 <div class="flex items-center gap-2 text-xs font-semibold text-slate-600 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-200/60 font-mono">
@@ -126,15 +122,11 @@
         <main class="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto w-full">
 
             <!-- PAGE SUB-HEADER TITLE & VIEW TOGGLES -->
-            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
                 
                 <div>
-                    <div class="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-amber-600 font-mono">
-                        <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-                        <span>LIVE WORKSHOP DISPATCH</span>
-                    </div>
-                    <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
-                        Manajemen Antrean Mesin & Workshop
+                    <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                        Manajemen Antrean Online
                     </h1>
                     <p class="text-xs text-slate-500 mt-0.5 leading-relaxed">
                         Pantau dan kelola antrean cetak online gerai Bintaro Sektor 7
@@ -142,17 +134,17 @@
                 </div>
 
                 <!-- Right View Mode & Print Buttons -->
-                <div class="flex flex-wrap items-center gap-2.5">
+                <div class="flex items-center gap-2 sm:gap-2.5 flex-nowrap shrink-0">
                     
                     <!-- View Mode Toggle Capsule -->
-                    <div class="bg-slate-100 p-1 rounded-xl flex items-center gap-1 border border-slate-200/80 text-xs">
-                        <button type="button" id="btn-view-table" onclick="setViewMode('table')" class="px-3.5 py-1.5 rounded-lg bg-white shadow-2xs font-bold text-slate-800 flex items-center gap-1.5 transition">
+                    <div class="bg-slate-100 p-1 rounded-xl flex items-center gap-1 border border-slate-200/80 text-xs shrink-0">
+                        <button type="button" id="btn-view-table" onclick="setViewMode('table')" class="px-3.5 py-1.5 rounded-lg bg-white shadow-2xs font-bold text-slate-800 flex items-center gap-1.5 transition whitespace-nowrap">
                             <svg class="w-3.5 h-3.5 text-slate-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                             </svg>
                             <span>Tampilan Tabel</span>
                         </button>
-                        <button type="button" id="btn-view-kanban" onclick="setViewMode('kanban')" class="px-3.5 py-1.5 rounded-lg text-slate-500 hover:text-slate-800 font-medium flex items-center gap-1.5 transition">
+                        <button type="button" id="btn-view-kanban" onclick="setViewMode('kanban')" class="px-3.5 py-1.5 rounded-lg text-slate-500 hover:text-slate-800 font-medium flex items-center gap-1.5 transition whitespace-nowrap">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>
                             </svg>
@@ -161,192 +153,50 @@
                     </div>
 
                     <!-- Print Button -->
-                    <button type="button" onclick="window.print()" class="px-3.5 py-2 rounded-xl bg-blue-50/80 hover:bg-blue-100 text-blue-700 font-bold text-xs border border-blue-200/80 shadow-2xs flex items-center gap-1.5 transition">
+                    <button type="button" onclick="window.print()" class="px-3.5 py-2 rounded-xl bg-blue-50/80 hover:bg-blue-100 text-blue-700 font-bold text-xs border border-blue-200/80 shadow-2xs flex items-center gap-1.5 transition whitespace-nowrap shrink-0">
                         <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
                         </svg>
                         <span>Cetak Daftar Antrean</span>
                     </button>
 
-                    <!-- Simulator Demo Toggle Button -->
-                    <div class="flex items-center gap-1 bg-slate-200/70 p-1 rounded-xl text-xs font-semibold">
-                        <form action="{{ route('admin.dashboard.clear-demo') }}" method="POST" class="inline">
-                            @csrf
-                            <button type="submit" title="Reset ke Kondisi Awal Kosong" class="px-2.5 py-1 rounded-lg {{ $workshopData['total'] == 0 ? 'bg-white text-slate-800 shadow-2xs font-bold' : 'text-slate-600 hover:text-slate-900' }}">
-                                Empty State
-                            </button>
-                        </form>
-                        <form action="{{ route('admin.dashboard.seed-demo') }}" method="POST" class="inline">
-                            @csrf
-                            <button type="submit" title="Muat Data Simulasi Sesuai Referensi Gambar" class="px-2.5 py-1 rounded-lg {{ $workshopData['total'] > 0 ? 'bg-amber-500 text-white shadow-2xs font-bold' : 'text-slate-600 hover:text-slate-900' }}">
-                                Simulasi Data
-                            </button>
-                        </form>
-                    </div>
-
                 </div>
 
             </div>
 
+
             <!-- ========================================== -->
-            <!-- 3 WORKSHOP MACHINE STATUS CARDS            -->
+            <!-- FILTER PILLS ROW                           -->
             <!-- ========================================== -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="machine-cards-container">
-                
-                <!-- CARD 1: MESIN KONICA 1 • HEAVY -->
-                <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-start justify-between gap-3">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block font-mono">
-                                        MESIN KONICA 1 • HEAVY
-                                    </span>
-                                    <h3 class="text-sm font-extrabold text-slate-900 leading-tight">
-                                        Cetak Skripsi
-                                    </h3>
-                                    <p id="konica-status-text" class="text-xs font-semibold mt-0.5 {{ $workshopData['machines']['konica']['pct'] > 50 ? 'text-rose-600' : 'text-slate-500' }}">
-                                        {{ $workshopData['machines']['konica']['status'] }}
-                                    </p>
-                                </div>
-                            </div>
-                            <span id="konica-pct-text" class="text-2xl font-black text-slate-900 font-mono tracking-tight">
-                                {{ $workshopData['machines']['konica']['pct'] }}%
-                            </span>
-                        </div>
-                    </div>
-                    <!-- Workload Progress Bar -->
-                    <div class="w-full bg-slate-100 rounded-full h-1.5 mt-4 overflow-hidden">
-                        <div id="konica-bar" class="h-full bg-amber-500 rounded-full transition-all duration-500" style="width: {{ $workshopData['machines']['konica']['pct'] }}%;"></div>
-                    </div>
-                </div>
+            <div class="bg-white rounded-2xl p-2.5 sm:p-3 border border-slate-200/90 shadow-2xs flex items-center gap-1.5 text-xs font-semibold overflow-x-auto scrollbar-none whitespace-nowrap">
+                <a href="{{ route('admin.antrean.index', ['tab' => 'masuk']) }}" class="px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 shrink-0 {{ in_array($filter, ['masuk', 'semua']) ? 'bg-amber-50 text-amber-800 font-bold border border-amber-300 shadow-2xs' : 'text-slate-600 hover:bg-slate-50' }}">
+                    <span>Order Masuk</span>
+                    <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono {{ in_array($filter, ['masuk', 'semua']) ? 'bg-amber-600 text-white' : 'bg-slate-200 text-slate-700' }}">{{ $workshopData['masuk'] ?? 0 }}</span>
+                </a>
 
-                <!-- CARD 2: MESIN RICOH 2 • DIGITAL -->
-                <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-start justify-between gap-3">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block font-mono">
-                                        MESIN RICOH 2 • DIGITAL
-                                    </span>
-                                    <h3 class="text-sm font-extrabold text-slate-900 leading-tight">
-                                        Warna High-speed
-                                    </h3>
-                                    <p id="ricoh-status-text" class="text-xs font-semibold text-slate-500 mt-0.5">
-                                        {{ $workshopData['machines']['ricoh']['status'] }}
-                                    </p>
-                                </div>
-                            </div>
-                            <span id="ricoh-pct-text" class="text-2xl font-black text-slate-900 font-mono tracking-tight">
-                                {{ $workshopData['machines']['ricoh']['pct'] }}%
-                            </span>
-                        </div>
-                    </div>
-                    <div class="w-full bg-slate-100 rounded-full h-1.5 mt-4 overflow-hidden">
-                        <div id="ricoh-bar" class="h-full bg-blue-500 rounded-full transition-all duration-500" style="width: {{ $workshopData['machines']['ricoh']['pct'] }}%;"></div>
-                    </div>
-                </div>
+                <a href="{{ route('admin.antrean.index', ['tab' => 'diterima']) }}" class="px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 shrink-0 {{ $filter === 'diterima' ? 'bg-blue-50 text-blue-700 font-bold border border-blue-200/80 shadow-2xs' : 'text-slate-600 hover:bg-slate-50' }}">
+                    <span>Diterima</span>
+                    <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono {{ $filter === 'diterima' ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-700' }}">{{ $workshopData['diterima'] }}</span>
+                </a>
 
-                <!-- CARD 3: CANON 3 / KASIR A -->
-                <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-start justify-between gap-3">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center flex-shrink-0">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block font-mono">
-                                        CANON 3 / KASIR A
-                                    </span>
-                                    <h3 class="text-sm font-extrabold text-slate-900 leading-tight">
-                                        Fotokopi Dokumen
-                                    </h3>
-                                    <p id="canon-status-text" class="text-xs font-semibold text-slate-400 mt-0.5">
-                                        {{ $workshopData['machines']['canon']['status'] }}
-                                    </p>
-                                </div>
-                            </div>
-                            <span id="canon-pct-text" class="text-2xl font-black text-slate-900 font-mono tracking-tight">
-                                {{ $workshopData['machines']['canon']['pct'] }}%
-                            </span>
-                        </div>
-                    </div>
-                    <div class="w-full bg-slate-100 rounded-full h-1.5 mt-4 overflow-hidden">
-                        <div id="canon-bar" class="h-full bg-slate-400 rounded-full transition-all duration-500" style="width: {{ $workshopData['machines']['canon']['pct'] }}%;"></div>
-                    </div>
-                </div>
+                <a href="{{ route('admin.antrean.index', ['tab' => 'proses']) }}" class="px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 shrink-0 {{ $filter === 'proses' ? 'bg-blue-50 text-blue-700 font-bold border border-blue-200/80 shadow-2xs' : 'text-slate-600 hover:bg-slate-50' }}">
+                    <span>Sedang Diproses</span>
+                    <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono {{ $filter === 'proses' ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-700' }}">{{ $workshopData['proses'] }}</span>
+                </a>
 
+                <a href="{{ route('admin.antrean.index', ['tab' => 'siap']) }}" class="px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 shrink-0 {{ $filter === 'siap' ? 'bg-blue-50 text-blue-700 font-bold border border-blue-200/80 shadow-2xs' : 'text-slate-600 hover:bg-slate-50' }}">
+                    <span>Siap Diambil</span>
+                    <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono {{ $filter === 'siap' ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-700' }}">{{ $workshopData['siap'] }}</span>
+                </a>
+
+                <a href="{{ route('admin.antrean.index', ['tab' => 'selesai']) }}" class="px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 shrink-0 {{ $filter === 'selesai' ? 'bg-emerald-50 text-emerald-800 font-bold border border-emerald-300 shadow-2xs' : 'text-slate-600 hover:bg-slate-50' }}">
+                    <span>Selesai</span>
+                    <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono {{ $filter === 'selesai' ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700' }}">{{ $workshopData['selesai'] ?? 0 }}</span>
+                </a>
             </div>
 
             <!-- ========================================== -->
-            <!-- FILTER PILLS & SEARCH / DATE ROW           -->
-            <!-- ========================================== -->
-            <div class="bg-white rounded-2xl p-2.5 sm:p-3 border border-slate-200/90 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
-                
-                <!-- Filter Pills -->
-                <div class="flex items-center flex-wrap gap-1.5 text-xs font-semibold">
-                    <a href="{{ route('admin.antrean.index', ['tab' => 'semua']) }}" class="px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 {{ $filter === 'semua' ? 'bg-blue-50 text-blue-700 font-bold border border-blue-200/80 shadow-2xs' : 'text-slate-600 hover:bg-slate-50' }}">
-                        <span>Semua</span>
-                        <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono {{ $filter === 'semua' ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-700' }}">{{ $workshopData['total'] }}</span>
-                    </a>
-
-                    <a href="{{ route('admin.antrean.index', ['tab' => 'diterima']) }}" class="px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 {{ $filter === 'diterima' ? 'bg-blue-50 text-blue-700 font-bold border border-blue-200/80 shadow-2xs' : 'text-slate-600 hover:bg-slate-50' }}">
-                        <span>Diterima</span>
-                        <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono {{ $filter === 'diterima' ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-700' }}">{{ $workshopData['diterima'] }}</span>
-                    </a>
-
-                    <a href="{{ route('admin.antrean.index', ['tab' => 'proses']) }}" class="px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 {{ $filter === 'proses' ? 'bg-blue-50 text-blue-700 font-bold border border-blue-200/80 shadow-2xs' : 'text-slate-600 hover:bg-slate-50' }}">
-                        <span>Sedang Diproses</span>
-                        <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono {{ $filter === 'proses' ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-700' }}">{{ $workshopData['proses'] }}</span>
-                    </a>
-
-                    <a href="{{ route('admin.antrean.index', ['tab' => 'siap']) }}" class="px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 {{ $filter === 'siap' ? 'bg-blue-50 text-blue-700 font-bold border border-blue-200/80 shadow-2xs' : 'text-slate-600 hover:bg-slate-50' }}">
-                        <span>Siap Diambil / Selesai</span>
-                        <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono {{ $filter === 'siap' ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-700' }}">{{ $workshopData['siap'] }}</span>
-                    </a>
-                </div>
-
-                <!-- Right Search Filter & Date Badge -->
-                <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
-                    
-                    <!-- Search input -->
-                    <div class="relative flex-1 sm:w-60">
-                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                            </svg>
-                        </span>
-                        <input type="text" id="client-search" onkeyup="filterQueueClientSide()" placeholder="Cari nota / nama..." class="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 focus:bg-white border border-slate-200/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 text-slate-800 placeholder-slate-400">
-                    </div>
-
-                    <!-- Date Pill Badge -->
-                    <div class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-semibold text-slate-700 shadow-2xs">
-                        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                        </svg>
-                        <span>Hari Ini • {{ now()->format('d M Y') }}</span>
-                    </div>
-
-                </div>
-
-            </div>
-
-            <!-- ========================================== -->
-            <!-- TABLE VIEW: MANAJEMEN ANTREAN MESIN        -->
+            <!-- TABLE VIEW: MANAJEMEN ANTREAN ONLINE       -->
             <!-- ========================================== -->
             <div id="view-table-container" class="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
                 <div class="overflow-x-auto custom-scrollbar">
@@ -389,26 +239,28 @@
                                         <div class="font-extrabold text-slate-900 leading-tight">
                                             {{ $pesanan?->display_name ?? 'Pelanggan' }}
                                         </div>
-                                        <div class="mt-1">
-                                            @php $tipe = $pesanan?->display_tipe ?? 'Walk-in'; @endphp
-                                            @if(str_contains($tipe, 'Platinum') || str_contains($tipe, 'Gold') || str_contains($tipe, 'Member'))
-                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                                                    {{ $tipe }}
-                                                </span>
-                                            @elseif(str_contains($tipe, 'STAN') || str_contains($tipe, 'Mahasiswa'))
-                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                                                    {{ $tipe }}
-                                                </span>
-                                            @elseif(str_contains($tipe, 'Reguler'))
-                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                                                    {{ $tipe }}
-                                                </span>
-                                            @else
-                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">
-                                                    {{ $tipe }}
-                                                </span>
-                                            @endif
-                                        </div>
+                                        @php $tipe = trim($pesanan?->display_tipe ?? ''); @endphp
+                                        @if(!empty($tipe) && !str_contains($tipe, 'Order Web'))
+                                            <div class="mt-1">
+                                                @if(str_contains($tipe, 'Platinum') || str_contains($tipe, 'Gold') || str_contains($tipe, 'Member'))
+                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                                        {{ $tipe }}
+                                                    </span>
+                                                @elseif(str_contains($tipe, 'STAN') || str_contains($tipe, 'Mahasiswa'))
+                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                                        {{ $tipe }}
+                                                    </span>
+                                                @elseif(str_contains($tipe, 'Reguler'))
+                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                                        {{ $tipe }}
+                                                    </span>
+                                                @else
+                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">
+                                                        {{ $tipe }}
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        @endif
                                     </td>
 
                                     <!-- DOKUMEN & SPESIFIKASI -->
@@ -475,35 +327,43 @@
                                     <!-- AKSI -->
                                     <td class="py-3.5 px-4 text-center">
                                         @php
-                                            $alur = strtolower($q->status_alur ?? 'diterima');
+                                            $alur = strtolower($q->status_alur ?? 'menunggu');
+                                            $statusAntrean = strtolower($q->status_antrean ?? 'menunggu');
                                             $berkasDok = $pesanan?->detailPesanan?->firstWhere('berkas_id', '!=', null)?->berkasDokumen;
+                                            $isSelesai = in_array($alur, ['selesai']) || ($statusAntrean === 'selesai') || ($pesanan?->status_pesanan === 'selesai');
+                                            $isSiap = in_array($alur, ['siap diambil', 'siap', 'siap_pickup']) || ($statusAntrean === 'siap');
+                                            $isSedangDiproses = in_array($alur, ['sedang diproses', 'sedang cetak', 'sedang jilid', 'cetak', 'salin', 'finishing', 'proses']) || in_array($statusAntrean, ['cetak', 'salin', 'finishing']);
+                                            $isDiterima = in_array($alur, ['diterima']) || ($statusAntrean === 'diterima');
                                         @endphp
                                         <div class="flex items-center justify-center gap-1.5 flex-wrap">
-                                            @if($berkasDok)
-                                                <a href="{{ route('admin.berkas.download', $berkasDok->berkas_id) }}" title="Unduh Berkas Asli ({{ $berkasDok->nama_file }})" class="px-2.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold text-xs transition inline-flex items-center gap-1">
+                                            @if($berkasDok && !$isSiap && !$isSelesai)
+                                                <a href="{{ route('admin.berkas.download', $berkasDok->berkas_id) }}" title="Unduh Berkas Asli ({{ $berkasDok->nama_file }})" class="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 font-bold text-xs transition inline-flex items-center gap-1 shadow-2xs">
                                                     <span>⬇</span>
                                                     <span>Unduh</span>
                                                 </a>
                                             @endif
-                                            @if($alur === 'sedang cetak')
-                                                <button type="button" onclick="actionAntrean({{ $q->antrean_id }}, 'selesai')" class="px-3.5 py-1.5 rounded-xl bg-[#f59e0b] hover:bg-[#ea580c] text-white font-bold text-xs shadow-2xs transition">
-                                                    Proses Cetak
+
+                                            @if($isSelesai)
+                                                <span class="text-xs font-semibold text-slate-400">—</span>
+                                            @elseif($isSiap)
+                                                <button type="button" onclick="actionAntrean({{ $q->antrean_id }}, 'selesai')" title="Tandai pesanan Selesai / Diserahkan" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-2xs transition active:scale-95 flex items-center gap-1">
+                                                    <span>✓</span>
+                                                    <span>Selesai</span>
                                                 </button>
-                                            @elseif($alur === 'diterima')
-                                                <button type="button" onclick="actionAntrean({{ $q->antrean_id }}, 'proses_cetak')" class="px-3.5 py-1.5 rounded-xl bg-[#f59e0b] hover:bg-[#ea580c] text-white font-bold text-xs shadow-2xs transition">
-                                                    Proses Cetak
+                                            @elseif($isSedangDiproses)
+                                                <button type="button" onclick="actionAntrean({{ $q->antrean_id }}, 'siap')" title="Ubah status menjadi Siap Diambil" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow-2xs transition active:scale-95 flex items-center gap-1">
+                                                    <span>📦</span>
+                                                    <span>Siap Diambil</span>
                                                 </button>
-                                            @elseif($alur === 'sedang jilid')
-                                                <button type="button" onclick="actionAntrean({{ $q->antrean_id }}, 'selesai')" class="px-3.5 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs transition border border-blue-200">
-                                                    Selesai
-                                                </button>
-                                            @elseif($alur === 'siap diambil')
-                                                <button type="button" onclick="actionAntrean({{ $q->antrean_id }}, 'serahkan')" class="px-3.5 py-1.5 rounded-xl bg-[#78350f] hover:bg-[#5e290b] text-white font-bold text-xs shadow-2xs transition">
-                                                    Serahkan
+                                            @elseif($isDiterima)
+                                                <button type="button" onclick="actionAntrean({{ $q->antrean_id }}, 'proses')" title="Ubah status antrean menjadi Sedang Diproses" class="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs shadow-2xs transition active:scale-95 flex items-center gap-1">
+                                                    <span>⚙️</span>
+                                                    <span>Proses</span>
                                                 </button>
                                             @else
-                                                <button type="button" onclick="actionAntrean({{ $q->antrean_id }}, 'proses_cetak')" class="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">
-                                                    Detail
+                                                <button type="button" onclick="actionAntrean({{ $q->antrean_id }}, 'terima')" title="Terima pesanan antrean" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs shadow-2xs transition active:scale-95 flex items-center gap-1">
+                                                    <span>✓</span>
+                                                    <span>Terima</span>
                                                 </button>
                                             @endif
                                         </div>
@@ -519,9 +379,9 @@
                                                 </svg>
                                             </div>
                                             <div>
-                                                <h4 class="font-extrabold text-slate-800 text-base">Belum Ada Antrean Mesin Berjalan</h4>
+                                                <h4 class="font-extrabold text-slate-800 text-base">Belum Ada Antrean Online Berjalan</h4>
                                                 <p class="text-xs text-slate-400 mt-1 leading-relaxed">
-                                                    Sistem antrean mesin terintegrasi secara otomatis. Setiap pesanan baru dari pelanggan (Online via Website) akan langsung masuk ke antrean mesin ini secara real-time.
+                                                    Sistem antrean online terintegrasi secara otomatis. Setiap pesanan baru dari pelanggan (Online via Website) akan langsung masuk ke antrean online ini secara real-time.
                                                 </p>
                                             </div>
                                         </div>
@@ -535,7 +395,7 @@
                 <!-- Pagination & Counter Footer -->
                 <div class="p-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
                     <div>
-                        Menampilkan <strong class="text-slate-800 font-mono">{{ $antreanList->firstItem() ?? 0 }}-{{ $antreanList->lastItem() ?? 0 }}</strong> dari <strong class="text-slate-800 font-mono">{{ $workshopData['total'] }}</strong> antrean aktif
+                        Menampilkan <strong class="text-slate-800 font-mono">{{ $antreanList->firstItem() ?? 0 }}-{{ $antreanList->lastItem() ?? 0 }}</strong> dari <strong class="text-slate-800 font-mono">{{ $antreanList->total() }}</strong> antrean
                     </div>
 
                     <!-- Pagination Links -->
@@ -583,9 +443,14 @@
                                 </div>
                                 <h5 class="font-bold text-slate-800 leading-tight">{{ $q->pesanan?->display_name }}</h5>
                                 <p class="text-[11px] text-slate-500 truncate">{{ $q->pesanan?->display_judul }}</p>
-                                <button type="button" onclick="actionAntrean({{ $q->antrean_id }}, 'proses_cetak')" class="mt-2 w-full py-1.5 rounded-lg bg-[#f59e0b] hover:bg-[#ea580c] text-white text-[11px] font-bold transition">
-                                    Mulai Cetak →
-                                </button>
+                                <div class="grid grid-cols-2 gap-1.5 mt-2">
+                                    <button type="button" onclick="actionAntrean({{ $q->antrean_id }}, 'proses_cetak')" class="py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-bold transition">
+                                        Proses Cetak
+                                    </button>
+                                    <button type="button" onclick="actionAntrean({{ $q->antrean_id }}, 'selesai')" class="py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold transition">
+                                        Selesai
+                                    </button>
+                                </div>
                             </div>
                         @empty
                             <div class="text-center py-6 text-slate-400 text-xs italic">Tidak ada order menunggu</div>
@@ -743,7 +608,7 @@
 
         // Client Side Filter on Antrean Table
         function filterQueueClientSide() {
-            const query = (document.getElementById('client-search')?.value || document.getElementById('header-search-input')?.value || '').toLowerCase().trim();
+            const query = (document.getElementById('header-search-input')?.value || '').toLowerCase().trim();
             const rows = document.querySelectorAll('#antrean-table-body tr.antrean-row');
             let visible = 0;
 
@@ -780,13 +645,14 @@
                 if (data.status === 'success') {
                     showToast(data.message);
                     fetchAntreanLiveData();
+                    setTimeout(() => window.location.reload(), 500);
                 }
             } catch (err) {
                 console.error(err);
             }
         }
 
-        // Real-Time Poller for Antrean Mesin
+        // Real-Time Poller for Antrean Online
         async function fetchAntreanLiveData() {
             try {
                 const res = await fetch("{{ route('admin.antrean.live-data') }}", {
@@ -797,21 +663,17 @@
                 const data = await res.json();
                 const workshop = data.workshopData;
 
-                // Update Machine Cards
-                document.getElementById('konica-pct-text').textContent = `${workshop.machines.konica.pct}%`;
-                document.getElementById('konica-status-text').textContent = workshop.machines.konica.status;
-                document.getElementById('konica-bar').style.width = `${workshop.machines.konica.pct}%`;
-
-                document.getElementById('ricoh-pct-text').textContent = `${workshop.machines.ricoh.pct}%`;
-                document.getElementById('ricoh-status-text').textContent = workshop.machines.ricoh.status;
-                document.getElementById('ricoh-bar').style.width = `${workshop.machines.ricoh.pct}%`;
-
-                document.getElementById('canon-pct-text').textContent = `${workshop.machines.canon.pct}%`;
-                document.getElementById('canon-status-text').textContent = workshop.machines.canon.status;
-                document.getElementById('canon-bar').style.width = `${workshop.machines.canon.pct}%`;
 
                 // Update sidebar badge
-                document.getElementById('sidebar-queue-badge').textContent = workshop.total;
+                const badge = document.getElementById('sidebar-queue-badge');
+                if (badge) {
+                    if (workshop && workshop.total > 0) {
+                        badge.textContent = workshop.total;
+                        badge.classList.remove('hidden');
+                    } else {
+                        badge.classList.add('hidden');
+                    }
+                }
 
             } catch (err) {
                 console.error("Antrean live poll error:", err);
