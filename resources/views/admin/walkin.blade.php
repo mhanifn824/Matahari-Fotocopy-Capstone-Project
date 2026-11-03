@@ -478,6 +478,14 @@
                         </div>
                     </div>
 
+                    <!-- Toggle Kirim ke Antrean Pengerjaan -->
+                    <label for="kirim_workshop" class="flex items-start gap-2.5 p-2.5 rounded-2xl bg-slate-50 hover:bg-amber-50/60 border border-slate-200/80 cursor-pointer transition select-none">
+                        <input type="checkbox" name="kirim_workshop" id="kirim_workshop" value="1" class="mt-0.5 w-4 h-4 rounded text-amber-600 focus:ring-amber-500 border-slate-300">
+                        <span class="text-[11px] font-bold text-slate-700 leading-snug">
+                            Kirim ke Antrean Pengerjaan (Jika dokumen memerlukan waktu cetak/jilid)
+                        </span>
+                    </label>
+
                     <!-- Primary Checkout Button -->
                     <button 
                         type="button" 
@@ -1026,7 +1034,8 @@
                 total_harga: finalTotal,
                 metode_pembayaran: selectedPayment,
                 uang_diterima: selectedPayment === 'TUNAI' ? currentTender : finalTotal,
-                kembalian: selectedPayment === 'TUNAI' ? Math.max(0, currentTender - finalTotal) : 0
+                kembalian: selectedPayment === 'TUNAI' ? Math.max(0, currentTender - finalTotal) : 0,
+                kirim_workshop: document.getElementById('kirim_workshop')?.checked ? true : false
             };
 
             const submitBtn = document.getElementById('modalSubmitBtn');
@@ -1059,6 +1068,8 @@
                     
                     // Reset cart
                     cart = [];
+                    const kirimCheckbox = document.getElementById('kirim_workshop');
+                    if (kirimCheckbox) kirimCheckbox.checked = false;
                     renderCart();
                     
                     // Refresh data table

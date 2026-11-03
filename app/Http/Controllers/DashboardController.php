@@ -1017,7 +1017,37 @@ class DashboardController extends Controller
             'berkas' => 'nullable|file|max:20480', // 20MB max
         ]);
 
-        return DB::transaction(function () use ($validated, $user, $request) {
+        $produk = ProdukLayanan::findOrFail($validated['produk_id']);
+        $kuantitas = (int) $validated['kuantitas'];
+        $matchedStok = $this->findMatchingInventoryStock($produk, $validated['judul_dokumen'], $validated['spesifikasi']);
+
+        if ($matchedStok) {
+            if ($matchedStok->jumlah_stok <= 0) {
+                $msg = "Maaf, stok bahan baku/produk {$matchedStok->nama_bahan} sedang kosong (0). Pesanan tidak dapat diproses.";
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => $msg,
+                    ], 422);
+                }
+
+                return redirect()->back()->withInput()->with('error', $msg);
+            }
+
+            if ($kuantitas > $matchedStok->jumlah_stok) {
+                $msg = "Jumlah pesanan melebihi sisa stok yang tersedia (Tersisa: {$matchedStok->jumlah_stok}).";
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => $msg,
+                    ], 422);
+                }
+
+                return redirect()->back()->withInput()->with('error', $msg);
+            }
+        }
+
+        return DB::transaction(function () use ($validated, $user, $request, $produk, $kuantitas) {
             $pelanggan = $user->pelanggan;
             if (! $pelanggan) {
                 $pelanggan = Pelanggan::create([
@@ -1026,8 +1056,6 @@ class DashboardController extends Controller
                 ]);
             }
 
-            $produk = ProdukLayanan::findOrFail($validated['produk_id']);
-            $kuantitas = (int) $validated['kuantitas'];
             $jumlahHalaman = max(1, (int) ($validated['jumlah_halaman'] ?? 1));
 
             $berkasId = null;
@@ -1108,15 +1136,70 @@ class DashboardController extends Controller
             if ($request->expectsJson()) {
                 return response()->json([
                     'status' => 'success',
-                    'message' => 'Pesanan berhasil dikirim ke antrean mesin kasir.',
+                    'message' => 'Pesanan berhasil dikirim ke antrean online workshop gerai.',
                     'pesanan' => $pesanan,
                     'antrean' => $antrean,
                 ]);
             }
 
             return redirect()->to(route('customer.home').'#pesanan-saya')
-                ->with('success', 'Pesanan Anda berhasil dikirim ke antrean mesin workshop gerai!');
+                ->with('success', 'Pesanan Anda berhasil dikirim ke antrean online workshop gerai!');
         });
+    }
+
+    /**
+     * Find matching physical stock record from inventaris_stok based on product name,
+     * order title, or specification.
+     */
+    protected function findMatchingInventoryStock(ProdukLayanan $produk, string $judulDokumen, string $spesifikasi): ?InventarisStok
+    {
+        $allStok = InventarisStok::all();
+        if ($allStok->isEmpty()) {
+            return null;
+        }
+
+        $haystack = mb_strtolower($produk->nama_item.' '.$judulDokumen.' '.$spesifikasi);
+        $produkNamaLower = mb_strtolower(trim($produk->nama_item));
+
+        // 1. Direct substring match on full nama_bahan (longest match first)
+        $sortedStok = $allStok->sortByDesc(fn (InventarisStok $s) => mb_strlen($s->nama_bahan));
+        foreach ($sortedStok as $stok) {
+            $namaBahanLower = mb_strtolower(trim($stok->nama_bahan));
+            if ($namaBahanLower !== '' && str_contains($haystack, $namaBahanLower)) {
+                return $stok;
+            }
+            if (mb_strlen($produkNamaLower) >= 4 && str_contains($namaBahanLower, $produkNamaLower)) {
+                return $stok;
+            }
+        }
+
+        // 2. Paper/material keyword matching (e.g. A4 70g -> Kertas HVS A4 70gr / 70gsm)
+        if (str_contains($haystack, 'a4') && str_contains($haystack, '80')) {
+            $match = $allStok->first(fn (InventarisStok $s) => str_contains(mb_strtolower($s->nama_bahan), 'a4') && str_contains(mb_strtolower($s->nama_bahan), '80'));
+            if ($match) {
+                return $match;
+            }
+        }
+        if (str_contains($haystack, 'a4') && str_contains($haystack, '70')) {
+            $match = $allStok->first(fn (InventarisStok $s) => str_contains(mb_strtolower($s->nama_bahan), 'a4') && str_contains(mb_strtolower($s->nama_bahan), '70'));
+            if ($match) {
+                return $match;
+            }
+        }
+        if (str_contains($haystack, 'f4')) {
+            $match = $allStok->first(fn (InventarisStok $s) => str_contains(mb_strtolower($s->nama_bahan), 'f4'));
+            if ($match) {
+                return $match;
+            }
+        }
+        if (str_contains($haystack, 'a4')) {
+            $match = $allStok->first(fn (InventarisStok $s) => str_contains(mb_strtolower($s->nama_bahan), 'a4'));
+            if ($match) {
+                return $match;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -1650,6 +1733,8 @@ class DashboardController extends Controller
             $spesifikasiSummary = implode(' + ', $itemStrings);
             $judulUtama = $validated['items'][0]['nama_item'] ?? 'Penjualan Walk-in Kasir';
 
+            $kirimWorkshop = ! empty($validated['kirim_workshop']);
+
             $pesanan = Pesanan::create([
                 'pelanggan_id' => $validated['pelanggan_id'] ?? null,
                 'nama_pemesan' => $validated['nama_pemesan'],
@@ -1659,7 +1744,7 @@ class DashboardController extends Controller
                 'tenggat_waktu' => now()->addMinutes(15)->format('H:i').' WIB',
                 'jenis_pesanan' => 'walk-in',
                 'total_harga' => $validated['total_harga'],
-                'status_pesanan' => 'selesai',
+                'status_pesanan' => $kirimWorkshop ? 'proses' : 'selesai',
                 'metode_pembayaran' => strtoupper($validated['metode_pembayaran']),
                 'waktu_pesan' => now(),
             ]);
@@ -1680,8 +1765,24 @@ class DashboardController extends Controller
                 ]);
             }
 
-            // Transaksi Kasir Walk-in adalah transaksi kasir langsung (POS) dan tidak masuk ke antrean mesin workshop
+            // Jika kirim_workshop dicentang, masukkan ke antrean pengerjaan (antrean_mesin)
             $antrean = null;
+            if ($kirimWorkshop) {
+                $nextTiket = (AntreanMesin::whereDate('created_at', Carbon::today())->max('nomor_tiket') ?? 0) + 1;
+                $namaMesin = str_contains(strtolower($spesifikasiSummary), 'warna') ? 'Mesin Ricoh 2' : 'Mesin Konica 1';
+
+                $antrean = AntreanMesin::create([
+                    'pesanan_id' => $pesanan->pesanan_id,
+                    'nomor_tiket' => $nextTiket,
+                    'status_antrean' => 'menunggu',
+                    'estimasi_waktu' => 15,
+                    'nama_mesin' => $namaMesin,
+                    'nama_operator' => Auth::user()?->nama ?? 'Operator Kasir',
+                    'status_alur' => 'Menunggu',
+                    'status_pembayaran' => 'lunas',
+                    'keterangan_tenggat' => 'Est. 15 mnt',
+                ]);
+            }
 
             // Allocate loyalty points if walk-in transaction belongs to a registered member (KF-15)
             $this->allocateLoyaltyPointsForOrder($pesanan);

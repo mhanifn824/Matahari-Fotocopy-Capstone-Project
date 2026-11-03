@@ -648,4 +648,152 @@ class AdminDashboardTest extends TestCase
         $resSelesai->assertDontSee('actionAntrean('.$antrean->antrean_id, false);
         $resSelesai->assertDontSee('title="Unduh Berkas Asli (skripsi_final.pdf)"', false);
     }
+
+    public function test_customer_cannot_order_when_stock_is_zero(): void
+    {
+        InventarisStok::create([
+            'nama_bahan' => 'Pulpen Gel Faster C600',
+            'kategori' => 'Alat Tulis & Koreksi',
+            'jumlah_stok' => 0,
+            'batas_minimum' => 5,
+            'satuan' => 'Box',
+        ]);
+
+        $initialOrderCount = Pesanan::count();
+
+        $jsonResponse = $this->actingAs($this->customer)->postJson(route('customer.order.store'), [
+            'judul_dokumen' => 'Beli ATK: Pulpen Gel Faster C600',
+            'spesifikasi' => 'Produk ATK Retail • Satuan: Box',
+            'produk_id' => $this->product->produk_id,
+            'kuantitas' => 1,
+            'metode_pembayaran' => 'qris',
+        ]);
+
+        $jsonResponse->assertStatus(422);
+        $jsonResponse->assertJsonFragment([
+            'status' => 'error',
+            'message' => 'Maaf, stok bahan baku/produk Pulpen Gel Faster C600 sedang kosong (0). Pesanan tidak dapat diproses.',
+        ]);
+        $this->assertSame($initialOrderCount, Pesanan::count());
+
+        // Also verify web redirect with flash error
+        $webResponse = $this->actingAs($this->customer)
+            ->from(route('customer.home'))
+            ->post(route('customer.order.store'), [
+                'judul_dokumen' => 'Beli ATK: Pulpen Gel Faster C600',
+                'spesifikasi' => 'Produk ATK Retail • Satuan: Box',
+                'produk_id' => $this->product->produk_id,
+                'kuantitas' => 1,
+                'metode_pembayaran' => 'qris',
+            ]);
+
+        $webResponse->assertRedirect(route('customer.home'));
+        $webResponse->assertSessionHas('error', 'Maaf, stok bahan baku/produk Pulpen Gel Faster C600 sedang kosong (0). Pesanan tidak dapat diproses.');
+        $this->assertSame($initialOrderCount, Pesanan::count());
+    }
+
+    public function test_customer_cannot_order_when_quantity_exceeds_available_stock(): void
+    {
+        InventarisStok::create([
+            'nama_bahan' => 'Ordner Bantex Folio #1465',
+            'kategori' => 'Ordner & Filing Document',
+            'jumlah_stok' => 5,
+            'batas_minimum' => 3,
+            'satuan' => 'Pcs',
+        ]);
+
+        $initialOrderCount = Pesanan::count();
+
+        $response = $this->actingAs($this->customer)->postJson(route('customer.order.store'), [
+            'judul_dokumen' => 'Beli ATK: Ordner Bantex Folio #1465',
+            'spesifikasi' => 'Produk ATK Retail • Satuan: Pcs',
+            'produk_id' => $this->product->produk_id,
+            'kuantitas' => 8,
+            'metode_pembayaran' => 'qris',
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonFragment([
+            'status' => 'error',
+            'message' => 'Jumlah pesanan melebihi sisa stok yang tersedia (Tersisa: 5).',
+        ]);
+        $this->assertSame($initialOrderCount, Pesanan::count());
+    }
+
+    public function test_customer_can_order_when_stock_is_sufficient(): void
+    {
+        InventarisStok::create([
+            'nama_bahan' => 'Amplop Putih Panjang Paperline',
+            'kategori' => 'Kertas & Amplop',
+            'jumlah_stok' => 12,
+            'batas_minimum' => 3,
+            'satuan' => 'Box',
+        ]);
+
+        $response = $this->actingAs($this->customer)->postJson(route('customer.order.store'), [
+            'judul_dokumen' => 'Beli ATK: Amplop Putih Panjang Paperline',
+            'spesifikasi' => 'Produk ATK Retail • Satuan: Box',
+            'produk_id' => $this->product->produk_id,
+            'kuantitas' => 4,
+            'metode_pembayaran' => 'qris',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'status' => 'success',
+            'message' => 'Pesanan berhasil dikirim ke antrean online workshop gerai.',
+        ]);
+
+        $this->assertDatabaseHas('pesanan', [
+            'judul_dokumen' => 'Beli ATK: Amplop Putih Panjang Paperline',
+            'jenis_pesanan' => 'online',
+            'status_pesanan' => 'menunggu',
+        ]);
+    }
+
+    public function test_walkin_checkout_with_kirim_workshop_true_creates_antrean(): void
+    {
+        $payload = [
+            'nama_pemesan' => 'Dimas Anggara',
+            'tipe_pelanggan' => 'Walk-in Tamu',
+            'items' => [
+                [
+                    'nama_item' => 'Cetak & Jilid Skripsi Hardcover',
+                    'kuantitas' => 3,
+                    'harga_satuan' => 35000,
+                    'sub_total' => 105000,
+                    'rincian' => '3 Buku Hardcover Navy',
+                ],
+            ],
+            'subtotal' => 105000,
+            'diskon' => 0,
+            'total_harga' => 105000,
+            'metode_pembayaran' => 'TUNAI',
+            'uang_diterima' => 110000,
+            'kembalian' => 5000,
+            'kirim_workshop' => true,
+        ];
+
+        $response = $this->actingAs($this->admin)->postJson(route('admin.walkin.checkout'), $payload);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'status' => 'success',
+        ]);
+
+        $this->assertDatabaseHas('pesanan', [
+            'nama_pemesan' => 'Dimas Anggara',
+            'jenis_pesanan' => 'walk-in',
+            'status_pesanan' => 'proses',
+            'total_harga' => 105000,
+        ]);
+
+        $pesanan = Pesanan::where('nama_pemesan', 'Dimas Anggara')->firstOrFail();
+
+        $this->assertDatabaseHas('antrean_mesin', [
+            'pesanan_id' => $pesanan->pesanan_id,
+            'status_antrean' => 'menunggu',
+            'status_alur' => 'Menunggu',
+        ]);
+    }
 }

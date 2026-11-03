@@ -168,6 +168,20 @@
     </div>
     @endif
 
+    @if(session('error'))
+    <div id="flashErrorNotice" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 w-full">
+        <div class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2.5">
+                <svg class="w-5 h-5 text-rose-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                </svg>
+                <span>{{ session('error') }}</span>
+            </div>
+            <button type="button" onclick="document.getElementById('flashErrorNotice').remove()" class="text-rose-700 hover:text-rose-900 font-bold ml-4">✕</button>
+        </div>
+    </div>
+    @endif
+
     <!-- ======================================================== -->
     <!-- SECTION 1: HERO HEADER                                  -->
     <!-- ======================================================== -->
@@ -395,6 +409,66 @@
     </section>
 
     <!-- ======================================================== -->
+    <!-- INTERACTIVE CATALOG SEARCH BAR                           -->
+    <!-- ======================================================== -->
+    <section id="catalog-search-section" class="pt-6 pb-2 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-xs">
+            <div class="relative flex items-center">
+                <!-- Magnifying Glass Icon -->
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 103.5 10.5a7.5 7.5 0 0013.15 6.15z"/>
+                    </svg>
+                </div>
+
+                <!-- Search Input -->
+                <input
+                    type="text"
+                    id="catalogSearchInput"
+                    oninput="debouncedCatalogSearch(this.value)"
+                    placeholder="Cari layanan cetak, jilid, kertas, pulpen, ordner, atau perlengkapan ATK..."
+                    class="w-full pl-12 pr-12 py-3.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white focus:bg-white text-xs sm:text-sm font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition"
+                >
+
+                <!-- Clear Button (✕) -->
+                <button
+                    type="button"
+                    id="clearSearchBtn"
+                    onclick="resetCatalogSearch()"
+                    title="Hapus Pencarian"
+                    class="hidden absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-rose-600 font-bold text-sm transition"
+                >
+                    ✕
+                </button>
+            </div>
+        </div>
+
+        <!-- Empty State Box when no items match -->
+        <div id="searchEmptyState" class="hidden mt-6 p-8 rounded-3xl bg-white border border-slate-200/90 shadow-xs text-center space-y-3">
+            <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mx-auto">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 103.5 10.5a7.5 7.5 0 0013.15 6.15z"/>
+                </svg>
+            </div>
+            <h3 id="searchEmptyText" class="text-sm sm:text-base font-extrabold text-slate-800">
+                Produk atau layanan tidak ditemukan. Silakan periksa ejaan atau hubungi kasir.
+            </h3>
+            <p class="text-xs text-slate-500 max-w-md mx-auto">
+                Coba gunakan kata kunci yang lebih umum seperti "A4", "Spanduk", "Stiker", "Pulpen", atau "Ordner".
+            </p>
+            <div class="pt-1">
+                <button
+                    type="button"
+                    onclick="resetCatalogSearch()"
+                    class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs inline-flex items-center gap-1.5"
+                >
+                    <span>Reset Pencarian</span>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ======================================================== -->
     <!-- SECTION 4: KATALOG DIGITAL PRINT & JASA                  -->
     <!-- ======================================================== -->
     <section id="katalog-print" class="py-14 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
@@ -408,10 +482,10 @@
             </p>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5" id="printGridContainer">
             
             <!-- Item 1: Kartu Nama Exclusive -->
-            <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-lg hover:border-blue-300 transition duration-200 flex flex-col justify-between group">
+            <div class="print-item-card bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-lg hover:border-blue-300 transition duration-200 flex flex-col justify-between group">
                 <div>
                     <div class="relative h-44 overflow-hidden bg-slate-100">
                         <img src="{{ asset('images/products/kartu_nama.jpg') }}" alt="Kartu Nama Exclusive" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
@@ -439,7 +513,7 @@
             </div>
 
             <!-- Item 2: Spanduk Flexi Korea 440g -->
-            <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-lg hover:border-blue-300 transition duration-200 flex flex-col justify-between group">
+            <div class="print-item-card bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-lg hover:border-blue-300 transition duration-200 flex flex-col justify-between group">
                 <div>
                     <div class="relative h-44 overflow-hidden bg-slate-100">
                         <img src="{{ asset('images/products/spanduk.jpg') }}" alt="Spanduk Flexi Korea 440g" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
@@ -467,7 +541,7 @@
             </div>
 
             <!-- Item 3: Stiker Vinyl & Transparan -->
-            <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-lg hover:border-blue-300 transition duration-200 flex flex-col justify-between group">
+            <div class="print-item-card bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-lg hover:border-blue-300 transition duration-200 flex flex-col justify-between group">
                 <div>
                     <div class="relative h-44 overflow-hidden bg-slate-100">
                         <img src="{{ asset('images/products/stiker.jpg') }}" alt="Stiker Vinyl & Transparan" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
@@ -495,7 +569,7 @@
             </div>
 
             <!-- Item 4: Buku Agenda & Kalender Meja -->
-            <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-lg hover:border-blue-300 transition duration-200 flex flex-col justify-between group">
+            <div class="print-item-card bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-lg hover:border-blue-300 transition duration-200 flex flex-col justify-between group">
                 <div>
                     <div class="relative h-44 overflow-hidden bg-slate-100">
                         <img src="{{ asset('images/products/agenda_kalender.svg') }}" alt="Buku Agenda & Kalender Meja" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
@@ -582,8 +656,13 @@
                     <div class="atk-item-card bg-white rounded-2xl border border-slate-200/90 p-3 shadow-2xs hover:shadow-md hover:border-blue-300 transition duration-150 flex flex-col justify-between {{ $idx >= 6 ? 'hidden extra-atk-item' : '' }}" data-category="{{ $filterTag }}">
                         <div>
                             <!-- Visual Stock Image / SVG -->
-                            <div class="w-full h-24 rounded-xl bg-slate-50 flex items-center justify-center p-2 mb-2.5 overflow-hidden border border-slate-100">
-                                <img src="{{ $stok->gambar_url }}" alt="{{ $stok->nama_bahan }}" class="w-full h-full object-contain" loading="lazy">
+                            <div class="relative w-full h-24 rounded-xl bg-slate-50 flex items-center justify-center p-2 mb-2.5 overflow-hidden border border-slate-100">
+                                <img src="{{ $stok->gambar_url }}" alt="{{ $stok->nama_bahan }}" class="w-full h-full object-contain {{ $stok->jumlah_stok <= 0 ? 'opacity-50 grayscale' : '' }}" loading="lazy">
+                                @if($stok->jumlah_stok <= 0)
+                                    <span class="absolute top-1.5 right-1.5 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-rose-600 text-white shadow-xs">
+                                        Stok Habis
+                                    </span>
+                                @endif
                             </div>
                             
                             <!-- Category Badge -->
@@ -611,9 +690,15 @@
                                 </span>
                             </div>
 
-                            <button type="button" onclick="orderAtkItem('{{ addslashes($stok->nama_bahan) }}', {{ $stok->estimasi_harga }}, '{{ $stok->satuan }}')" class="mt-2 w-full py-1.5 bg-slate-100 hover:bg-blue-600 hover:text-white text-slate-700 rounded-lg text-[11px] font-bold transition flex items-center justify-center gap-1">
-                                <span>+ Pesan</span>
-                            </button>
+                            @if($stok->jumlah_stok <= 0)
+                                <button type="button" disabled class="mt-2 w-full py-1.5 bg-slate-200 text-slate-400 cursor-not-allowed pointer-events-none rounded-lg text-[11px] font-bold transition flex items-center justify-center gap-1">
+                                    <span>Stok Habis</span>
+                                </button>
+                            @else
+                                <button type="button" onclick="orderAtkItem('{{ addslashes($stok->nama_bahan) }}', {{ $stok->estimasi_harga }}, '{{ $stok->satuan }}', {{ $stok->jumlah_stok }})" class="mt-2 w-full py-1.5 bg-slate-100 hover:bg-blue-600 hover:text-white text-slate-700 rounded-lg text-[11px] font-bold transition flex items-center justify-center gap-1">
+                                    <span>+ Pesan</span>
+                                </button>
+                            @endif
                         </div>
                     </div>
                 @endforeach
@@ -1072,11 +1157,11 @@
                         <!-- Kolom 2: Rangkap -->
                         <div>
                             <label class="block font-bold text-slate-700 text-xs mb-1.5 h-4 leading-4 truncate">
-                                Jml Rangkap
+                                Jml Rangkap <span id="cust-stock-badge" class="hidden text-[10px] font-extrabold text-emerald-600"></span>
                             </label>
                             <div class="flex items-center border border-slate-200 rounded-xl overflow-hidden bg-white shadow-2xs focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500">
                                 <button type="button" onclick="adjustCustQty(-1)" class="w-7 h-10 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50/50 transition font-black text-sm select-none">−</button>
-                                <input type="number" name="kuantitas" id="cust-qty" value="1" min="1" oninput="calculateCustPrice()" class="w-full h-10 text-center font-bold font-mono text-xs text-slate-800 focus:outline-none bg-transparent">
+                                <input type="number" name="kuantitas" id="cust-qty-input" value="1" min="1" oninput="calculateCustPrice()" class="w-full h-10 text-center font-bold font-mono text-xs text-slate-800 focus:outline-none bg-transparent">
                                 <button type="button" onclick="adjustCustQty(1)" class="w-7 h-10 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50/50 transition font-black text-sm select-none">+</button>
                             </div>
                         </div>
@@ -1091,6 +1176,7 @@
                             </div>
                         </div>
                     </div>
+                    <p id="cust-qty-error" class="hidden text-[11px] font-bold text-rose-600">⚠️ Jumlah pesanan melebihi stok yang tersedia!</p>
 
                     <!-- Row 4: Rincian Hitungan Bersih, Terstruktur & Rapih -->
                     <div id="cust-price-formula-box" class="p-3 rounded-2xl bg-blue-50/70 border border-blue-200/80 text-xs space-y-2">
@@ -1157,7 +1243,7 @@
                         <button type="button" onclick="closeCustomerOrderModal()" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-white hover:border-slate-300 transition text-xs">
                             Batal
                         </button>
-                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold transition shadow-md shadow-blue-500/25 flex items-center gap-2 text-xs hover:scale-[1.02] active:scale-[0.98]">
+                        <button type="submit" id="cust-submit-btn" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold transition shadow-md shadow-blue-500/25 flex items-center gap-2 text-xs hover:scale-[1.02] active:scale-[0.98]">
                             <span>Kirim Pesanan Sekarang</span>
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                         </button>
@@ -1214,6 +1300,11 @@
         }
 
         let detectedPdfPages = null;
+        let currentModalMaxStock = null;
+
+        function getCustQtyInput() {
+            return document.getElementById('cust-qty-input') || document.getElementById('cust-qty');
+        }
 
         function adjustCustPages(delta) {
             const input = document.getElementById('cust-pages');
@@ -1225,12 +1316,34 @@
         }
 
         function adjustCustQty(delta) {
-            const input = document.getElementById('cust-qty');
+            const input = getCustQtyInput();
             if (!input) return;
             const current = parseInt(input.value || 1);
             const next = Math.max(1, current + delta);
             input.value = next;
             calculateCustPrice();
+        }
+
+        function validateCustQtyAgainstStock() {
+            const qtyInput = getCustQtyInput();
+            const errorEl = document.getElementById('cust-qty-error');
+            const submitBtn = document.getElementById('cust-submit-btn');
+            if (!qtyInput) return;
+
+            const qty = parseInt(qtyInput.value || 1);
+            if (currentModalMaxStock !== null && qty > currentModalMaxStock) {
+                if (errorEl) errorEl.classList.remove('hidden');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.classList.add('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+                }
+            } else {
+                if (errorEl) errorEl.classList.add('hidden');
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+                }
+            }
         }
 
         function removeCustSelectedFile() {
@@ -1298,7 +1411,7 @@
             if (!select) return;
             const price = parseFloat(select.options[select.selectedIndex]?.getAttribute('data-price') || 300);
             const pagesInput = document.getElementById('cust-pages');
-            const qtyInput = document.getElementById('cust-qty');
+            const qtyInput = getCustQtyInput();
 
             const pages = Math.max(1, parseInt(pagesInput?.value || detectedPdfPages || 1));
             const qty = Math.max(1, parseInt(qtyInput?.value || 1));
@@ -1326,15 +1439,27 @@
             if (breakdownPrice) breakdownPrice.textContent = `Rp ${formattedPrice}`;
             if (breakdownQty) breakdownQty.textContent = `${qty} ${qty > 1 ? 'Rangkap' : 'Buku'}`;
             if (totalLembarBadge) totalLembarBadge.textContent = `Total ${pages * qty} Lembar Cetak`;
+
+            validateCustQtyAgainstStock();
         }
 
         function resetCustOrderModalState() {
             removeCustSelectedFile();
             const pagesInput = document.getElementById('cust-pages');
             if (pagesInput) pagesInput.value = 1;
-            const qtyInput = document.getElementById('cust-qty');
-            if (qtyInput) qtyInput.value = 1;
+            const qtyInput = getCustQtyInput();
+            if (qtyInput) {
+                qtyInput.value = 1;
+                qtyInput.removeAttribute('max');
+            }
+            currentModalMaxStock = null;
+            const stockBadge = document.getElementById('cust-stock-badge');
+            if (stockBadge) {
+                stockBadge.textContent = '';
+                stockBadge.classList.add('hidden');
+            }
             detectedPdfPages = null;
+            validateCustQtyAgainstStock();
         }
 
         function openOrderForProduct(namaItem, hargaDasar) {
@@ -1362,12 +1487,115 @@
             openCustomerOrderModal();
         }
 
-        function orderAtkItem(namaItem, harga, satuan) {
+        function orderAtkItem(namaItem, harga, satuan, maxStok = null) {
+            if (maxStok !== null && Number(maxStok) <= 0) {
+                alert('Maaf, stok produk ini sedang kosong di toko.');
+                return;
+            }
             resetCustOrderModalState();
+            if (maxStok !== null && Number(maxStok) > 0) {
+                currentModalMaxStock = Number(maxStok);
+                const qtyInput = getCustQtyInput();
+                if (qtyInput) {
+                    qtyInput.setAttribute('max', String(currentModalMaxStock));
+                }
+                const stockBadge = document.getElementById('cust-stock-badge');
+                if (stockBadge) {
+                    stockBadge.textContent = `(Stok: ${currentModalMaxStock} ${satuan})`;
+                    stockBadge.classList.remove('hidden');
+                }
+            }
             document.getElementById('orderModalTitle').textContent = 'Beli ATK: ' + namaItem;
             document.getElementById('orderModalJudul').value = 'Beli ATK: ' + namaItem;
             document.getElementById('orderModalSpesifikasi').value = 'Produk ATK Retail • Satuan: ' + satuan;
             openCustomerOrderModal();
+        }
+
+        // ========================================================
+        // LIVE SEARCH FOR JASA CETAK & ATK CATALOG
+        // ========================================================
+        let catalogSearchTimeout = null;
+
+        function debouncedCatalogSearch(rawQuery) {
+            if (catalogSearchTimeout) clearTimeout(catalogSearchTimeout);
+            catalogSearchTimeout = setTimeout(() => {
+                performCatalogSearch(rawQuery);
+            }, 120);
+        }
+
+        function performCatalogSearch(rawQuery) {
+            const query = (rawQuery || '').trim().toLowerCase();
+            const clearBtn = document.getElementById('clearSearchBtn');
+            const emptyState = document.getElementById('searchEmptyState');
+            const emptyText = document.getElementById('searchEmptyText');
+
+            if (clearBtn) {
+                if (query.length > 0) {
+                    clearBtn.classList.remove('hidden');
+                } else {
+                    clearBtn.classList.add('hidden');
+                }
+            }
+
+            const printCards = document.querySelectorAll('#katalog-print .print-item-card');
+            const atkCards = document.querySelectorAll('#katalog-atk .atk-item-card');
+
+            if (query.length === 0) {
+                printCards.forEach(card => card.classList.remove('hidden'));
+                atkCards.forEach((card, idx) => {
+                    if (!isAllAtkExpanded && idx >= 6) {
+                        card.classList.add('hidden');
+                    } else {
+                        card.classList.remove('hidden');
+                    }
+                });
+                if (emptyState) emptyState.classList.add('hidden');
+                return;
+            }
+
+            // Expand all ATK items automatically when searching so nothing is hidden behind toggle
+            if (!isAllAtkExpanded) {
+                toggleAllAtkItems();
+            }
+
+            let matchCount = 0;
+
+            printCards.forEach(card => {
+                const text = (card.textContent || '').toLowerCase();
+                if (text.includes(query)) {
+                    card.classList.remove('hidden');
+                    matchCount++;
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+
+            atkCards.forEach(card => {
+                const text = (card.textContent || '').toLowerCase();
+                if (text.includes(query)) {
+                    card.classList.remove('hidden');
+                    matchCount++;
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+
+            if (matchCount === 0) {
+                if (emptyText) {
+                    emptyText.textContent = `Produk atau layanan '${rawQuery.trim()}' tidak ditemukan. Silakan periksa ejaan atau hubungi kasir.`;
+                }
+                if (emptyState) emptyState.classList.remove('hidden');
+            } else {
+                if (emptyState) emptyState.classList.add('hidden');
+            }
+        }
+
+        function resetCatalogSearch() {
+            const input = document.getElementById('catalogSearchInput');
+            if (input) {
+                input.value = '';
+            }
+            performCatalogSearch('');
         }
 
         function filterAtkByCategory(category) {
