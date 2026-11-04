@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Manajemen Antrean Online - Matahari Fotocopy</title>
+    <title>Pembelian Online - Matahari Fotocopy</title>
     
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
@@ -125,19 +125,24 @@
             <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
                 
                 <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider font-mono bg-amber-100 text-amber-800 border border-amber-200">
+                            LOKET DIGITAL GERAI
+                        </span>
+                    </div>
                     <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                        Manajemen Antrean Online
+                        Pembelian Online
                     </h1>
                     <p class="text-xs text-slate-500 mt-0.5 leading-relaxed">
-                        Pantau dan kelola antrean cetak online gerai Bintaro Sektor 7
+                        Manajemen Antrean Online (Printing Workshop) &amp; Pembelian Retail ATK Gerai
                     </p>
                 </div>
 
                 <!-- Right View Mode & Print Buttons -->
                 <div class="flex items-center gap-2 sm:gap-2.5 flex-nowrap shrink-0">
                     
-                    <!-- View Mode Toggle Capsule -->
-                    <div class="bg-slate-100 p-1 rounded-xl flex items-center gap-1 border border-slate-200/80 text-xs shrink-0">
+                    <!-- View Mode Toggle Capsule (Khusus Printing) -->
+                    <div id="printing-view-toggles" class="bg-slate-100 p-1 rounded-xl flex items-center gap-1 border border-slate-200/80 text-xs shrink-0">
                         <button type="button" id="btn-view-table" onclick="setViewMode('table')" class="px-3.5 py-1.5 rounded-lg bg-white shadow-2xs font-bold text-slate-800 flex items-center gap-1.5 transition whitespace-nowrap">
                             <svg class="w-3.5 h-3.5 text-slate-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -148,7 +153,7 @@
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>
                             </svg>
-                            <span>Papan Kanban Alur Kerja</span>
+                            <span>Papan Kanban</span>
                         </button>
                     </div>
 
@@ -157,12 +162,42 @@
                         <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
                         </svg>
-                        <span>Cetak Daftar Antrean</span>
+                        <span>Cetak</span>
                     </button>
 
                 </div>
 
             </div>
+
+            <!-- ========================================== -->
+            <!-- DUA TABEL PEMBELIAN ONLINE: PRINT VS ATK  -->
+            <!-- ========================================== -->
+            <div class="flex items-center gap-2 border-b border-slate-200 pb-2.5 overflow-x-auto scrollbar-none">
+                <button type="button" id="tab-btn-printing" onclick="switchOnlineTab('printing')" class="px-5 py-2.5 rounded-2xl font-black text-xs transition flex items-center gap-2.5 bg-[#f59e0b] text-white shadow-sm active:scale-95 shrink-0">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                    </svg>
+                    <span>1. Pembelian Khusus Printing (Antrean Workshop)</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-white/25 text-white">
+                        {{ $workshopData['total'] ?? 0 }}
+                    </span>
+                </button>
+
+                <button type="button" id="tab-btn-atk" onclick="switchOnlineTab('atk')" class="px-5 py-2.5 rounded-2xl font-bold text-xs transition flex items-center gap-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-2xs active:scale-95 shrink-0">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                    </svg>
+                    <span>2. Pembelian Khusus ATK (Alat Tulis Kantor)</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-100 text-blue-700">
+                        {{ $activeAtkCount ?? 0 }}
+                    </span>
+                </button>
+            </div>
+
+            <!-- ======================================================== -->
+            <!-- SECTION 1: TABEL PEMBELIAN KHUSUS PRINTING (EXISTING)   -->
+            <!-- ======================================================== -->
+            <div id="section-printing" class="space-y-6">
 
 
             <!-- ========================================== -->
@@ -534,6 +569,145 @@
                 </div>
 
             </div>
+            <!-- End of #section-printing -->
+            </div>
+
+            <!-- ======================================================== -->
+            <!-- SECTION 2: TABEL PEMBELIAN KHUSUS ATK (RETAIL)          -->
+            <!-- ======================================================== -->
+            <div id="section-atk" class="space-y-4 hidden">
+                <div class="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
+                    
+                    <!-- Table Header Card -->
+                    <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-blue-50/60 to-indigo-50/40">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
+                                🛍️
+                            </div>
+                            <div>
+                                <h3 class="font-black text-slate-900 text-sm sm:text-base tracking-tight">Tabel Pembelian Retail ATK Online</h3>
+                                <p class="text-xs text-slate-500">Daftar pesanan perlengkapan alat tulis kantor dari keranjang online pelanggan. Siap disiapkan dan diserahkan di loket kasir.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <span class="px-3 py-1.5 rounded-xl bg-white border border-blue-200 text-blue-700 text-xs font-bold font-mono shadow-2xs">
+                                Total: {{ $atkOrdersList->count() }} Pesanan
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- ATK Table -->
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left text-xs" id="atk-table">
+                            <thead class="bg-[#f0f6ff]/70 text-slate-500 font-bold uppercase text-[10px] tracking-wider border-b border-slate-100">
+                                <tr>
+                                    <th class="py-3.5 px-4">TIKET &amp; NOTA</th>
+                                    <th class="py-3.5 px-4">PELANGGAN</th>
+                                    <th class="py-3.5 px-4">DAFTAR ITEM ATK &amp; CATATAN</th>
+                                    <th class="py-3.5 px-4">TOTAL BELANJA</th>
+                                    <th class="py-3.5 px-4">PEMBAYARAN</th>
+                                    <th class="py-3.5 px-4">STATUS PENGAMBILAN</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100" id="atk-table-body">
+                                @forelse($atkOrdersList as $atk)
+                                    @php
+                                        $pesanan = $atk->pesanan;
+                                        $isSelesai = in_array(strtolower($atk->status_alur ?? $atk->status_antrean ?? ''), ['selesai'], true) || ($pesanan?->status_pesanan === 'selesai');
+                                    @endphp
+                                    <tr class="hover:bg-slate-50/70 transition atk-row" data-search="{{ strtolower($atk->kode_antrean . ' ' . ($pesanan?->nomor_nota ?? '') . ' ' . ($pesanan?->display_name ?? '') . ' ' . ($pesanan?->spesifikasi ?? '')) }}">
+                                        
+                                        <!-- TIKET & NOTA -->
+                                        <td class="py-3.5 px-4 whitespace-nowrap">
+                                            <div class="flex items-center gap-2">
+                                                <span class="inline-flex items-center px-2.5 py-1 rounded-lg font-bold font-mono text-xs bg-blue-50 text-blue-700 border border-blue-200 shadow-2xs">
+                                                    {{ $atk->kode_antrean }}
+                                                </span>
+                                                <span class="font-mono font-extrabold text-[#b45309]">
+                                                    {{ $pesanan?->nomor_nota ?? '#MF-'.str_pad((string)$atk->pesanan_id, 3, '0', STR_PAD_LEFT) }}
+                                                </span>
+                                            </div>
+                                            <div class="text-[10px] text-slate-400 font-mono mt-1">
+                                                {{ ($pesanan?->waktu_pesan ?? $atk->created_at)->translatedFormat('d M • H:i') }} WIB
+                                            </div>
+                                        </td>
+
+                                        <!-- PELANGGAN -->
+                                        <td class="py-3.5 px-4">
+                                            <div class="font-extrabold text-slate-900 leading-tight">
+                                                {{ $pesanan?->display_name ?? 'Pelanggan Toko' }}
+                                            </div>
+                                            <div class="text-[10px] text-slate-400 font-medium mt-0.5">
+                                                {{ $pesanan?->display_tipe ?? 'Member Pelanggan' }}
+                                            </div>
+                                        </td>
+
+                                        <!-- DAFTAR ITEM ATK & CATATAN -->
+                                        <td class="py-3.5 px-4 max-w-sm">
+                                            <div class="font-bold text-slate-800 leading-snug">
+                                                {{ $pesanan?->spesifikasi ?? $pesanan?->display_judul }}
+                                            </div>
+                                            <div class="text-[10px] text-blue-600 font-semibold mt-1 flex items-center gap-1">
+                                                <span>🏪 Loket Kasir &amp; Rak ATK</span>
+                                            </div>
+                                        </td>
+
+                                        <!-- TOTAL BELANJA -->
+                                        <td class="py-3.5 px-4 whitespace-nowrap">
+                                            <span class="font-mono font-black text-blue-600 text-xs block">
+                                                Rp {{ number_format($pesanan?->total_harga ?? 0, 0, ',', '.') }}
+                                            </span>
+                                            <span class="text-[10px] text-slate-400 font-medium">
+                                                {{ $pesanan?->volume_halaman ?? 1 }} jenis barang
+                                            </span>
+                                        </td>
+
+                                        <!-- PEMBAYARAN -->
+                                        <td class="py-3.5 px-4 whitespace-nowrap">
+                                            @if(($atk->status_pembayaran ?? 'lunas') === 'belum_lunas' || strtolower($pesanan?->metode_pembayaran ?? '') === 'tunai')
+                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                                    Bayar di Kasir (Tunai)
+                                                </span>
+                                            @else
+                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                    ✓ Lunas ({{ strtoupper($pesanan?->metode_pembayaran ?? 'QRIS') }})
+                                                </span>
+                                            @endif
+                                        </td>
+
+                                        <!-- STATUS PENGAMBILAN -->
+                                        <td class="py-3.5 px-4 whitespace-nowrap">
+                                            @if($isSelesai)
+                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                                                    <span>Sudah Diserahkan</span>
+                                                </span>
+                                            @else
+                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-indigo-600 animate-pulse"></span>
+                                                    <span>Siap Diambil di Loket</span>
+                                                </span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr id="empty-state-atk">
+                                        <td colspan="6" class="py-12 text-center text-slate-400">
+                                            <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center text-2xl mb-2">
+                                                🛍️
+                                            </div>
+                                            <p class="font-bold text-slate-700 text-sm">Belum Ada Pembelian ATK Online</p>
+                                            <p class="text-xs text-slate-400 mt-0.5">Pesanan ATK yang dibeli pelanggan melalui keranjang online akan muncul di tabel ini.</p>
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
 
         </main>
 
@@ -606,25 +780,74 @@
             }
         }
 
-        // Client Side Filter on Antrean Table
+        // Online Purchase Tab Switcher (Printing vs ATK)
+        function switchOnlineTab(tab) {
+            const btnPrint = document.getElementById('tab-btn-printing');
+            const btnAtk = document.getElementById('tab-btn-atk');
+            const secPrint = document.getElementById('section-printing');
+            const secAtk = document.getElementById('section-atk');
+            const viewToggles = document.getElementById('printing-view-toggles');
+
+            if (tab === 'atk') {
+                if (btnPrint) btnPrint.className = "px-5 py-2.5 rounded-2xl font-bold text-xs transition flex items-center gap-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-2xs active:scale-95 shrink-0";
+                if (btnAtk) btnAtk.className = "px-5 py-2.5 rounded-2xl font-black text-xs transition flex items-center gap-2.5 bg-[#f59e0b] text-white shadow-sm active:scale-95 shrink-0";
+                if (secPrint) secPrint.classList.add('hidden');
+                if (secAtk) secAtk.classList.remove('hidden');
+                if (viewToggles) viewToggles.classList.add('hidden');
+            } else {
+                if (btnPrint) btnPrint.className = "px-5 py-2.5 rounded-2xl font-black text-xs transition flex items-center gap-2.5 bg-[#f59e0b] text-white shadow-sm active:scale-95 shrink-0";
+                if (btnAtk) btnAtk.className = "px-5 py-2.5 rounded-2xl font-bold text-xs transition flex items-center gap-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-2xs active:scale-95 shrink-0";
+                if (secPrint) secPrint.classList.remove('hidden');
+                if (secAtk) secAtk.classList.add('hidden');
+                if (viewToggles) viewToggles.classList.remove('hidden');
+            }
+        }
+
+        // Check URL parameter on load
+        window.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const sectionParam = urlParams.get('section') || window.location.hash.replace('#', '');
+            if (sectionParam === 'atk') {
+                switchOnlineTab('atk');
+            }
+        });
+
+        // Client Side Filter on Both Antrean & ATK Tables
         function filterQueueClientSide() {
             const query = (document.getElementById('header-search-input')?.value || '').toLowerCase().trim();
-            const rows = document.querySelectorAll('#antrean-table-body tr.antrean-row');
-            let visible = 0;
-
-            rows.forEach(r => {
+            
+            // Filter Printing table
+            const printRows = document.querySelectorAll('#antrean-table-body tr.antrean-row');
+            let printVisible = 0;
+            printRows.forEach(r => {
                 const text = r.getAttribute('data-search') || '';
                 if (text.includes(query)) {
                     r.style.display = '';
-                    visible++;
+                    printVisible++;
                 } else {
                     r.style.display = 'none';
                 }
             });
+            const emptyPrintRow = document.getElementById('empty-state-antrean');
+            if (emptyPrintRow && printRows.length > 0) {
+                emptyPrintRow.style.display = (printVisible === 0 && query !== '') ? '' : 'none';
+            }
 
-            const emptyRow = document.getElementById('empty-state-antrean');
-            if (emptyRow && rows.length > 0) {
-                emptyRow.style.display = (visible === 0 && query !== '') ? '' : 'none';
+            // Filter ATK table
+            const atkRows = document.querySelectorAll('#atk-table-body tr.atk-row');
+            let atkVisible = 0;
+            atkRows.forEach(r => {
+                const text = r.getAttribute('data-search') || '';
+                if (text.includes(query)) {
+                    r.style.display = '';
+                    atkVisible++;
+                } else {
+                    r.style.display = 'none';
+                }
+            });
+            const emptyAtkRow = document.getElementById('empty-state-atk');
+            if (emptyAtkRow && atkRows.length > 0) {
+                emptyAtkRow.style.display = (atkVisible === 0 && query !== '') ? '' : 'none';
             }
         }
 

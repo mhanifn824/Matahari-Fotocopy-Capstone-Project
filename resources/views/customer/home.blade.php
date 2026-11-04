@@ -691,13 +691,19 @@
                             </div>
 
                             @if($stok->jumlah_stok <= 0)
-                                <button type="button" disabled class="mt-2 w-full py-1.5 bg-slate-200 text-slate-400 cursor-not-allowed pointer-events-none rounded-lg text-[11px] font-bold transition flex items-center justify-center gap-1">
+                                <button type="button" disabled class="mt-2 w-full py-2 bg-slate-100 text-slate-400 cursor-not-allowed pointer-events-none rounded-xl text-[11px] font-bold transition flex items-center justify-center gap-1 border border-slate-200">
                                     <span>Stok Habis</span>
                                 </button>
                             @else
-                                <button type="button" onclick="orderAtkItem('{{ addslashes($stok->nama_bahan) }}', {{ $stok->estimasi_harga }}, '{{ $stok->satuan }}', {{ $stok->jumlah_stok }})" class="mt-2 w-full py-1.5 bg-slate-100 hover:bg-blue-600 hover:text-white text-slate-700 rounded-lg text-[11px] font-bold transition flex items-center justify-center gap-1">
-                                    <span>+ Pesan</span>
-                                </button>
+                                <div class="mt-2 flex items-center gap-1.5">
+                                    <button type="button" onclick="addToCart({{ $stok->stok_id }}, '{{ addslashes($stok->nama_bahan) }}', {{ $stok->estimasi_harga }}, '{{ $stok->satuan }}', {{ $stok->jumlah_stok }}, '{{ $stok->gambar_url }}')" class="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[11px] font-black transition flex items-center justify-center gap-1 shadow-2xs active:scale-95" title="Tambah ke Keranjang Belanja">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                                        <span>Keranjang</span>
+                                    </button>
+                                    <button type="button" onclick="buyAtkNow({{ $stok->stok_id }}, '{{ addslashes($stok->nama_bahan) }}', {{ $stok->estimasi_harga }}, '{{ $stok->satuan }}', {{ $stok->jumlah_stok }}, '{{ $stok->gambar_url }}')" class="px-2.5 py-1.5 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 hover:border-blue-200 rounded-xl text-[11px] font-bold transition active:scale-95" title="Beli Langsung">
+                                        Beli
+                                    </button>
+                                </div>
                             @endif
                         </div>
                     </div>
@@ -1281,6 +1287,241 @@
     </div>
 
     <!-- ======================================================== -->
+    <!-- MODAL 3: KERANJANG BELANJA ATK (SHOPPING CART)           -->
+    <!-- ======================================================== -->
+    <div id="modalCart" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-100 flex flex-col max-h-[92vh] my-auto">
+            
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between pb-3.5 border-b border-slate-100 shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg shadow-2xs">
+                        🛒
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-black text-slate-900 text-base sm:text-lg tracking-tight">Keranjang Belanja ATK</h3>
+                            <span id="cartModalItemCountBadge" class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[10px] font-black font-mono">0 Item</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400">Pilih &amp; atur perlengkapan alat tulis kantor yang ingin dibeli</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeCartModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 flex items-center justify-center text-sm font-bold transition">
+                    ✕
+                </button>
+            </div>
+
+            <!-- Modal Content (Scrollable) -->
+            <div class="py-3 overflow-y-auto flex-1 space-y-4" id="cartContentArea">
+                
+                <!-- Empty State -->
+                <div id="cartEmptyState" class="py-12 text-center space-y-3">
+                    <div class="w-16 h-16 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center text-3xl">
+                        🛒
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-slate-800 text-sm">Keranjang Belanja ATK Anda Masih Kosong</h4>
+                        <p class="text-xs text-slate-400 max-w-xs mx-auto mt-1">
+                            Pilih kertas, pulpen, ordner, lakban, dan kebutuhan kantor lainnya di katalog untuk belanja mudah tanpa antre.
+                        </p>
+                    </div>
+                    <button type="button" onclick="closeCartModal(); window.location.hash='#katalog-atk';" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs active:scale-95 inline-flex items-center gap-2">
+                        <span>Jelajahi Katalog ATK</span>
+                        <span>&rarr;</span>
+                    </button>
+                </div>
+
+                <!-- Cart Items Container (Dynamic) -->
+                <div id="cartItemsList" class="space-y-2.5 hidden max-h-72 overflow-y-auto pr-1">
+                    <!-- Dynamic cart item rows will be injected by JavaScript -->
+                </div>
+
+                <!-- Checkout Summary Card (Hidden when empty) -->
+                <div id="cartSummaryCard" class="hidden space-y-3.5 pt-2 border-t border-slate-100">
+                    
+                    <!-- Breakdown Card -->
+                    <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2 text-xs">
+                        <div class="flex items-center justify-between text-slate-500">
+                            <span>Total Item</span>
+                            <span id="cartSummaryTotalQty" class="font-bold text-slate-800">0 pcs</span>
+                        </div>
+                        <div class="flex items-center justify-between text-slate-500">
+                            <span>Estimasi Poin Reward</span>
+                            <span id="cartSummaryBonusPoints" class="font-black text-amber-600 font-mono">+0 Poin ⭐</span>
+                        </div>
+                        <div class="pt-2 border-t border-slate-200/80 flex items-center justify-between text-sm">
+                            <span class="font-extrabold text-slate-900">Total Pembayaran</span>
+                            <span id="cartSummaryTotalPrice" class="font-black text-blue-600 font-mono text-base">Rp 0</span>
+                        </div>
+                    </div>
+
+                    <!-- Pickup Location Note -->
+                    <div class="p-3 rounded-xl bg-blue-50/70 border border-blue-200/80 flex items-start gap-2.5 text-xs text-blue-800">
+                        <span class="text-base shrink-0">🏪</span>
+                        <div class="leading-relaxed">
+                            <span class="font-bold">Ambil Langsung di Loket Toko:</span>
+                            <p class="text-[11px] text-blue-700 mt-0.5">Barang disiapkan langsung oleh staf gerai. Cukup sebutkan nama / nomor tiket Anda.</p>
+                        </div>
+                    </div>
+
+                    <!-- Order Form -->
+                    <form id="cartCheckoutForm" onsubmit="handleCartCheckout(event)" class="space-y-3">
+                        @csrf
+                        <input type="hidden" name="cart_data" id="cartDataJsonInput">
+                        <input type="hidden" name="total_harga" id="cartTotalHargaInput">
+
+                        <!-- Catatan Tambahan (Optional) -->
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">Catatan Pesanan (Opsional)</label>
+                            <input type="text" name="catatan" id="cartCatatanInput" placeholder="Contoh: Tolong siapkan sebelum jam 1 siang / warna biru..." class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white">
+                        </div>
+
+                        <!-- Metode Pembayaran -->
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1.5">Metode Pembayaran</label>
+                            <div class="grid grid-cols-3 gap-2" id="cartPaymentMethodsGroup">
+                                <label class="payment-method-card flex flex-col items-center justify-center p-2.5 rounded-xl border-2 border-blue-600 bg-blue-50/50 cursor-pointer text-center transition hover:border-blue-400">
+                                    <input type="radio" name="metode_pembayaran" value="qris" checked class="sr-only" onchange="updatePaymentCardStyles(this)">
+                                    <span class="text-xs font-black text-blue-700">QRIS</span>
+                                    <span class="text-[9px] text-slate-400 mt-0.5">E-Wallet / Bank</span>
+                                </label>
+                                <label class="payment-method-card flex flex-col items-center justify-center p-2.5 rounded-xl border border-slate-200 bg-white cursor-pointer text-center transition hover:border-blue-400">
+                                    <input type="radio" name="metode_pembayaran" value="transfer" class="sr-only" onchange="updatePaymentCardStyles(this)">
+                                    <span class="text-xs font-black text-slate-700">Transfer</span>
+                                    <span class="text-[9px] text-slate-400 mt-0.5">BCA / BRI / Mandiri</span>
+                                </label>
+                                <label class="payment-method-card flex flex-col items-center justify-center p-2.5 rounded-xl border border-slate-200 bg-white cursor-pointer text-center transition hover:border-blue-400">
+                                    <input type="radio" name="metode_pembayaran" value="tunai" class="sr-only" onchange="updatePaymentCardStyles(this)">
+                                    <span class="text-xs font-black text-slate-700">Bayar di Kasir</span>
+                                    <span class="text-[9px] text-slate-400 mt-0.5">Tunai saat Ambil</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex items-center gap-2 pt-2">
+                            <button type="button" onclick="clearCartConfirm()" class="px-3.5 py-2.5 rounded-xl border border-slate-200 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-slate-500 text-xs font-bold transition flex items-center gap-1" title="Kosongkan Keranjang">
+                                <span>🗑️</span>
+                                <span class="hidden sm:inline">Kosongkan</span>
+                            </button>
+                            <button type="submit" id="btnSubmitCart" class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs transition shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:pointer-events-none">
+                                <span id="btnSubmitCartText">Pesan &amp; Checkout ATK Sekarang</span>
+                                <span id="btnSubmitCartSpinner" class="hidden animate-spin">⏳</span>
+                            </button>
+                        </div>
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Floating Quick Cart Button -->
+    <div id="floatingCartContainer" class="fixed bottom-6 right-6 z-40 transition-all duration-300">
+        <button type="button" onclick="openCartModal()" class="relative flex items-center gap-2.5 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl shadow-xl shadow-blue-500/30 font-bold text-xs transition-all duration-200 active:scale-95 group border border-white/20">
+            <div class="relative">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+                <span id="floatingCartBadge" class="hidden absolute -top-2.5 -right-2.5 min-w-4.5 h-4.5 px-1 rounded-full bg-amber-400 text-slate-900 text-[10px] font-black flex items-center justify-center font-mono shadow-xs">0</span>
+            </div>
+            <span class="font-extrabold tracking-tight">Keranjang ATK</span>
+            <span id="floatingCartTotal" class="hidden text-amber-300 font-mono font-extrabold text-[11px] pl-2 border-l border-white/20">Rp 0</span>
+        </button>
+    </div>
+
+    <!-- Cart Toast Notification -->
+    <div id="cartToast" class="fixed top-20 right-4 sm:right-8 z-50 transform -translate-y-4 opacity-0 pointer-events-none transition-all duration-300">
+        <div class="flex items-center gap-3 px-4 py-3 bg-slate-900/95 backdrop-blur-md text-white rounded-2xl shadow-2xl border border-slate-700 text-xs font-semibold">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+            <span id="cartToastMsg">Item berhasil ditambahkan ke keranjang!</span>
+            <button type="button" onclick="openCartModal()" class="ml-2 px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold rounded-xl transition shadow-xs">Lihat Keranjang</button>
+        </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- MODAL 4: NOTIFIKASI POPUP PESANAN BERHASIL               -->
+    <!-- ======================================================== -->
+    <div id="modalOrderSuccess" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-100 text-center space-y-5 my-auto">
+            
+            <!-- Success Icon with Ping Animation -->
+            <div class="relative w-16 h-16 mx-auto">
+                <div class="absolute inset-0 rounded-full bg-emerald-100 animate-ping opacity-50"></div>
+                <div class="relative w-16 h-16 rounded-full bg-emerald-500 text-white flex items-center justify-center text-3xl shadow-lg shadow-emerald-500/30">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Title & Subtitle -->
+            <div class="space-y-1.5">
+                <span class="inline-block px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-black uppercase tracking-wider font-mono">
+                    TRANSAKSI BERHASIL
+                </span>
+                <h3 class="text-xl font-black text-slate-900 tracking-tight">
+                    Pesanan ATK Berhasil Dibuat!
+                </h3>
+                <p id="successModalMessage" class="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
+                    Pesanan Anda telah diterima sistem dan langsung diteruskan ke loket kasir gerai Matahari Fotocopy.
+                </p>
+            </div>
+
+            <!-- Order Details Ticket Box -->
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 text-left space-y-2.5">
+                <div class="flex items-center justify-between pb-2 border-b border-slate-200/80">
+                    <span class="text-xs text-slate-500 font-medium">Nomor Nota</span>
+                    <span id="successModalNota" class="font-mono text-xs font-black text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200">
+                        #MF-2026-001
+                    </span>
+                </div>
+                <div class="flex items-center justify-between pb-2 border-b border-slate-200/80">
+                    <span class="text-xs text-slate-500 font-medium">Nomor Tiket Loket</span>
+                    <span id="successModalTiket" class="font-mono text-xs font-black text-amber-900 bg-amber-100 border border-amber-200 px-2.5 py-0.5 rounded-lg shadow-2xs">
+                        Tiket A-01
+                    </span>
+                </div>
+                <div class="flex items-center justify-between pb-2 border-b border-slate-200/80">
+                    <span class="text-xs text-slate-500 font-medium">Metode Pembayaran</span>
+                    <span id="successModalMetode" class="font-mono text-xs font-bold text-slate-700 uppercase">
+                        QRIS
+                    </span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-xs text-slate-500 font-medium">Status Pengambilan</span>
+                    <span class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span>Siap di Loket Toko</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Instruction Box -->
+            <div class="p-3 rounded-xl bg-blue-50/70 border border-blue-200/80 flex items-start gap-2.5 text-left text-xs text-blue-800">
+                <span class="text-base shrink-0">💡</span>
+                <p class="text-[11px] text-blue-700 leading-relaxed">
+                    Tunjukkan <strong>nomor tiket</strong> atau <strong>nota</strong> ini kepada kasir saat mengambil pesanan Anda di toko.
+                </p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="space-y-2 pt-1">
+                <button type="button" onclick="goToMyOrdersFromSuccessModal()" class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold shadow-md shadow-blue-500/20 transition flex items-center justify-center gap-2 active:scale-95">
+                    <span>Lihat di Pesanan &amp; Antrean Saya</span>
+                    <span>&rarr;</span>
+                </button>
+                <button type="button" onclick="closeOrderSuccessModal()" class="w-full py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-bold transition">
+                    Lanjut Belanja di Toko
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ======================================================== -->
     <!-- JAVASCRIPT LOGIC                                         -->
     <!-- ======================================================== -->
     <script>
@@ -1487,28 +1728,445 @@
             openCustomerOrderModal();
         }
 
-        function orderAtkItem(namaItem, harga, satuan, maxStok = null) {
+        // ========================================================
+        // SHOPPING CART (KERANJANG ATK) LOGIC
+        // ========================================================
+        const CART_STORAGE_KEY = 'matahari_atk_cart_v1';
+
+        function getCart() {
+            try {
+                const stored = localStorage.getItem(CART_STORAGE_KEY);
+                return stored ? JSON.parse(stored) : [];
+            } catch (e) {
+                console.error('Error loading cart:', e);
+                return [];
+            }
+        }
+
+        function saveCart(cart) {
+            try {
+                localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+                updateCartBadges(cart);
+            } catch (e) {
+                console.error('Error saving cart:', e);
+            }
+        }
+
+        function updateCartBadges(cart = null) {
+            if (!cart) cart = getCart();
+            const totalQty = cart.reduce((sum, item) => sum + (parseInt(item.kuantitas) || 0), 0);
+            const totalPrice = cart.reduce((sum, item) => sum + ((parseFloat(item.harga_satuan) || 0) * (parseInt(item.kuantitas) || 0)), 0);
+
+            // Navbar badge
+            const navBadge = document.getElementById('cartCountBadge');
+            if (navBadge) {
+                navBadge.textContent = totalQty;
+                if (totalQty > 0) {
+                    navBadge.classList.remove('hidden');
+                    navBadge.classList.add('inline-flex');
+                } else {
+                    navBadge.classList.add('hidden');
+                    navBadge.classList.remove('inline-flex');
+                }
+            }
+
+            // Floating badge & total
+            const floatBadge = document.getElementById('floatingCartBadge');
+            const floatTotal = document.getElementById('floatingCartTotal');
+            if (floatBadge) {
+                floatBadge.textContent = totalQty;
+                if (totalQty > 0) {
+                    floatBadge.classList.remove('hidden');
+                    floatBadge.classList.add('flex');
+                } else {
+                    floatBadge.classList.add('hidden');
+                    floatBadge.classList.remove('flex');
+                }
+            }
+            if (floatTotal) {
+                floatTotal.textContent = 'Rp ' + Number(totalPrice).toLocaleString('id-ID');
+                if (totalQty > 0) {
+                    floatTotal.classList.remove('hidden');
+                } else {
+                    floatTotal.classList.add('hidden');
+                }
+            }
+
+            // Modal Header Item Count
+            const modalBadge = document.getElementById('cartModalItemCountBadge');
+            if (modalBadge) {
+                modalBadge.textContent = `${totalQty} Item`;
+            }
+        }
+
+        function addToCart(stokId, namaItem, hargaSatuan, satuan, maxStok = 999, gambarUrl = '') {
             if (maxStok !== null && Number(maxStok) <= 0) {
-                alert('Maaf, stok produk ini sedang kosong di toko.');
+                alert('Maaf, stok item ' + namaItem + ' sedang kosong.');
+                return false;
+            }
+
+            const cart = getCart();
+            const existingIndex = cart.findIndex(item => Number(item.stok_id) === Number(stokId));
+
+            if (existingIndex > -1) {
+                const currentQty = parseInt(cart[existingIndex].kuantitas) || 1;
+                const max = Number(cart[existingIndex].max_stok) || 999;
+                if (currentQty >= max) {
+                    alert(`Jumlah ${namaItem} di keranjang sudah mencapai batas stok yang tersedia (${max} ${satuan}).`);
+                    return false;
+                }
+                cart[existingIndex].kuantitas = currentQty + 1;
+                cart[existingIndex].sub_total = cart[existingIndex].kuantitas * cart[existingIndex].harga_satuan;
+            } else {
+                cart.push({
+                    stok_id: Number(stokId),
+                    nama_item: namaItem,
+                    harga_satuan: Number(hargaSatuan),
+                    kuantitas: 1,
+                    sub_total: Number(hargaSatuan),
+                    satuan: satuan || 'Pcs',
+                    max_stok: Number(maxStok) || 999,
+                    gambar_url: gambarUrl || '/images/stok/default.svg'
+                });
+            }
+
+            saveCart(cart);
+            showCartToast(`"${namaItem}" ditambahkan ke keranjang!`);
+            renderCartUI();
+            return true;
+        }
+
+        function buyAtkNow(stokId, namaItem, hargaSatuan, satuan, maxStok = 999, gambarUrl = '') {
+            addToCart(stokId, namaItem, hargaSatuan, satuan, maxStok, gambarUrl);
+            openCartModal();
+        }
+
+        function updateCartItemQty(stokId, delta) {
+            const cart = getCart();
+            const index = cart.findIndex(item => Number(item.stok_id) === Number(stokId));
+            if (index === -1) return;
+
+            const current = parseInt(cart[index].kuantitas) || 1;
+            const next = current + delta;
+            const max = Number(cart[index].max_stok) || 999;
+
+            if (next <= 0) {
+                if (confirm(`Hapus "${cart[index].nama_item}" dari keranjang belanja?`)) {
+                    cart.splice(index, 1);
+                } else {
+                    return;
+                }
+            } else if (next > max) {
+                alert(`Maksimal pesanan untuk item ini adalah ${max} ${cart[index].satuan || 'Pcs'} sesuai stok toko.`);
+                return;
+            } else {
+                cart[index].kuantitas = next;
+                cart[index].sub_total = next * cart[index].harga_satuan;
+            }
+
+            saveCart(cart);
+            renderCartUI();
+        }
+
+        function removeCartItem(stokId) {
+            const cart = getCart();
+            const index = cart.findIndex(item => Number(item.stok_id) === Number(stokId));
+            if (index > -1) {
+                cart.splice(index, 1);
+                saveCart(cart);
+                renderCartUI();
+                showCartToast('Item dihapus dari keranjang.');
+            }
+        }
+
+        function clearCart() {
+            saveCart([]);
+            renderCartUI();
+        }
+
+        function clearCartConfirm() {
+            if (confirm('Apakah Anda yakin ingin mengosongkan keranjang belanja ATK?')) {
+                clearCart();
+                showCartToast('Keranjang telah dikosongkan.');
+            }
+        }
+
+        function openCartModal() {
+            renderCartUI();
+            const modal = document.getElementById('modalCart');
+            if (modal) {
+                modal.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
+            }
+        }
+
+        function closeCartModal() {
+            const modal = document.getElementById('modalCart');
+            if (modal) {
+                modal.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            }
+        }
+
+        function renderCartUI() {
+            const cart = getCart();
+            const emptyEl = document.getElementById('cartEmptyState');
+            const listEl = document.getElementById('cartItemsList');
+            const summaryEl = document.getElementById('cartSummaryCard');
+
+            updateCartBadges(cart);
+
+            if (!emptyEl || !listEl || !summaryEl) return;
+
+            if (cart.length === 0) {
+                emptyEl.classList.remove('hidden');
+                listEl.classList.add('hidden');
+                summaryEl.classList.add('hidden');
+                listEl.innerHTML = '';
                 return;
             }
-            resetCustOrderModalState();
-            if (maxStok !== null && Number(maxStok) > 0) {
-                currentModalMaxStock = Number(maxStok);
-                const qtyInput = getCustQtyInput();
-                if (qtyInput) {
-                    qtyInput.setAttribute('max', String(currentModalMaxStock));
+
+            emptyEl.classList.add('hidden');
+            listEl.classList.remove('hidden');
+            summaryEl.classList.remove('hidden');
+
+            let totalQty = 0;
+            let totalPrice = 0;
+
+            let html = '';
+            cart.forEach(item => {
+                const subTotal = (item.harga_satuan || 0) * (item.kuantitas || 1);
+                totalQty += parseInt(item.kuantitas || 1);
+                totalPrice += subTotal;
+
+                html += `
+                    <div class="flex items-center justify-between gap-3 p-3 rounded-2xl bg-slate-50 hover:bg-slate-100/70 border border-slate-200/80 transition">
+                        <div class="flex items-center gap-3 min-w-0 flex-1">
+                            <div class="w-11 h-11 rounded-xl bg-white border border-slate-200 p-1 flex items-center justify-center shrink-0 overflow-hidden">
+                                <img src="${item.gambar_url || '/images/stok/default.svg'}" alt="${item.nama_item}" class="w-full h-full object-contain">
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <h4 class="font-extrabold text-slate-900 text-xs truncate" title="${item.nama_item}">${item.nama_item}</h4>
+                                <div class="flex items-center gap-2 mt-0.5 text-[11px]">
+                                    <span class="font-mono text-blue-600 font-bold">Rp ${Number(item.harga_satuan).toLocaleString('id-ID')}</span>
+                                    <span class="text-slate-400">/ ${item.satuan || 'Pcs'}</span>
+                                    <span class="text-[9px] text-slate-400 font-medium">(Sisa: ${item.max_stok || 'Aman'})</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Stepper & Subtotal -->
+                        <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+                            <div class="flex items-center border border-slate-200 bg-white rounded-xl shadow-2xs overflow-hidden">
+                                <button type="button" onclick="updateCartItemQty(${item.stok_id}, -1)" class="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center text-slate-600 hover:bg-slate-100 active:bg-slate-200 font-black text-xs transition">
+                                    -
+                                </button>
+                                <span class="w-7 sm:w-8 text-center text-xs font-mono font-bold text-slate-900">${item.kuantitas}</span>
+                                <button type="button" onclick="updateCartItemQty(${item.stok_id}, 1)" class="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center text-slate-600 hover:bg-slate-100 active:bg-slate-200 font-black text-xs transition">
+                                    +
+                                </button>
+                            </div>
+
+                            <div class="text-right w-16 sm:w-20">
+                                <span class="font-mono font-black text-xs text-slate-900 block truncate">Rp ${Number(subTotal).toLocaleString('id-ID')}</span>
+                            </div>
+
+                            <button type="button" onclick="removeCartItem(${item.stok_id})" title="Hapus dari keranjang" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            listEl.innerHTML = html;
+
+            // Update Summary Numbers
+            const summaryQty = document.getElementById('cartSummaryTotalQty');
+            const summaryPrice = document.getElementById('cartSummaryTotalPrice');
+            const summaryPoints = document.getElementById('cartSummaryBonusPoints');
+            const jsonInput = document.getElementById('cartDataJsonInput');
+            const totalInput = document.getElementById('cartTotalHargaInput');
+
+            if (summaryQty) summaryQty.textContent = `${totalQty} pcs (${cart.length} item)`;
+            if (summaryPrice) summaryPrice.textContent = 'Rp ' + Number(totalPrice).toLocaleString('id-ID');
+            
+            // Loyalty points estimate: 1 base point + 1 point per 10k
+            const estPoints = 1 + Math.max(0, Math.floor((totalPrice - 1) / 10000));
+            if (summaryPoints) summaryPoints.textContent = `+${estPoints} Poin ⭐`;
+
+            if (jsonInput) jsonInput.value = JSON.stringify(cart);
+            if (totalInput) totalInput.value = totalPrice;
+        }
+
+        function updatePaymentCardStyles(radio) {
+            document.querySelectorAll('#cartPaymentMethodsGroup .payment-method-card').forEach(card => {
+                card.classList.remove('border-2', 'border-blue-600', 'bg-blue-50/50');
+                card.classList.add('border', 'border-slate-200', 'bg-white');
+                const title = card.querySelector('span:first-of-type');
+                if (title) {
+                    title.classList.remove('text-blue-700');
+                    title.classList.add('text-slate-700');
                 }
-                const stockBadge = document.getElementById('cust-stock-badge');
-                if (stockBadge) {
-                    stockBadge.textContent = `(Stok: ${currentModalMaxStock} ${satuan})`;
-                    stockBadge.classList.remove('hidden');
+            });
+
+            const parentCard = radio.closest('.payment-method-card');
+            if (parentCard) {
+                parentCard.classList.add('border-2', 'border-blue-600', 'bg-blue-50/50');
+                parentCard.classList.remove('border-slate-200', 'bg-white');
+                const title = parentCard.querySelector('span:first-of-type');
+                if (title) {
+                    title.classList.add('text-blue-700');
+                    title.classList.remove('text-slate-700');
                 }
             }
-            document.getElementById('orderModalTitle').textContent = 'Beli ATK: ' + namaItem;
-            document.getElementById('orderModalJudul').value = 'Beli ATK: ' + namaItem;
-            document.getElementById('orderModalSpesifikasi').value = 'Produk ATK Retail • Satuan: ' + satuan;
-            openCustomerOrderModal();
+        }
+
+        let toastTimeout = null;
+        function showCartToast(msg) {
+            const toast = document.getElementById('cartToast');
+            const toastMsg = document.getElementById('cartToastMsg');
+            if (!toast) return;
+
+            if (toastMsg) toastMsg.textContent = msg;
+
+            toast.classList.remove('opacity-0', 'pointer-events-none', '-translate-y-4');
+            toast.classList.add('opacity-100', 'translate-y-0');
+
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', 'pointer-events-none', '-translate-y-4');
+            }, 3000);
+        }
+
+        function handleCartCheckout(e) {
+            e.preventDefault();
+            const cart = getCart();
+            if (cart.length === 0) {
+                alert('Keranjang belanja Anda masih kosong.');
+                return;
+            }
+
+            const btn = document.getElementById('btnSubmitCart');
+            const btnText = document.getElementById('btnSubmitCartText');
+            const btnSpinner = document.getElementById('btnSubmitCartSpinner');
+
+            if (btn) {
+                btn.disabled = true;
+                if (btnText) btnText.textContent = 'Memproses Pesanan ATK...';
+                if (btnSpinner) btnSpinner.classList.remove('hidden');
+            }
+
+            const form = document.getElementById('cartCheckoutForm');
+            const formData = new FormData(form);
+
+            fetch('{{ route("customer.cart.checkout") }}', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                body: formData
+            })
+            .then(res => res.json().then(data => ({ status: res.status, ok: res.ok, data })))
+            .then(result => {
+                if (result.ok && result.data.status === 'success') {
+                    // Clear cart
+                    clearCart();
+                    closeCartModal();
+                    
+                    if (btn) {
+                        btn.disabled = false;
+                        if (btnText) btnText.textContent = 'Pesan & Checkout ATK Sekarang';
+                        if (btnSpinner) btnSpinner.classList.add('hidden');
+                    }
+
+                    // Tampilkan Notifikasi Pop-up Pesanan Berhasil
+                    showOrderSuccessModal(result.data);
+                } else {
+                    alert(result.data.message || 'Terjadi kesalahan saat membuat pesanan ATK. Silakan periksa kembali keranjang Anda.');
+                    if (btn) {
+                        btn.disabled = false;
+                        if (btnText) btnText.textContent = 'Pesan & Checkout ATK Sekarang';
+                        if (btnSpinner) btnSpinner.classList.add('hidden');
+                    }
+                }
+            })
+            .catch(err => {
+                console.error('Checkout error:', err);
+                alert('Mengarahkan pemrosesan checkout pesanan...');
+                form.action = '{{ route("customer.cart.checkout") }}';
+                form.method = 'POST';
+                form.submit();
+            });
+        }
+
+        function showOrderSuccessModal(data) {
+            const modal = document.getElementById('modalOrderSuccess');
+            const notaEl = document.getElementById('successModalNota');
+            const tiketEl = document.getElementById('successModalTiket');
+            const metodeEl = document.getElementById('successModalMetode');
+            const msgEl = document.getElementById('successModalMessage');
+
+            if (notaEl && data.nomor_nota) notaEl.textContent = data.nomor_nota;
+            if (tiketEl && data.kode_antrean) tiketEl.textContent = 'Tiket ' + data.kode_antrean;
+            if (metodeEl && data.metode_pembayaran) {
+                const met = String(data.metode_pembayaran).toLowerCase();
+                metodeEl.textContent = met === 'tunai' ? 'Bayar Tunai di Kasir' : met.toUpperCase();
+            }
+            if (msgEl && data.message) msgEl.textContent = data.message;
+
+            if (modal) {
+                modal.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
+            }
+
+            // Refresh live tracking in background so "Pesanan Saya" immediately shows the new order
+            if (typeof refreshCustomerOrders === 'function') {
+                refreshCustomerOrders();
+            }
+        }
+
+        function closeOrderSuccessModal() {
+            const modal = document.getElementById('modalOrderSuccess');
+            if (modal) {
+                modal.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            }
+        }
+
+        function goToMyOrdersFromSuccessModal() {
+            closeOrderSuccessModal();
+            window.location.hash = '#pesanan-saya';
+            const ordersSection = document.getElementById('pesanan-saya');
+            if (ordersSection) {
+                ordersSection.scrollIntoView({ behavior: 'smooth' });
+            }
+            if (typeof refreshCustomerOrders === 'function') {
+                refreshCustomerOrders();
+            }
+        }
+
+        function orderAtkItem(namaItem, harga, satuan, maxStok = null) {
+            @php
+                $stokJson = $stokItems->map(fn($s) => [
+                    'stok_id' => $s->stok_id,
+                    'nama_bahan' => $s->nama_bahan,
+                    'harga' => $s->estimasi_harga,
+                    'satuan' => $s->satuan,
+                    'max_stok' => $s->jumlah_stok,
+                    'gambar_url' => $s->gambar_url
+                ]);
+            @endphp
+            const catalog = @json($stokJson);
+            const found = catalog.find(c => (c.nama_bahan || '').toLowerCase() === (namaItem || '').toLowerCase());
+            if (found) {
+                buyAtkNow(found.stok_id, found.nama_bahan, found.harga, found.satuan, found.max_stok, found.gambar_url);
+            } else {
+                addToCart(Date.now(), namaItem, harga, satuan, maxStok || 999);
+                openCartModal();
+            }
         }
 
         // ========================================================
@@ -1730,6 +2388,9 @@
             } else {
                 syncNavOnScroll();
             }
+
+            // Initialize ATK shopping cart badge and persistent state
+            updateCartBadges();
 
             // Setup modern drag and drop for modal file upload
             const dropzone = document.getElementById('dropzone-cust-file');

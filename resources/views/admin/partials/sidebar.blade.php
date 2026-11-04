@@ -50,7 +50,7 @@
                 <span>Dashboard</span>
             </a>
 
-            <!-- 2. Antrean Online -->
+            <!-- 2. Pembelian Online -->
             <a href="{{ route('admin.antrean.index') }}" 
                data-menu="antrean"
                data-active="{{ $active === 'antrean' ? 'true' : 'false' }}"
@@ -60,7 +60,7 @@
                     <svg class="w-4 h-4 flex-shrink-0 {{ $active === 'antrean' ? 'text-white' : 'text-slate-600' }}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
                     </svg>
-                    <span>Antrean Online</span>
+                    <span>Pembelian Online</span>
                 </div>
                 <span id="sidebar-queue-badge" class="{{ $activeCount > 0 ? '' : 'hidden' }} px-2 py-0.5 rounded-full text-[10px] font-extrabold font-mono shadow-2xs {{ $active === 'antrean' ? 'bg-white text-amber-700' : 'bg-white text-slate-700' }}">
                     {{ $activeCount }}

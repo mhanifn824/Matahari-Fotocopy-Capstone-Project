@@ -84,4 +84,5 @@ Route::middleware(['auth', 'customer.only'])->prefix('customer')->name('customer
     Route::get('/home', [DashboardController::class, 'customer'])->name('home');
     Route::get('/dashboard', [DashboardController::class, 'customer'])->name('dashboard');
     Route::post('/order', [DashboardController::class, 'storeCustomerOrder'])->name('order.store');
+    Route::post('/cart-checkout', [DashboardController::class, 'storeCustomerCartCheckout'])->name('cart.checkout');
 });

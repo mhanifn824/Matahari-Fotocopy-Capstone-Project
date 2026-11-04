@@ -67,6 +67,7 @@ class DashboardController extends Controller
         $user = Auth::user();
         $user->load('adminKasir');
 
+        $activeSection = $request->query('section', 'printing');
         $filter = $request->query('tab', 'masuk');
         if ($filter === 'semua') {
             $filter = 'masuk';
@@ -75,41 +76,83 @@ class DashboardController extends Controller
 
         $workshopData = $this->calculateWorkshopStats();
 
-        $query = AntreanMesin::with([
+        // 1. Pembelian Khusus Printing (Antrean Cetak & Workshop - Excludes Retail ATK)
+        $queryPrinting = AntreanMesin::with([
             'pesanan.pelanggan.user',
             'pesanan.detailPesanan.produkLayanan',
             'pesanan.detailPesanan.berkasDokumen',
-        ]);
+        ])->where(function ($q) {
+            $q->whereNull('nama_mesin')
+                ->orWhere('nama_mesin', '!=', 'Loket Kasir & Rak ATK');
+        })->whereHas('pesanan', function ($q) {
+            $q->where('kategori_layanan', '!=', 'Retail ATK')
+                ->where('judul_dokumen', 'not like', 'Beli ATK%');
+        });
 
         if ($filter === 'selesai') {
-            $query->where(function ($q) {
+            $queryPrinting->where(function ($q) {
                 $q->where('status_antrean', 'selesai')
                     ->orWhere('status_alur', 'Selesai');
             });
         } elseif ($filter === 'siap') {
-            $query->whereIn('status_alur', ['Siap Diambil', 'siap', 'siap_pickup']);
+            $queryPrinting->whereIn('status_alur', ['Siap Diambil', 'siap', 'siap_pickup']);
         } elseif ($filter === 'proses') {
-            $query->whereIn('status_alur', ['Sedang Diproses', 'Sedang Cetak', 'Sedang Jilid', 'Menunggu Bahan', 'cetak', 'salin', 'finishing', 'proses']);
+            $queryPrinting->whereIn('status_alur', ['Sedang Diproses', 'Sedang Cetak', 'Sedang Jilid', 'Menunggu Bahan', 'cetak', 'salin', 'finishing', 'proses']);
         } elseif ($filter === 'diterima') {
-            $query->whereIn('status_alur', ['Diterima', 'diterima']);
+            $queryPrinting->whereIn('status_alur', ['Diterima', 'diterima']);
         } else {
-            $query->whereIn('status_alur', ['Menunggu', 'menunggu', 'order masuk'])
+            $queryPrinting->whereIn('status_alur', ['Menunggu', 'menunggu', 'order masuk'])
                 ->where('status_antrean', '!=', 'selesai');
         }
 
         if (! empty($search)) {
-            $query->whereHas('pesanan', function ($q) use ($search) {
+            $queryPrinting->whereHas('pesanan', function ($q) use ($search) {
                 $q->where('nama_pemesan', 'like', "%{$search}%")
                     ->orWhere('judul_dokumen', 'like', "%{$search}%");
             });
         }
 
-        $antreanList = $query->orderBy('nomor_tiket', 'asc')->paginate(5)->withQueryString();
+        $antreanList = $queryPrinting->orderBy('nomor_tiket', 'asc')->paginate(5)->withQueryString();
+
+        // 2. Pembelian Khusus ATK (Alat Tulis Kantor - Siap di Loket Kasir)
+        $queryAtk = AntreanMesin::with([
+            'pesanan.pelanggan.user',
+            'pesanan.detailPesanan.produkLayanan',
+        ])->where(function ($q) {
+            $q->where('nama_mesin', 'Loket Kasir & Rak ATK')
+                ->orWhereHas('pesanan', function ($sub) {
+                    $sub->where('kategori_layanan', 'Retail ATK')
+                        ->orWhere('judul_dokumen', 'like', 'Beli ATK%');
+                });
+        });
+
+        if (! empty($search)) {
+            $queryAtk->whereHas('pesanan', function ($q) use ($search) {
+                $q->where('nama_pemesan', 'like', "%{$search}%")
+                    ->orWhere('spesifikasi', 'like', "%{$search}%")
+                    ->orWhere('nomor_nota_kustom', 'like', "%{$search}%");
+            });
+        }
+
+        $atkOrdersList = $queryAtk->latest()->get();
+
+        $activeAtkCount = AntreanMesin::where(function ($q) {
+            $q->where('nama_mesin', 'Loket Kasir & Rak ATK')
+                ->orWhereHas('pesanan', function ($sub) {
+                    $sub->where('kategori_layanan', 'Retail ATK')
+                        ->orWhere('judul_dokumen', 'like', 'Beli ATK%');
+                });
+        })->where('status_antrean', '!=', 'selesai')
+            ->where('status_alur', '!=', 'Selesai')
+            ->count();
 
         return view('admin.antrean', compact(
             'user',
             'workshopData',
             'antreanList',
+            'atkOrdersList',
+            'activeAtkCount',
+            'activeSection',
             'filter',
             'search'
         ));
@@ -1148,6 +1191,175 @@ class DashboardController extends Controller
     }
 
     /**
+     * Store ATK cart order placed by Customer from the customer portal shopping cart.
+     * Decrements physical inventory, creates order & queue ticket, and awards points.
+     */
+    public function storeCustomerCartCheckout(Request $request): JsonResponse|RedirectResponse
+    {
+        $user = Auth::user();
+        $user->load('pelanggan');
+
+        // Allow cart_data JSON string if passed from HTML hidden field
+        if ($request->has('cart_data') && is_string($request->input('cart_data'))) {
+            $decoded = json_decode($request->input('cart_data'), true);
+            if (is_array($decoded)) {
+                $request->merge(['items' => $decoded]);
+            }
+        }
+
+        $validated = $request->validate([
+            'items' => 'required|array|min:1',
+            'items.*.stok_id' => 'required|integer',
+            'items.*.nama_item' => 'required|string|max:150',
+            'items.*.kuantitas' => 'required|integer|min:1',
+            'items.*.harga_satuan' => 'required|numeric|min:0',
+            'items.*.sub_total' => 'required|numeric|min:0',
+            'total_harga' => 'required|numeric|min:0',
+            'metode_pembayaran' => 'required|string|in:qris,transfer,tunai,QRIS,TRANSFER,TUNAI',
+            'catatan' => 'nullable|string|max:500',
+        ], [
+            'items.required' => 'Keranjang belanja Anda masih kosong.',
+            'items.min' => 'Pilih minimal satu item ATK untuk dipesan.',
+            'metode_pembayaran.required' => 'Pilih metode pembayaran terlebih dahulu.',
+        ]);
+
+        $this->ensureCatalogProductsExist();
+
+        // Stock availability verification
+        foreach ($validated['items'] as $item) {
+            $stok = InventarisStok::find($item['stok_id']);
+            if (! $stok) {
+                $stok = InventarisStok::where('nama_bahan', $item['nama_item'])->first();
+            }
+
+            if (! $stok || $stok->jumlah_stok <= 0) {
+                $itemName = $stok ? $stok->nama_bahan : $item['nama_item'];
+                $msg = "Maaf, stok item '{$itemName}' saat ini sedang kosong.";
+                if ($request->expectsJson()) {
+                    return response()->json(['status' => 'error', 'message' => $msg], 422);
+                }
+
+                return redirect()->back()->with('error', $msg);
+            }
+
+            if ($item['kuantitas'] > $stok->jumlah_stok) {
+                $msg = "Pesanan '{$stok->nama_bahan}' melebihi stok yang tersedia (Sisa: {$stok->jumlah_stok}).";
+                if ($request->expectsJson()) {
+                    return response()->json(['status' => 'error', 'message' => $msg], 422);
+                }
+
+                return redirect()->back()->with('error', $msg);
+            }
+        }
+
+        return DB::transaction(function () use ($validated, $user, $request) {
+            $pelanggan = $user->pelanggan;
+            if (! $pelanggan) {
+                $pelanggan = Pelanggan::create([
+                    'user_id' => $user->user_id,
+                    'saldo_poin' => 50,
+                ]);
+            }
+
+            // Summary of items
+            $itemStrings = [];
+            $firstItemName = $validated['items'][0]['nama_item'] ?? 'Item ATK';
+            $otherCount = count($validated['items']) - 1;
+
+            foreach ($validated['items'] as $item) {
+                $stok = InventarisStok::find($item['stok_id'])
+                    ?? InventarisStok::where('nama_bahan', $item['nama_item'])->first();
+                $satuan = $stok ? $stok->satuan : 'Pcs';
+                $itemStrings[] = $item['nama_item'].' ('.$item['kuantitas'].' '.$satuan.')';
+
+                // Decrement stock
+                if ($stok) {
+                    $stok->decrement('jumlah_stok', $item['kuantitas']);
+                }
+            }
+
+            $spesifikasiSummary = implode(' • ', $itemStrings);
+            if (! empty($validated['catatan'])) {
+                $spesifikasiSummary .= ' [Catatan: '.$validated['catatan'].']';
+            }
+
+            $judulDokumen = 'Beli ATK: '.$firstItemName.($otherCount > 0 ? " (+{$otherCount} item lainnya)" : '');
+            $metodeClean = strtolower($validated['metode_pembayaran']);
+            $isPaid = in_array($metodeClean, ['qris', 'transfer'], true);
+
+            $pesanan = Pesanan::create([
+                'pelanggan_id' => $pelanggan->pelanggan_id,
+                'nama_pemesan' => $user->nama,
+                'tipe_pelanggan' => $pelanggan->kategori_member ?? 'Member Pelanggan',
+                'judul_dokumen' => $judulDokumen,
+                'spesifikasi' => $spesifikasiSummary,
+                'tenggat_waktu' => 'Siap Diambil di Loket',
+                'jenis_pesanan' => 'online',
+                'kategori_layanan' => 'Retail ATK',
+                'total_harga' => $validated['total_harga'],
+                'volume_halaman' => count($validated['items']),
+                'status_pesanan' => 'menunggu',
+                'metode_pembayaran' => strtoupper($metodeClean),
+                'waktu_pesan' => now(),
+            ]);
+
+            // Save order item details
+            foreach ($validated['items'] as $item) {
+                $produk = ProdukLayanan::where('nama_item', 'like', '%'.$item['nama_item'].'%')->first();
+                if (! $produk) {
+                    $produk = ProdukLayanan::where('kategori', 'Alat Tulis & Map')->first()
+                        ?? ProdukLayanan::first();
+                }
+
+                DetailPesanan::create([
+                    'pesanan_id' => $pesanan->pesanan_id,
+                    'produk_id' => $produk ? $produk->produk_id : 1,
+                    'kuantitas' => $item['kuantitas'],
+                    'sub_total' => $item['sub_total'],
+                ]);
+            }
+
+            $nextTiket = (AntreanMesin::whereDate('created_at', Carbon::today())->max('nomor_tiket') ?? 0) + 1;
+
+            $antrean = AntreanMesin::create([
+                'pesanan_id' => $pesanan->pesanan_id,
+                'nomor_tiket' => $nextTiket,
+                'status_antrean' => 'siap',
+                'estimasi_waktu' => 10,
+                'nama_mesin' => 'Loket Kasir & Rak ATK',
+                'nama_operator' => 'Staf Kasir Retail',
+                'status_alur' => 'Siap Diambil',
+                'status_pembayaran' => $isPaid ? 'lunas' : 'belum_lunas',
+                'keterangan_tenggat' => 'Ambil di Loket',
+            ]);
+
+            // Allocate loyalty points if paid
+            if ($isPaid) {
+                $this->allocateLoyaltyPointsForOrder($pesanan);
+            }
+
+            // Sync monthly revenue aggregation
+            $this->syncMonthlyOmset();
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Pesanan ATK berhasil dibuat! Silakan ambil barang Anda di loket kasir Matahari Fotocopy.',
+                    'pesanan_id' => $pesanan->pesanan_id,
+                    'nomor_nota' => $pesanan->nomor_nota,
+                    'kode_antrean' => $antrean->kode_antrean,
+                    'total_harga' => (float) $pesanan->total_harga,
+                    'metode_pembayaran' => $pesanan->metode_pembayaran,
+                    'redirect_url' => route('customer.home').'#pesanan-saya',
+                ]);
+            }
+
+            return redirect()->to(route('customer.home').'#pesanan-saya')
+                ->with('success', 'Pesanan ATK Anda (Tiket: '.$antrean->kode_antrean.') berhasil dibuat! Silakan ambil barang di loket kasir.');
+        });
+    }
+
+    /**
      * Find matching physical stock record from inventaris_stok based on product name,
      * order title, or specification.
      */
@@ -1521,6 +1733,14 @@ class DashboardController extends Controller
         $activeQueues = AntreanMesin::with('pesanan')
             ->where('status_antrean', '!=', 'selesai')
             ->where('status_alur', '!=', 'Selesai')
+            ->where(function ($q) {
+                $q->whereNull('nama_mesin')
+                    ->orWhere('nama_mesin', '!=', 'Loket Kasir & Rak ATK');
+            })
+            ->whereHas('pesanan', function ($q) {
+                $q->where('kategori_layanan', '!=', 'Retail ATK')
+                    ->where('judul_dokumen', 'not like', 'Beli ATK%');
+            })
             ->get();
 
         $totalCount = $activeQueues->count();
