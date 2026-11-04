@@ -828,19 +828,26 @@
                         @php
                             $alurRaw = strtolower((string) ($order->antreanMesin?->status_alur ?? $order->antreanMesin?->status_antrean ?? $order->status_pesanan ?? 'diterima'));
                             $statusPesananRaw = strtolower((string) $order->status_pesanan);
+                            $isRetailAtk = ($order->kategori_layanan === 'Retail ATK')
+                                || str_starts_with((string) $order->judul_dokumen, 'Beli ATK')
+                                || ($order->antreanMesin?->nama_mesin === 'Loket Kasir & Rak ATK');
 
                             if (in_array($alurRaw, ['selesai'], true) || $statusPesananRaw === 'selesai') {
                                 $currentStep = 3;
                                 $statusStepLabel = 'Selesai';
                                 $statusBadgeBg = 'bg-emerald-50 text-emerald-700 border-emerald-200';
                                 $statusDotBg = 'bg-emerald-500';
-                                $statusDesc = 'Pesanan telah selesai diproses & diserahkan. Terima kasih atas pesanan Anda!';
+                                $statusDesc = $isRetailAtk
+                                    ? 'Pesanan ATK telah selesai diambil di loket kasir. Terima kasih telah berbelanja di Matahari Fotocopy!'
+                                    : 'Pesanan telah selesai diproses & diserahkan. Terima kasih atas pesanan Anda!';
                             } elseif (in_array($alurRaw, ['siap diambil', 'siap', 'siap_pickup'], true) || $statusPesananRaw === 'siap') {
                                 $currentStep = 3;
                                 $statusStepLabel = 'Siap Diambil';
                                 $statusBadgeBg = 'bg-emerald-50 text-emerald-700 border-emerald-200';
                                 $statusDotBg = 'bg-emerald-500';
-                                $statusDesc = 'Hasil cetak Anda telah selesai diproses & siap diambil di loket kasir gerai Bintaro Sektor 7.';
+                                $statusDesc = $isRetailAtk
+                                    ? 'Barang ATK Anda telah disiapkan oleh kasir. Silakan sebutkan Nomor Nota / Tiket di loket kasir gerai Bintaro Sektor 7 untuk mengambil barang.'
+                                    : 'Hasil cetak Anda telah selesai diproses & siap diambil di loket kasir gerai Bintaro Sektor 7.';
                             } elseif (in_array($alurRaw, ['diterima', 'menunggu', 'antrean'], true) || in_array($statusPesananRaw, ['menunggu', 'diterima'], true)) {
                                 $currentStep = 1;
                                 $statusStepLabel = ($alurRaw === 'menunggu' || $statusPesananRaw === 'menunggu') ? 'Menunggu Konfirmasi' : 'Diterima di Antrean';

@@ -333,12 +333,12 @@ class CustomerAtkCartTest extends TestCase
         $response->assertSee('Modul Skripsi Bab 1-4');
         $response->assertSee('Mesin Ricoh 2');
 
-        // Check ATK item is rendered in ATK table without action column
+        // Check ATK item is rendered in ATK table with handover action column
         $response->assertSee('Tabel Pembelian Retail ATK Online');
         $response->assertSee('Kertas HVS A4 70gr PaperOne (1 Rim)');
         $response->assertSee('Loket Kasir &amp; Rak ATK', false);
-        $response->assertDontSee('AKSI KASIR');
-        $response->assertDontSee('Serahkan ke Pelanggan');
+        $response->assertSee('AKSI SERAH TERIMA');
+        $response->assertSee('Barang Sudah Diambil');
     }
 
     public function test_admin_can_handover_atk_order_via_serahkan_action(): void
@@ -366,6 +366,11 @@ class CustomerAtkCartTest extends TestCase
             'estimasi_waktu' => 5,
         ]);
 
+        // Before handover: customer sees 'Siap Diambil' informative message for Retail ATK
+        $custBeforeResponse = $this->actingAs($this->customer)->get(route('customer.home'));
+        $custBeforeResponse->assertStatus(200);
+        $custBeforeResponse->assertSee('Barang ATK Anda telah disiapkan oleh kasir. Silakan sebutkan Nomor Nota / Tiket di loket kasir gerai Bintaro Sektor 7 untuk mengambil barang.');
+
         $response = $this->actingAs($this->admin)->post(route('admin.antrean.action', $antreanAtk), [
             'action' => 'serahkan',
         ]);
@@ -380,5 +385,15 @@ class CustomerAtkCartTest extends TestCase
         $this->assertEquals('selesai', $antreanAtk->status_antrean);
         $this->assertEquals('lunas', $antreanAtk->status_pembayaran);
         $this->assertEquals('selesai', $pesananAtk->status_pesanan);
+        $this->assertGreaterThan(50, $this->pelanggan->fresh()->saldo_poin);
+
+        // After handover: admin table displays completed badge and customer sees 'Selesai' message for Retail ATK
+        $adminAfterResponse = $this->actingAs($this->admin)->get(route('admin.antrean.index'));
+        $adminAfterResponse->assertStatus(200);
+        $adminAfterResponse->assertSee('✓ Transaksi Selesai');
+
+        $custAfterResponse = $this->actingAs($this->customer)->get(route('customer.home'));
+        $custAfterResponse->assertStatus(200);
+        $custAfterResponse->assertSee('Pesanan ATK telah selesai diambil di loket kasir. Terima kasih telah berbelanja di Matahari Fotocopy!');
     }
 }

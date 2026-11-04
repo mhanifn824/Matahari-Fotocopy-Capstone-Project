@@ -608,6 +608,7 @@
                                     <th class="py-3.5 px-4">TOTAL BELANJA</th>
                                     <th class="py-3.5 px-4">PEMBAYARAN</th>
                                     <th class="py-3.5 px-4">STATUS PENGAMBILAN</th>
+                                    <th class="py-3.5 px-4 text-center">AKSI SERAH TERIMA</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100" id="atk-table-body">
@@ -665,7 +666,7 @@
 
                                         <!-- PEMBAYARAN -->
                                         <td class="py-3.5 px-4 whitespace-nowrap">
-                                            @if(($atk->status_pembayaran ?? 'lunas') === 'belum_lunas' || strtolower($pesanan?->metode_pembayaran ?? '') === 'tunai')
+                                            @if(!$isSelesai && (($atk->status_pembayaran ?? 'lunas') === 'belum_lunas' || strtolower($pesanan?->metode_pembayaran ?? '') === 'tunai'))
                                                 <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
                                                     Bayar di Kasir (Tunai)
                                                 </span>
@@ -690,10 +691,30 @@
                                                 </span>
                                             @endif
                                         </td>
+
+                                        <!-- AKSI SERAH TERIMA -->
+                                        <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                                            <div class="flex items-center justify-center">
+                                                @if(!$isSelesai)
+                                                    <form action="{{ route('admin.antrean.action', $atk->antrean_id) }}" method="POST" onsubmit="return confirm('Konfirmasi bahwa barang ATK untuk nota {{ $pesanan?->nomor_nota }} sudah diserahkan ke pelanggan?')">
+                                                        @csrf
+                                                        <input type="hidden" name="action" value="serahkan">
+                                                        <button type="submit" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-2xs transition flex items-center gap-1.5 whitespace-nowrap">
+                                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                                                            </svg>
+                                                            <span>Barang Sudah Diambil</span>
+                                                        </button>
+                                                    </form>
+                                                @else
+                                                    <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200">✓ Transaksi Selesai</span>
+                                                @endif
+                                            </div>
+                                        </td>
                                     </tr>
                                 @empty
                                     <tr id="empty-state-atk">
-                                        <td colspan="6" class="py-12 text-center text-slate-400">
+                                        <td colspan="7" class="py-12 text-center text-slate-400">
                                             <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center text-2xl mb-2">
                                                 🛍️
                                             </div>

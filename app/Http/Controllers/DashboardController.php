@@ -411,9 +411,14 @@ class DashboardController extends Controller
 
         return DB::transaction(function () use ($validated, $request, $antrean) {
             $pesanan = $antrean->pesanan;
+            $wasNotFinished = $antrean->status_antrean !== 'selesai'
+                && $antrean->status_alur !== 'Selesai'
+                && $pesanan?->status_pesanan !== 'selesai';
             $wasAlreadyCompleted = in_array($antrean->status_alur, ['Siap Diambil', 'Selesai'], true)
                 || in_array($antrean->status_antrean, ['siap', 'selesai'], true)
                 || $pesanan?->status_pesanan === 'selesai';
+            $wasUnpaid = in_array(strtolower((string) $antrean->status_pembayaran), ['belum_lunas', 'belum_bayar'], true)
+                || ($wasNotFinished && strtolower((string) ($pesanan?->metode_pembayaran ?? '')) === 'tunai');
 
             switch ($validated['action']) {
                 case 'terima':
@@ -484,9 +489,12 @@ class DashboardController extends Controller
                         if (! $wasAlreadyCompleted) {
                             $this->deductInventoryStockForOrder($pesanan);
                             $this->allocateLoyaltyPointsForOrder($pesanan);
+                        } elseif ($wasUnpaid && $wasNotFinished) {
+                            $this->allocateLoyaltyPointsForOrder($pesanan);
                         }
                         $this->purgeOrderFiles($pesanan);
                     }
+                    $this->syncMonthlyOmset();
                     $msg = 'Pesanan '.$antrean->kode_antrean.' telah diserahkan ke pelanggan.';
                     break;
                 case 'tunggu_bahan':
