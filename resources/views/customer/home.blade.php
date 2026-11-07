@@ -1008,7 +1008,7 @@
                             <!-- Card Footer: Time, Payment & WhatsApp Help Button -->
                             <div class="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs text-slate-500">
                                 <div class="flex items-center gap-2 text-[11px] font-mono">
-                                    <span>🕒 {{ $order->waktu_pesan ? $order->waktu_pesan->format('d M H:i') : '' }} WIB</span>
+                                    <span>🕒 {{ $order->waktu_pesan ? $order->waktu_pesan->copy()->timezone('Asia/Jakarta')->format('d M H:i') : '' }} WIB</span>
                                     <span class="text-slate-300">•</span>
                                     <span class="capitalize">💳 {{ strtoupper($order->metode_pembayaran ?: 'QRIS') }}</span>
                                 </div>

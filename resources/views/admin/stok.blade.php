@@ -76,52 +76,8 @@
         <!-- ====================================== -->
         <!-- TOPBAR NAVIGATION                      -->
         <!-- ====================================== -->
-        <header class="bg-white/95 backdrop-blur border-b border-slate-200/80 px-4 md:px-8 py-3 sticky top-0 z-30 flex flex-col sm:flex-row items-center justify-between gap-4">
-            
-            <!-- Search bar -->
-            <div class="relative w-full sm:w-96">
-                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                </div>
-                <input 
-                    type="text" 
-                    id="searchStockInput"
-                    placeholder="Cari no. antrean, nota, nama..." 
-                    class="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition placeholder:text-slate-400 font-medium"
-                    onkeyup="filterStockTable(this.value)"
-                >
-            </div>
-
-            <!-- Topbar Badges & Actions -->
-            <div class="flex items-center gap-3 flex-wrap justify-end w-full sm:w-auto">
-                
-
-
-                <!-- Live Clock Capsule -->
-                <div class="flex items-center gap-2 bg-slate-100/80 border border-slate-200 px-3 py-1.5 rounded-full text-xs font-mono font-medium text-slate-700">
-                    <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    <span id="liveClockDisplay">{{ date('H:i') }} WIB • {{ date('d M') }}</span>
-                </div>
-
-                <!-- Notification Bell -->
-                <button class="relative p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition" onclick="alert('Pemberitahuan stok dan logistik telah diperbarui real-time.')">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                    </svg>
-                    @if($stokMenipis > 0 || $stokKritis > 0)
-                    <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white"></span>
-                    @endif
-                </button>
-
-                <!-- Profile Circle -->
-                <div class="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold text-xs ring-2 ring-amber-200">
-                    FA
-                </div>
-            </div>
+        <header class="bg-white/95 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-30 px-4 md:px-8 py-3 flex items-center justify-end min-h-[60px]">
+            @include('admin.partials.topbar-right')
         </header>
 
         <!-- Flash Message Notification -->

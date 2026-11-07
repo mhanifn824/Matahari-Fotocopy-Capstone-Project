@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -93,7 +95,9 @@ class Pesanan extends Model
             return $this->nomor_nota_kustom;
         }
 
-        $datePrefix = ($this->waktu_pesan ?? $this->created_at ?? now())->format('ym');
+        $time = $this->waktu_pesan ?? $this->created_at ?? now();
+        $carbon = ($time instanceof CarbonInterface ? $time->copy() : Carbon::parse($time))->timezone('Asia/Jakarta');
+        $datePrefix = $carbon->format('ym');
 
         return '#MF-'.$datePrefix.'-'.str_pad((string) $this->pesanan_id, 3, '0', STR_PAD_LEFT);
     }
@@ -149,7 +153,10 @@ class Pesanan extends Model
             return $this->tenggat_waktu;
         }
 
-        return ($this->waktu_pesan ?? $this->created_at ?? now())->addMinutes(30)->format('H:i').' WIB';
+        $time = $this->waktu_pesan ?? $this->created_at ?? now();
+        $carbon = ($time instanceof CarbonInterface ? $time->copy() : Carbon::parse($time))->timezone('Asia/Jakarta');
+
+        return $carbon->addMinutes(30)->format('H:i').' WIB';
     }
 
     public function getKodeNotaWalkInAttribute(): string
@@ -159,7 +166,10 @@ class Pesanan extends Model
 
     public function getWaktuTransaksiFormatAttribute(): string
     {
-        return ($this->waktu_pesan ?? $this->created_at ?? now())->format('H:i').' WIB';
+        $time = $this->waktu_pesan ?? $this->created_at ?? now();
+        $carbon = ($time instanceof CarbonInterface ? $time->copy() : Carbon::parse($time))->timezone('Asia/Jakarta');
+
+        return $carbon->format('H:i').' WIB';
     }
 
     public function getMetodeBadgeClassAttribute(): string

@@ -74,7 +74,7 @@
     <div class="flex-1 flex flex-col min-h-screen overflow-x-hidden">
         
         <!-- TOP HEADER BAR -->
-        <header class="bg-white/80 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-30 px-4 sm:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
+        <header class="bg-white/95 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-30 px-4 md:px-8 py-3 flex items-center justify-between gap-4 min-h-[60px]">
             
             <!-- Search Bar Field -->
             <div class="relative flex-1 max-w-md">
@@ -86,35 +86,7 @@
                 <input type="text" id="header-search-input" onkeyup="filterQueueClientSide()" placeholder="Cari no. antrean, nota, nama..." class="w-full pl-10 pr-4 py-2 text-xs bg-slate-100/90 hover:bg-slate-100 focus:bg-white border border-slate-200/80 rounded-full focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition text-slate-800 placeholder-slate-400">
             </div>
 
-            <!-- Right Info & Actions -->
-            <div class="flex items-center gap-3 sm:gap-4">
-                
-
-
-                <!-- Live Clock & Date -->
-                <div class="flex items-center gap-2 text-xs font-semibold text-slate-600 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-200/60 font-mono">
-                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    <span id="live-clock">14:32 WIB • 24 Okt</span>
-                </div>
-
-                <!-- Notification Bell -->
-                <div class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition relative cursor-pointer">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                    </svg>
-                    <span class="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-white"></span>
-                </div>
-
-                <!-- User Profile Avatar (Warm Brown/Caramel Circle) -->
-                <div class="w-8 h-8 rounded-full bg-[#92400e] text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                    <svg class="w-4 h-4 text-amber-100" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
-                    </svg>
-                </div>
-
-            </div>
+            @include('admin.partials.topbar-right')
 
         </header>
 
@@ -125,11 +97,6 @@
             <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
                 
                 <div>
-                    <div class="flex items-center gap-2 mb-1">
-                        <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider font-mono bg-amber-100 text-amber-800 border border-amber-200">
-                            LOKET DIGITAL GERAI
-                        </span>
-                    </div>
                     <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
                         Pembelian Online
                     </h1>
@@ -172,26 +139,28 @@
             <!-- ========================================== -->
             <!-- DUA TABEL PEMBELIAN ONLINE: PRINT VS ATK  -->
             <!-- ========================================== -->
-            <div class="flex items-center gap-2 border-b border-slate-200 pb-2.5 overflow-x-auto scrollbar-none">
-                <button type="button" id="tab-btn-printing" onclick="switchOnlineTab('printing')" class="px-5 py-2.5 rounded-2xl font-black text-xs transition flex items-center gap-2.5 bg-[#f59e0b] text-white shadow-sm active:scale-95 shrink-0">
-                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-                    </svg>
-                    <span>1. Pembelian Khusus Printing (Antrean Workshop)</span>
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-white/25 text-white">
-                        {{ $workshopData['total'] ?? 0 }}
-                    </span>
-                </button>
+            <div class="flex items-center gap-2 overflow-x-auto scrollbar-none pb-0.5">
+                <div class="bg-slate-100/90 p-1.5 rounded-2xl border border-slate-200/80 inline-flex items-center gap-1.5 shadow-2xs">
+                    <button type="button" id="tab-btn-printing" onclick="switchOnlineTab('printing')" class="px-4 sm:px-5 py-2.5 rounded-xl font-black text-xs transition flex items-center gap-2.5 bg-[#f59e0b] text-white shadow-sm active:scale-95 shrink-0">
+                        <svg class="w-4 h-4 text-white shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                        </svg>
+                        <span>1. Pembelian Khusus Printing (Antrean Workshop)</span>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-white/25 text-white">
+                            {{ $workshopData['total'] ?? 0 }}
+                        </span>
+                    </button>
 
-                <button type="button" id="tab-btn-atk" onclick="switchOnlineTab('atk')" class="px-5 py-2.5 rounded-2xl font-bold text-xs transition flex items-center gap-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-2xs active:scale-95 shrink-0">
-                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                    </svg>
-                    <span>2. Pembelian Khusus ATK (Alat Tulis Kantor)</span>
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-100 text-blue-700">
-                        {{ $activeAtkCount ?? 0 }}
-                    </span>
-                </button>
+                    <button type="button" id="tab-btn-atk" onclick="switchOnlineTab('atk')" class="px-4 sm:px-5 py-2.5 rounded-xl font-bold text-xs transition flex items-center gap-2.5 text-slate-600 hover:text-slate-900 hover:bg-white/70 active:scale-95 shrink-0">
+                        <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                        </svg>
+                        <span>2. Pembelian Khusus ATK (Alat Tulis Kantor)</span>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-100 text-blue-700">
+                            {{ $activeAtkCount ?? 0 }}
+                        </span>
+                    </button>
+                </div>
             </div>
 
             <!-- ======================================================== -->
@@ -235,18 +204,18 @@
             <!-- ========================================== -->
             <div id="view-table-container" class="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
                 <div class="overflow-x-auto custom-scrollbar">
-                    <table class="w-full text-left text-xs" id="antrean-table">
+                    <table class="w-full text-left text-xs min-w-[1020px]" id="antrean-table">
                         <thead class="bg-[#f0f6ff]/70 text-slate-500 font-bold uppercase text-[10px] tracking-wider border-b border-slate-100">
                             <tr>
-                                <th class="py-3.5 px-4">ANTREAN</th>
-                                <th class="py-3.5 px-4">NO. NOTA</th>
-                                <th class="py-3.5 px-4">PELANGGAN</th>
-                                <th class="py-3.5 px-4">DOKUMEN & SPESIFIKASI</th>
-                                <th class="py-3.5 px-4">MESIN / OPERATOR</th>
-                                <th class="py-3.5 px-4">TENGGAT</th>
-                                <th class="py-3.5 px-4">PEMBAYARAN</th>
-                                <th class="py-3.5 px-4">STATUS ALUR</th>
-                                <th class="py-3.5 px-4 text-center">AKSI</th>
+                                <th class="py-3.5 px-4 whitespace-nowrap">ANTREAN</th>
+                                <th class="py-3.5 px-4 whitespace-nowrap">NO. NOTA</th>
+                                <th class="py-3.5 px-4 min-w-[140px]">PELANGGAN</th>
+                                <th class="py-3.5 px-4 min-w-[200px]">DOKUMEN &amp; SPESIFIKASI</th>
+                                <th class="py-3.5 px-4 whitespace-nowrap">MESIN / OPERATOR</th>
+                                <th class="py-3.5 px-4 whitespace-nowrap">TENGGAT</th>
+                                <th class="py-3.5 px-4 whitespace-nowrap">PEMBAYARAN</th>
+                                <th class="py-3.5 px-4 whitespace-nowrap">STATUS ALUR</th>
+                                <th class="py-3.5 px-4 text-center whitespace-nowrap">AKSI</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100" id="antrean-table-body">
@@ -255,22 +224,25 @@
                                     $pesanan = $q->pesanan;
                                     $badgeColor = $q->badge_alur_color;
                                 @endphp
-                                <tr class="hover:bg-slate-50/70 transition antrean-row" data-search="{{ strtolower($q->kode_antrean . ' ' . ($pesanan?->nomor_nota ?? '') . ' ' . ($pesanan?->display_name ?? '') . ' ' . ($pesanan?->display_judul ?? '')) }}">
+                                <tr class="hover:bg-slate-50/70 transition antrean-row" data-search="{{ strtolower($q->kode_antrean . ' ' . ($pesanan?->nomor_nota ?? '') . ' ' . str_replace('#', '', $pesanan?->nomor_nota ?? '') . ' ' . ($pesanan?->display_name ?? '') . ' ' . ($pesanan?->display_judul ?? '')) }}">
                                     
                                     <!-- ANTREAN -->
-                                    <td class="py-3.5 px-4">
+                                    <td class="py-3.5 px-4 whitespace-nowrap">
                                         <span class="inline-flex items-center px-2.5 py-1 rounded-lg font-bold font-mono text-xs shadow-2xs {{ $loop->first ? 'bg-[#f59e0b] text-white' : 'bg-blue-50 text-blue-700 border border-blue-100' }}">
                                             {{ $q->kode_antrean }}
                                         </span>
                                     </td>
 
                                     <!-- NO. NOTA -->
-                                    <td class="py-3.5 px-4 font-mono font-extrabold text-[#b45309]">
-                                        {{ $pesanan?->nomor_nota ?? '#MF-'.str_pad($q->pesanan_id, 3, '0', STR_PAD_LEFT) }}
+                                    <td class="py-3.5 px-4 font-mono font-extrabold text-[#b45309] whitespace-nowrap">
+                                        <div>{{ $pesanan?->nomor_nota ?? '#MF-'.str_pad((string)$q->pesanan_id, 3, '0', STR_PAD_LEFT) }}</div>
+                                        <div class="text-[10px] text-slate-400 font-mono mt-0.5 font-normal">
+                                            {{ ($pesanan?->waktu_pesan ?? $q->created_at)?->copy()->timezone('Asia/Jakarta')->format('d M • H:i') }} WIB
+                                        </div>
                                     </td>
 
                                     <!-- PELANGGAN -->
-                                    <td class="py-3.5 px-4">
+                                    <td class="py-3.5 px-4 min-w-[140px]">
                                         <div class="font-extrabold text-slate-900 leading-tight">
                                             {{ $pesanan?->display_name ?? 'Pelanggan' }}
                                         </div>
@@ -299,7 +271,7 @@
                                     </td>
 
                                     <!-- DOKUMEN & SPESIFIKASI -->
-                                    <td class="py-3.5 px-4 max-w-xs">
+                                    <td class="py-3.5 px-4 min-w-[200px] max-w-xs">
                                         <div class="font-bold text-slate-800 truncate">
                                             {{ $pesanan?->display_judul ?? 'Dokumen Cetak' }}
                                         </div>
@@ -309,7 +281,7 @@
                                     </td>
 
                                     <!-- MESIN / OPERATOR -->
-                                    <td class="py-3.5 px-4">
+                                    <td class="py-3.5 px-4 whitespace-nowrap">
                                         <div class="font-bold text-slate-800 leading-tight">
                                             {{ $q->nama_mesin ?? 'Mesin Konica 1' }}
                                         </div>
@@ -319,7 +291,7 @@
                                     </td>
 
                                     <!-- TENGGAT -->
-                                    <td class="py-3.5 px-4">
+                                    <td class="py-3.5 px-4 whitespace-nowrap">
                                         <div class="font-mono font-bold leading-tight {{ str_contains($q->keterangan_tenggat ?? '', 'Mendesak') ? 'text-rose-600' : 'text-slate-800' }}">
                                             {{ $pesanan?->display_tenggat ?? '15:30 WIB' }}
                                         </div>
@@ -329,7 +301,7 @@
                                     </td>
 
                                     <!-- PEMBAYARAN -->
-                                    <td class="py-3.5 px-4">
+                                    <td class="py-3.5 px-4 whitespace-nowrap">
                                         @if(($q->status_pembayaran ?? 'lunas') === 'belum_bayar')
                                             <div>
                                                 <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200">
@@ -352,7 +324,7 @@
                                     </td>
 
                                     <!-- STATUS ALUR -->
-                                    <td class="py-3.5 px-4">
+                                    <td class="py-3.5 px-4 whitespace-nowrap">
                                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold {{ $badgeColor['bg'] }} {{ $badgeColor['text'] }} border {{ $badgeColor['border'] }}">
                                             <span class="w-1.5 h-1.5 rounded-full {{ $badgeColor['dot'] }}"></span>
                                             <span>{{ $q->status_alur ?? 'Diterima' }}</span>
@@ -360,7 +332,7 @@
                                     </td>
 
                                     <!-- AKSI -->
-                                    <td class="py-3.5 px-4 text-center">
+                                    <td class="py-3.5 px-4 text-center whitespace-nowrap">
                                         @php
                                             $alur = strtolower($q->status_alur ?? 'menunggu');
                                             $statusAntrean = strtolower($q->status_antrean ?? 'menunggu');
@@ -423,6 +395,21 @@
                                     </td>
                                 </tr>
                             @endforelse
+
+                            <!-- Search Not Found State -->
+                            <tr id="search-not-found-antrean" style="display: none;">
+                                <td colspan="9" class="py-12 px-4 text-center">
+                                    <div class="flex flex-col items-center justify-center max-w-sm mx-auto space-y-2">
+                                        <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                            </svg>
+                                        </div>
+                                        <p class="font-bold text-slate-700 text-sm">Data tidak tersedia</p>
+                                        <p class="text-xs text-slate-400 not-found-msg">Tidak ada data antrean atau pesanan online yang sesuai.</p>
+                                    </div>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -471,7 +458,8 @@
                     </div>
                     <div class="space-y-2.5">
                         @forelse($antreanList->where('status_alur', 'Diterima') as $q)
-                            <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs space-y-1.5 text-xs">
+                            @php $pesanan = $q->pesanan; @endphp
+                            <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs space-y-1.5 text-xs antrean-kanban-card" data-search="{{ strtolower($q->kode_antrean . ' ' . ($pesanan?->nomor_nota ?? '') . ' ' . str_replace('#', '', $pesanan?->nomor_nota ?? '') . ' ' . ($pesanan?->display_name ?? '') . ' ' . ($pesanan?->display_judul ?? '')) }}">
                                 <div class="flex justify-between items-center">
                                     <span class="font-bold text-blue-700 font-mono">{{ $q->kode_antrean }}</span>
                                     <span class="text-[10px] text-slate-400 font-mono">{{ $q->pesanan?->nomor_nota }}</span>
@@ -501,7 +489,8 @@
                     </div>
                     <div class="space-y-2.5">
                         @forelse($antreanList->where('status_alur', 'Sedang Cetak') as $q)
-                            <div class="bg-white p-3.5 rounded-xl border border-blue-200 shadow-2xs space-y-1.5 text-xs">
+                            @php $pesanan = $q->pesanan; @endphp
+                            <div class="bg-white p-3.5 rounded-xl border border-blue-200 shadow-2xs space-y-1.5 text-xs antrean-kanban-card" data-search="{{ strtolower($q->kode_antrean . ' ' . ($pesanan?->nomor_nota ?? '') . ' ' . str_replace('#', '', $pesanan?->nomor_nota ?? '') . ' ' . ($pesanan?->display_name ?? '') . ' ' . ($pesanan?->display_judul ?? '')) }}">
                                 <div class="flex justify-between items-center">
                                     <span class="font-bold text-blue-700 font-mono">{{ $q->kode_antrean }}</span>
                                     <span class="text-[10px] text-rose-500 font-bold font-mono">{{ $q->keterangan_tenggat }}</span>
@@ -526,7 +515,8 @@
                     </div>
                     <div class="space-y-2.5">
                         @forelse($antreanList->where('status_alur', 'Sedang Jilid') as $q)
-                            <div class="bg-white p-3.5 rounded-xl border border-amber-200 shadow-2xs space-y-1.5 text-xs">
+                            @php $pesanan = $q->pesanan; @endphp
+                            <div class="bg-white p-3.5 rounded-xl border border-amber-200 shadow-2xs space-y-1.5 text-xs antrean-kanban-card" data-search="{{ strtolower($q->kode_antrean . ' ' . ($pesanan?->nomor_nota ?? '') . ' ' . str_replace('#', '', $pesanan?->nomor_nota ?? '') . ' ' . ($pesanan?->display_name ?? '') . ' ' . ($pesanan?->display_judul ?? '')) }}">
                                 <div class="flex justify-between items-center">
                                     <span class="font-bold text-amber-700 font-mono">{{ $q->kode_antrean }}</span>
                                     <span class="text-[10px] text-slate-400 font-mono">{{ $q->pesanan?->nomor_nota }}</span>
@@ -551,7 +541,8 @@
                     </div>
                     <div class="space-y-2.5">
                         @forelse($antreanList->where('status_alur', 'Siap Diambil') as $q)
-                            <div class="bg-white p-3.5 rounded-xl border border-emerald-200 shadow-2xs space-y-1.5 text-xs">
+                            @php $pesanan = $q->pesanan; @endphp
+                            <div class="bg-white p-3.5 rounded-xl border border-emerald-200 shadow-2xs space-y-1.5 text-xs antrean-kanban-card" data-search="{{ strtolower($q->kode_antrean . ' ' . ($pesanan?->nomor_nota ?? '') . ' ' . str_replace('#', '', $pesanan?->nomor_nota ?? '') . ' ' . ($pesanan?->display_name ?? '') . ' ' . ($pesanan?->display_judul ?? '')) }}">
                                 <div class="flex justify-between items-center">
                                     <span class="font-bold text-emerald-700 font-mono">{{ $q->kode_antrean }}</span>
                                     <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">Siap Pickup</span>
@@ -599,16 +590,16 @@
 
                     <!-- ATK Table -->
                     <div class="overflow-x-auto custom-scrollbar">
-                        <table class="w-full text-left text-xs" id="atk-table">
+                        <table class="w-full text-left text-xs min-w-[850px]" id="atk-table">
                             <thead class="bg-[#f0f6ff]/70 text-slate-500 font-bold uppercase text-[10px] tracking-wider border-b border-slate-100">
                                 <tr>
-                                    <th class="py-3.5 px-4">TIKET &amp; NOTA</th>
-                                    <th class="py-3.5 px-4">PELANGGAN</th>
-                                    <th class="py-3.5 px-4">DAFTAR ITEM ATK &amp; CATATAN</th>
-                                    <th class="py-3.5 px-4">TOTAL BELANJA</th>
-                                    <th class="py-3.5 px-4">PEMBAYARAN</th>
-                                    <th class="py-3.5 px-4">STATUS PENGAMBILAN</th>
-                                    <th class="py-3.5 px-4 text-center">AKSI SERAH TERIMA</th>
+                                    <th class="py-3.5 px-4 whitespace-nowrap">TIKET &amp; NOTA</th>
+                                    <th class="py-3.5 px-4 min-w-[140px]">PELANGGAN</th>
+                                    <th class="py-3.5 px-4 min-w-[200px]">DAFTAR ITEM ATK &amp; CATATAN</th>
+                                    <th class="py-3.5 px-4 whitespace-nowrap">TOTAL BELANJA</th>
+                                    <th class="py-3.5 px-4 whitespace-nowrap">PEMBAYARAN</th>
+                                    <th class="py-3.5 px-4 whitespace-nowrap">STATUS PENGAMBILAN</th>
+                                    <th class="py-3.5 px-4 text-center whitespace-nowrap">AKSI SERAH TERIMA</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100" id="atk-table-body">
@@ -617,7 +608,7 @@
                                         $pesanan = $atk->pesanan;
                                         $isSelesai = in_array(strtolower($atk->status_alur ?? $atk->status_antrean ?? ''), ['selesai'], true) || ($pesanan?->status_pesanan === 'selesai');
                                     @endphp
-                                    <tr class="hover:bg-slate-50/70 transition atk-row" data-search="{{ strtolower($atk->kode_antrean . ' ' . ($pesanan?->nomor_nota ?? '') . ' ' . ($pesanan?->display_name ?? '') . ' ' . ($pesanan?->spesifikasi ?? '')) }}">
+                                    <tr class="hover:bg-slate-50/70 transition atk-row" data-search="{{ strtolower($atk->kode_antrean . ' ' . ($pesanan?->nomor_nota ?? '') . ' ' . str_replace('#', '', $pesanan?->nomor_nota ?? '') . ' ' . ($pesanan?->display_name ?? '') . ' ' . ($pesanan?->spesifikasi ?? '')) }}">
                                         
                                         <!-- TIKET & NOTA -->
                                         <td class="py-3.5 px-4 whitespace-nowrap">
@@ -630,7 +621,7 @@
                                                 </span>
                                             </div>
                                             <div class="text-[10px] text-slate-400 font-mono mt-1">
-                                                {{ ($pesanan?->waktu_pesan ?? $atk->created_at)->translatedFormat('d M • H:i') }} WIB
+                                                {{ ($pesanan?->waktu_pesan ?? $atk->created_at)->copy()->timezone('Asia/Jakarta')->translatedFormat('d M • H:i') }} WIB
                                             </div>
                                         </td>
 
@@ -723,6 +714,21 @@
                                         </td>
                                     </tr>
                                 @endforelse
+
+                                <!-- Search Not Found State for ATK -->
+                                <tr id="search-not-found-atk" style="display: none;">
+                                    <td colspan="7" class="py-12 px-4 text-center">
+                                        <div class="flex flex-col items-center justify-center max-w-sm mx-auto space-y-2">
+                                            <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                                </svg>
+                                            </div>
+                                            <p class="font-bold text-slate-700 text-sm">Data tidak tersedia</p>
+                                            <p class="text-xs text-slate-400 not-found-msg">Tidak ada data pesanan ATK online yang sesuai.</p>
+                                        </div>
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -810,14 +816,14 @@
             const viewToggles = document.getElementById('printing-view-toggles');
 
             if (tab === 'atk') {
-                if (btnPrint) btnPrint.className = "px-5 py-2.5 rounded-2xl font-bold text-xs transition flex items-center gap-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-2xs active:scale-95 shrink-0";
-                if (btnAtk) btnAtk.className = "px-5 py-2.5 rounded-2xl font-black text-xs transition flex items-center gap-2.5 bg-[#f59e0b] text-white shadow-sm active:scale-95 shrink-0";
+                if (btnPrint) btnPrint.className = "px-4 sm:px-5 py-2.5 rounded-xl font-bold text-xs transition flex items-center gap-2.5 text-slate-600 hover:text-slate-900 hover:bg-white/70 active:scale-95 shrink-0";
+                if (btnAtk) btnAtk.className = "px-4 sm:px-5 py-2.5 rounded-xl font-black text-xs transition flex items-center gap-2.5 bg-[#f59e0b] text-white shadow-sm active:scale-95 shrink-0";
                 if (secPrint) secPrint.classList.add('hidden');
                 if (secAtk) secAtk.classList.remove('hidden');
                 if (viewToggles) viewToggles.classList.add('hidden');
             } else {
-                if (btnPrint) btnPrint.className = "px-5 py-2.5 rounded-2xl font-black text-xs transition flex items-center gap-2.5 bg-[#f59e0b] text-white shadow-sm active:scale-95 shrink-0";
-                if (btnAtk) btnAtk.className = "px-5 py-2.5 rounded-2xl font-bold text-xs transition flex items-center gap-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-2xs active:scale-95 shrink-0";
+                if (btnPrint) btnPrint.className = "px-4 sm:px-5 py-2.5 rounded-xl font-black text-xs transition flex items-center gap-2.5 bg-[#f59e0b] text-white shadow-sm active:scale-95 shrink-0";
+                if (btnAtk) btnAtk.className = "px-4 sm:px-5 py-2.5 rounded-xl font-bold text-xs transition flex items-center gap-2.5 text-slate-600 hover:text-slate-900 hover:bg-white/70 active:scale-95 shrink-0";
                 if (secPrint) secPrint.classList.remove('hidden');
                 if (secAtk) secAtk.classList.add('hidden');
                 if (viewToggles) viewToggles.classList.remove('hidden');
@@ -842,16 +848,22 @@
             let printVisible = 0;
             printRows.forEach(r => {
                 const text = r.getAttribute('data-search') || '';
-                if (text.includes(query)) {
+                if (query === '' || text.includes(query)) {
                     r.style.display = '';
                     printVisible++;
                 } else {
                     r.style.display = 'none';
                 }
             });
-            const emptyPrintRow = document.getElementById('empty-state-antrean');
-            if (emptyPrintRow && printRows.length > 0) {
-                emptyPrintRow.style.display = (printVisible === 0 && query !== '') ? '' : 'none';
+            const searchNotFoundPrint = document.getElementById('search-not-found-antrean');
+            if (searchNotFoundPrint) {
+                if (printRows.length > 0 && query !== '' && printVisible === 0) {
+                    searchNotFoundPrint.style.display = '';
+                    const msg = searchNotFoundPrint.querySelector('.not-found-msg');
+                    if (msg) msg.textContent = `Data antrean atau pesanan online untuk "${query}" tidak ditemukan.`;
+                } else {
+                    searchNotFoundPrint.style.display = 'none';
+                }
             }
 
             // Filter ATK table
@@ -859,17 +871,30 @@
             let atkVisible = 0;
             atkRows.forEach(r => {
                 const text = r.getAttribute('data-search') || '';
-                if (text.includes(query)) {
+                if (query === '' || text.includes(query)) {
                     r.style.display = '';
                     atkVisible++;
                 } else {
                     r.style.display = 'none';
                 }
             });
-            const emptyAtkRow = document.getElementById('empty-state-atk');
-            if (emptyAtkRow && atkRows.length > 0) {
-                emptyAtkRow.style.display = (atkVisible === 0 && query !== '') ? '' : 'none';
+            const searchNotFoundAtk = document.getElementById('search-not-found-atk');
+            if (searchNotFoundAtk) {
+                if (atkRows.length > 0 && query !== '' && atkVisible === 0) {
+                    searchNotFoundAtk.style.display = '';
+                    const msg = searchNotFoundAtk.querySelector('.not-found-msg');
+                    if (msg) msg.textContent = `Data pesanan ATK online untuk "${query}" tidak ditemukan.`;
+                } else {
+                    searchNotFoundAtk.style.display = 'none';
+                }
             }
+
+            // Also filter Kanban cards if present
+            const kanbanCards = document.querySelectorAll('.antrean-kanban-card');
+            kanbanCards.forEach(card => {
+                const text = card.getAttribute('data-search') || '';
+                card.style.display = (query === '' || text.includes(query)) ? '' : 'none';
+            });
         }
 
         // Action Button Handler

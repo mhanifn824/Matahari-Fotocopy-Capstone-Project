@@ -78,71 +78,8 @@
     <div class="flex-1 flex flex-col min-h-screen overflow-x-hidden">
         
         <!-- TOP HEADER BAR -->
-        <header class="bg-white/80 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-30 px-4 sm:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
-            
-            <!-- Search Bar Field -->
-            <div class="relative flex-1 max-w-md">
-                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                </span>
-                <input type="text" id="global-search-input" onkeyup="filterQueueTable()" placeholder="Cari no. antrean, nota, nama..." class="w-full pl-10 pr-4 py-2 text-xs bg-slate-100/90 hover:bg-slate-100 focus:bg-white border border-slate-200/80 rounded-full focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition text-slate-800 placeholder-slate-400">
-            </div>
-
-            <!-- Right Info & Actions -->
-            <div class="flex items-center gap-3 sm:gap-4">
-                
-
-
-                <!-- Live Clock & Date -->
-                <div class="flex items-center gap-2 text-xs font-semibold text-slate-600 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-200/60 font-mono">
-                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    <span id="live-clock">14:32 WIB • 24 Okt</span>
-                </div>
-
-                <!-- Notification Bell with Red Badge -->
-                <div class="relative">
-                    <button type="button" onclick="toggleNotificationDropdown()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                        </svg>
-                    </button>
-                    <span id="notif-badge" class="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-white {{ $stats['bahan_kritis_count'] > 0 ? '' : 'hidden' }}"></span>
-
-                    <!-- Dropdown notification box -->
-                    <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-200 p-4 z-50 text-xs space-y-2">
-                        <div class="flex items-center justify-between pb-2 border-b border-slate-100 font-bold text-slate-800">
-                            <span>Notifikasi Real-Time</span>
-                            <span class="text-[10px] text-amber-600 font-mono font-normal">Sistem Live</span>
-                        </div>
-                        <div id="notif-content" class="space-y-2">
-                            @if($stats['bahan_kritis_count'] > 0)
-                                <div class="p-2.5 rounded-xl bg-rose-50 border border-rose-100 text-rose-800">
-                                    <p class="font-bold">Peringatan Bahan Menipis!</p>
-                                    <p class="text-[11px] text-rose-600 mt-0.5">Tersisa {{ $stats['bahan_kritis_count'] }} item inventaris di bawah batas aman.</p>
-                                </div>
-                            @else
-                                <div class="p-2.5 rounded-xl bg-emerald-50 text-emerald-800">
-                                    <p class="font-bold">Status Sistem Normal</p>
-                                    <p class="text-[11px] text-emerald-600 mt-0.5">Semua stok bahan baku aman dan siap melayani pesanan.</p>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-
-                <!-- User Profile Silhouette (Warm Brown/Caramel Circle) -->
-                <div class="w-8 h-8 rounded-full bg-[#92400e] text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                    <svg class="w-4 h-4 text-amber-100" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
-                    </svg>
-                </div>
-
-            </div>
-
+        <header class="bg-white/95 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-30 px-4 md:px-8 py-3 flex items-center justify-end min-h-[60px]">
+            @include('admin.partials.topbar-right')
         </header>
 
         <!-- MAIN DASHBOARD CONTENT BODY -->
@@ -724,7 +661,10 @@
 
                                     <!-- NO NOTA -->
                                     <td class="py-3.5 px-4 font-mono font-bold text-slate-700">
-                                        {{ $pesanan?->nomor_nota ?? '#MF-'.str_pad($antrean->pesanan_id, 3, '0', STR_PAD_LEFT) }}
+                                        <div>{{ $pesanan?->nomor_nota ?? '#MF-'.str_pad($antrean->pesanan_id, 3, '0', STR_PAD_LEFT) }}</div>
+                                        <div class="text-[10px] text-slate-400 font-mono mt-0.5 font-normal">
+                                            {{ ($pesanan?->waktu_pesan ?? $antrean->created_at)?->copy()->timezone('Asia/Jakarta')->format('d M • H:i') }} WIB
+                                        </div>
                                     </td>
 
                                     <!-- PELANGGAN -->
@@ -1163,7 +1103,9 @@
 
         // Search Filter on Table
         function filterQueueTable() {
-            const query = document.getElementById('global-search-input').value.toLowerCase().trim();
+            const input = document.getElementById('global-search-input');
+            if (!input) return;
+            const query = input.value.toLowerCase().trim();
             const rows = document.querySelectorAll('#queue-table-body tr.queue-row');
             let visibleCount = 0;
 

@@ -203,6 +203,155 @@ class DashboardController extends Controller
     }
 
     /**
+     * Provide real-time centralized notifications across all Admin pages.
+     */
+    public function globalNotifications(Request $request): JsonResponse
+    {
+        $readIds = session()->get('admin_read_notification_ids', []);
+        if (! is_array($readIds)) {
+            $readIds = [];
+        }
+
+        $notifications = [];
+
+        // 1. Notifikasi Pesanan (Pembelian Online)
+        $latestOrders = Pesanan::where('jenis_pesanan', 'online')
+            ->where('status_pesanan', '!=', 'dibatalkan')
+            ->orderBy('waktu_pesan', 'desc')
+            ->take(8)
+            ->get();
+
+        foreach ($latestOrders as $order) {
+            $id = 'order_'.$order->pesanan_id;
+            $orderTime = $order->waktu_pesan ? Carbon::parse($order->waktu_pesan)->timezone('Asia/Jakarta') : $order->created_at?->timezone('Asia/Jakarta');
+            $timeStr = $orderTime ? $orderTime->locale('id')->diffForHumans() : 'Baru saja';
+            $nomorNota = $order->nomor_nota ?? ('#MF-'.str_pad((string) $order->pesanan_id, 3, '0', STR_PAD_LEFT));
+            $namaPemesan = $order->nama_pemesan ?: 'Pelanggan Online';
+            $judul = $order->judul_dokumen ?: ($order->kategori_layanan ?: 'Pesanan Online');
+            $nominal = 'Rp '.number_format($order->total_harga, 0, ',', '.');
+
+            $notifications[] = [
+                'id' => $id,
+                'type' => 'pesanan',
+                'title' => 'Pesanan Online Masuk',
+                'message' => "{$nomorNota} • {$namaPemesan} ({$judul}) - {$nominal}",
+                'time' => $timeStr,
+                'timestamp' => $orderTime ? $orderTime->timestamp : now()->timestamp,
+                'url' => route('admin.antrean.index'),
+                'badge' => 'Pesanan Online',
+                'badge_color' => 'bg-amber-100 text-amber-800',
+                'is_read' => in_array($id, $readIds, true),
+            ];
+        }
+
+        // 2. Notifikasi Stok Menipis (Batas Minimum)
+        $criticalStocks = InventarisStok::whereColumn('jumlah_stok', '<=', 'batas_minimum')
+            ->orderBy('jumlah_stok', 'asc')
+            ->take(6)
+            ->get();
+
+        foreach ($criticalStocks as $stock) {
+            $id = 'stock_'.$stock->bahan_id;
+            $stockTime = $stock->updated_at ? Carbon::parse($stock->updated_at) : now();
+            $notifications[] = [
+                'id' => $id,
+                'type' => 'stok',
+                'title' => 'Peringatan Stok Menipis!',
+                'message' => "{$stock->nama_bahan} tersisa {$stock->jumlah_stok} {$stock->satuan} (Min: {$stock->batas_minimum} {$stock->satuan})",
+                'time' => 'Batas Kritis',
+                'timestamp' => $stockTime->timestamp,
+                'url' => route('admin.stok.index'),
+                'badge' => 'Stok Menipis',
+                'badge_color' => 'bg-rose-100 text-rose-800',
+                'is_read' => in_array($id, $readIds, true),
+            ];
+        }
+
+        // 3. Notifikasi Member Baru Registrasi
+        $newMembers = User::where('role', 'user')
+            ->orderBy('created_at', 'desc')
+            ->take(6)
+            ->get();
+
+        foreach ($newMembers as $member) {
+            $id = 'member_'.$member->user_id;
+            $memberTime = $member->created_at ? Carbon::parse($member->created_at) : now();
+            $timeStr = $memberTime->locale('id')->diffForHumans();
+            $kontak = $member->nomor_telepon ?: $member->email;
+
+            $notifications[] = [
+                'id' => $id,
+                'type' => 'member',
+                'title' => 'Member Baru Bergabung',
+                'message' => "{$member->nama} ({$kontak}) telah mendaftar sebagai member.",
+                'time' => $timeStr,
+                'timestamp' => $memberTime->timestamp,
+                'url' => route('admin.member.index'),
+                'badge' => 'Member Baru',
+                'badge_color' => 'bg-blue-100 text-blue-800',
+                'is_read' => in_array($id, $readIds, true),
+            ];
+        }
+
+        usort($notifications, function ($a, $b) {
+            return $b['timestamp'] <=> $a['timestamp'];
+        });
+
+        $unreadCount = count(array_filter($notifications, function ($n) {
+            return empty($n['is_read']);
+        }));
+
+        return response()->json([
+            'status' => 'success',
+            'notifications' => $notifications,
+            'unread_count' => $unreadCount,
+            'read_ids' => $readIds,
+        ]);
+    }
+
+    /**
+     * Mark a single notification as read in session.
+     */
+    public function markNotificationRead(Request $request): JsonResponse
+    {
+        $id = $request->input('id');
+        $readIds = session()->get('admin_read_notification_ids', []);
+        if (! is_array($readIds)) {
+            $readIds = [];
+        }
+
+        if ($id && ! in_array($id, $readIds, true)) {
+            $readIds[] = $id;
+            session()->put('admin_read_notification_ids', $readIds);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'read_ids' => $readIds,
+        ]);
+    }
+
+    /**
+     * Mark all notifications as read in session.
+     */
+    public function markAllNotificationsRead(Request $request): JsonResponse
+    {
+        $ids = $request->input('ids', []);
+        $readIds = session()->get('admin_read_notification_ids', []);
+        if (! is_array($readIds)) {
+            $readIds = [];
+        }
+
+        $readIds = array_values(array_unique(array_merge($readIds, (array) $ids)));
+        session()->put('admin_read_notification_ids', $readIds);
+
+        return response()->json([
+            'status' => 'success',
+            'read_ids' => $readIds,
+        ]);
+    }
+
+    /**
      * Provide real-time data for Antrean Mesin view.
      */
     public function antreanLiveData(): JsonResponse
@@ -277,7 +426,7 @@ class DashboardController extends Controller
                 'tipe_pelanggan' => $validated['tipe_pelanggan'] ?? 'Walk-in • Reguler',
                 'judul_dokumen' => $validated['judul_dokumen'],
                 'spesifikasi' => $validated['spesifikasi'],
-                'tenggat_waktu' => now()->addMinutes($validated['estimasi_waktu'] ?? 30)->format('H:i').' WIB',
+                'tenggat_waktu' => now()->timezone('Asia/Jakarta')->addMinutes($validated['estimasi_waktu'] ?? 30)->format('H:i').' WIB',
                 'jenis_pesanan' => 'walk-in',
                 'total_harga' => $validated['total_harga'],
                 'status_pesanan' => 'proses',
@@ -1146,7 +1295,7 @@ class DashboardController extends Controller
                 'tipe_pelanggan' => $pelanggan->kategori_member ?? null,
                 'judul_dokumen' => $validated['judul_dokumen'],
                 'spesifikasi' => $validated['spesifikasi'],
-                'tenggat_waktu' => now()->addMinutes(45)->format('H:i').' WIB',
+                'tenggat_waktu' => now()->timezone('Asia/Jakarta')->addMinutes(45)->format('H:i').' WIB',
                 'jenis_pesanan' => 'online',
                 'total_harga' => $totalHarga,
                 'volume_halaman' => $jumlahHalaman,
@@ -1829,6 +1978,7 @@ class DashboardController extends Controller
         $user = Auth::user();
         $user->load('adminKasir');
 
+        $this->ensureInventoryItemsExist();
         $this->ensureCatalogProductsExist();
 
         $todayWalkInOrders = Pesanan::with(['pelanggan.user', 'detailPesanan.produkLayanan'])
@@ -1859,6 +2009,8 @@ class DashboardController extends Controller
             ->orderBy('nama_item', 'asc')
             ->get();
 
+        $inventoryStockMap = InventarisStok::all()->keyBy('nama_bahan');
+
         $members = Pelanggan::with('user')->get();
 
         // Sync monthly revenue report
@@ -1873,6 +2025,7 @@ class DashboardController extends Controller
             'activeAntreanCount',
             'categories',
             'catalogProducts',
+            'inventoryStockMap',
             'members'
         ));
     }
@@ -1969,7 +2122,7 @@ class DashboardController extends Controller
                 'tipe_pelanggan' => $validated['tipe_pelanggan'] ?? 'Walk-in Tamu',
                 'judul_dokumen' => $judulUtama,
                 'spesifikasi' => $spesifikasiSummary,
-                'tenggat_waktu' => now()->addMinutes(15)->format('H:i').' WIB',
+                'tenggat_waktu' => now()->timezone('Asia/Jakarta')->addMinutes(15)->format('H:i').' WIB',
                 'jenis_pesanan' => 'walk-in',
                 'total_harga' => $validated['total_harga'],
                 'status_pesanan' => $kirimWorkshop ? 'proses' : 'selesai',
@@ -1977,7 +2130,7 @@ class DashboardController extends Controller
                 'waktu_pesan' => now(),
             ]);
 
-            // Save details
+            // Save details & deduct stock for matching inventory items
             foreach ($validated['items'] as $item) {
                 $produkId = $item['produk_id'] ?? null;
                 if (! $produkId || ! ProdukLayanan::where('produk_id', $produkId)->exists()) {
@@ -1991,7 +2144,23 @@ class DashboardController extends Controller
                     'kuantitas' => $item['kuantitas'],
                     'sub_total' => $item['sub_total'],
                 ]);
+
+                // Integrasi Manajemen Stok: Pengurangan stok langsung untuk barang/bahan ATK & Jilid yang dibeli
+                $stokItem = InventarisStok::where('nama_bahan', $item['nama_item'])->first()
+                    ?? InventarisStok::where('nama_bahan', 'like', '%'.$item['nama_item'].'%')->first();
+                if (! $stokItem) {
+                    $stokItem = InventarisStok::all()->first(function ($s) use ($item) {
+                        return str_contains(strtolower($item['nama_item']), strtolower($s->nama_bahan)) ||
+                               str_contains(strtolower($s->nama_bahan), strtolower($item['nama_item']));
+                    });
+                }
+                if ($stokItem) {
+                    $stokItem->decrement('jumlah_stok', min((int) $stokItem->jumlah_stok, (int) $item['kuantitas']));
+                }
             }
+
+            // Deduct paper materials for printing/photocopy if applicable
+            $this->deductInventoryStockForOrder($pesanan);
 
             // Jika kirim_workshop dicentang, masukkan ke antrean pengerjaan (antrean_mesin)
             $antrean = null;
@@ -2201,6 +2370,161 @@ class DashboardController extends Controller
                 ]
             );
         }
+
+        // Integrasi Manajemen Stok: Pastikan seluruh item inventaris stok masuk ke katalog ProdukLayanan
+        $inventoryItems = InventarisStok::all();
+        foreach ($inventoryItems as $stok) {
+            $cat = $this->mapInventarisCategoryToCatalog($stok);
+            $harga = $this->getEstimatedPriceForInventaris($stok);
+
+            ProdukLayanan::firstOrCreate(
+                ['nama_item' => $stok->nama_bahan],
+                [
+                    'kategori' => $cat,
+                    'harga_dasar' => $harga,
+                    'status_aktif' => true,
+                ]
+            );
+        }
+    }
+
+    /**
+     * Map InventarisStok item into one of the 4 POS categories.
+     */
+    public function mapInventarisCategoryToCatalog(InventarisStok $stok): string
+    {
+        $cat = strtolower($stok->kategori ?? '');
+        $name = strtolower($stok->nama_bahan ?? '');
+
+        // Jilid & Finishing
+        if (
+            str_contains($cat, 'jilid') ||
+            str_contains($cat, 'packing') ||
+            str_contains($name, 'jilid') ||
+            str_contains($name, 'spiral') ||
+            str_contains($name, 'lakban') ||
+            str_contains($name, 'mika') ||
+            str_contains($name, 'laminat') ||
+            str_contains($name, 'hardcover') ||
+            str_contains($name, 'buffalo')
+        ) {
+            return 'Jilid & Finishing';
+        }
+
+        // Fotokopi & Print
+        if (
+            str_contains($cat, 'tinta') ||
+            str_contains($cat, 'toner') ||
+            str_contains($name, 'print') ||
+            str_contains($name, 'fotokopi') ||
+            str_contains($name, 'cetak')
+        ) {
+            return 'Fotokopi & Print';
+        }
+
+        // Jasa & Lainnya
+        if (
+            str_contains($cat, 'jasa') ||
+            str_contains($name, 'scan') ||
+            str_contains($name, 'ketik') ||
+            str_contains($name, 'desain')
+        ) {
+            return 'Jasa & Lainnya';
+        }
+
+        // Alat Tulis & Map (Default for retail papers, stationery, pens, folders, etc.)
+        return 'Alat Tulis & Map';
+    }
+
+    /**
+     * Get estimated default price for an inventory item.
+     */
+    public function getEstimatedPriceForInventaris(InventarisStok $stok): float
+    {
+        $name = strtolower($stok->nama_bahan);
+        $satuan = strtolower($stok->satuan);
+
+        if (str_contains($name, 'hvs a4 70')) {
+            return 48000;
+        }
+        if (str_contains($name, 'folio f4') || str_contains($name, 'f4 75')) {
+            return 52000;
+        }
+        if (str_contains($name, 'hvs a4 80')) {
+            return 55000;
+        }
+        if (str_contains($name, 'art paper a3')) {
+            return 65000;
+        }
+        if (str_contains($name, 'photo paper') || str_contains($name, 'glossy')) {
+            return 25000;
+        }
+        if (str_contains($name, 'kalkir')) {
+            return 3000;
+        }
+        if (str_contains($name, 'brief card') || str_contains($name, 'manila')) {
+            return 15000;
+        }
+        if (str_contains($name, 'toner konica')) {
+            return 175000;
+        }
+        if (str_contains($name, 'toner ricoh')) {
+            return 225000;
+        }
+        if (str_contains($name, 'canon')) {
+            return 45000;
+        }
+        if (str_contains($name, 'kawat spiral') || str_contains($name, 'ring kawat')) {
+            return 10000;
+        }
+        if (str_contains($name, 'lakban jilid') || str_contains($name, 'lakban nachi')) {
+            return 12000;
+        }
+        if (str_contains($name, 'lakban coklat') || str_contains($name, 'daimaru')) {
+            return 15000;
+        }
+        if (str_contains($name, 'mika')) {
+            return 8000;
+        }
+        if (str_contains($name, 'laminating')) {
+            return 5000;
+        }
+        if (str_contains($name, 'hardcover')) {
+            return 15000;
+        }
+        if (str_contains($name, 'ordner bantex')) {
+            return 28000;
+        }
+        if (str_contains($name, 'zebra kokoro')) {
+            return 35000;
+        }
+        if (str_contains($name, 'stapler heavy duty') || str_contains($name, 'kangaro')) {
+            return 85000;
+        }
+
+        if ($satuan === 'rim') {
+            return 50000;
+        }
+        if ($satuan === 'pak' || $satuan === 'pack') {
+            return 15000;
+        }
+        if ($satuan === 'roll') {
+            return 12000;
+        }
+        if ($satuan === 'unit') {
+            return 50000;
+        }
+        if ($satuan === 'batang') {
+            return 10000;
+        }
+        if ($satuan === 'botol' || $satuan === 'tabung') {
+            return 75000;
+        }
+        if ($satuan === 'lembar') {
+            return 2500;
+        }
+
+        return 5000;
     }
 
     /**
@@ -2456,6 +2780,18 @@ class DashboardController extends Controller
             'satuan' => $validated['satuan'],
             'terakhir_restock' => now(),
         ]);
+
+        // Sinkronisasi otomatis ke katalog Kasir Walk-in (ProdukLayanan)
+        $posCategory = $this->mapInventarisCategoryToCatalog($item);
+        $estimatedPrice = $this->getEstimatedPriceForInventaris($item);
+        ProdukLayanan::updateOrCreate(
+            ['nama_item' => $item->nama_bahan],
+            [
+                'kategori' => $posCategory,
+                'harga_dasar' => $estimatedPrice,
+                'status_aktif' => true,
+            ]
+        );
 
         if ($request->hasFile('gambar')) {
             $file = $request->file('gambar');
@@ -3301,127 +3637,216 @@ class DashboardController extends Controller
         $user->load('adminKasir');
 
         $activeAntreanCount = AntreanMesin::where('status_antrean', '!=', 'selesai')->count();
-        $rentang = $request->input('rentang', '7_hari');
+        $rentang = $request->input('rentang');
+        $tanggalMulaiInput = $request->input('tanggal_mulai');
+        $tanggalAkhirInput = $request->input('tanggal_akhir');
 
-        $startDate = Carbon::today()->subDays(6)->startOfDay();
+        $query = Pesanan::where('status_pesanan', '!=', 'dibatalkan');
 
-        // Dynamic KPIs calculated from actual database
-        $totalOmzet7Hari = (float) Pesanan::where('waktu_pesan', '>=', $startDate)->where('status_pesanan', '!=', 'dibatalkan')->sum('total_harga');
-        $totalNotaPesanan = Pesanan::where('waktu_pesan', '>=', $startDate)->where('status_pesanan', '!=', 'dibatalkan')->count();
-        $volumeKertas = (int) DetailPesanan::whereHas('pesanan', fn ($q) => $q->where('waktu_pesan', '>=', $startDate)->where('status_pesanan', '!=', 'dibatalkan'))->sum('kuantitas');
-        $rataRataTransaksi = $totalNotaPesanan > 0 ? round($totalOmzet7Hari / $totalNotaPesanan) : 0;
-        $highestNota = (float) (Pesanan::where('waktu_pesan', '>=', $startDate)->where('status_pesanan', '!=', 'dibatalkan')->max('total_harga') ?? 0);
-        $totalShiftSaatIni = (float) Pesanan::whereDate('waktu_pesan', Carbon::today())->where('status_pesanan', '!=', 'dibatalkan')->sum('total_harga');
-        $selesaiCount = Pesanan::where('waktu_pesan', '>=', $startDate)->where('status_pesanan', 'selesai')->count();
-        $rataRataNotaPerHari = round($totalNotaPesanan / 7, 1);
-        $rataRataOmzetPerHari = round($totalOmzet7Hari / 7);
-        $persenSelesai = $totalNotaPesanan > 0 ? round(($selesaiCount / $totalNotaPesanan) * 100, 1) : 100;
-        $rentangTanggalLabel = Carbon::today()->subDays(6)->translatedFormat('d M').' - '.Carbon::today()->translatedFormat('d M Y');
+        if ($tanggalMulaiInput && $tanggalAkhirInput) {
+            $rentang = 'rentang_tanggal';
+            $startDate = Carbon::parse($tanggalMulaiInput)->startOfDay();
+            $endDate = Carbon::parse($tanggalAkhirInput)->endOfDay();
+            if ($startDate->gt($endDate)) {
+                $temp = $startDate;
+                $startDate = $endDate->copy()->startOfDay();
+                $endDate = $temp->copy()->endOfDay();
+                $tanggalMulaiInput = $startDate->format('Y-m-d');
+                $tanggalAkhirInput = $endDate->format('Y-m-d');
+            }
+            $query->whereBetween('waktu_pesan', [$startDate, $endDate]);
+            $daysCount = max(1, $startDate->diffInDays($endDate) + 1);
+            $rentangLabel = $startDate->translatedFormat('d M Y').' - '.$endDate->translatedFormat('d M Y');
+        } elseif ($rentang === 'hari_ini') {
+            $startDate = Carbon::today()->startOfDay();
+            $endDate = Carbon::today()->endOfDay();
+            $query->whereBetween('waktu_pesan', [$startDate, $endDate]);
+            $daysCount = 1;
+            $rentangLabel = 'Hari Ini ('.Carbon::today()->translatedFormat('d M Y').')';
+            $tanggalMulaiInput = Carbon::today()->format('Y-m-d');
+            $tanggalAkhirInput = Carbon::today()->format('Y-m-d');
+        } elseif ($rentang === '7_hari') {
+            $startDate = Carbon::today()->subDays(6)->startOfDay();
+            $endDate = Carbon::today()->endOfDay();
+            $query->whereBetween('waktu_pesan', [$startDate, $endDate]);
+            $daysCount = 7;
+            $rentangLabel = '7 Hari Terakhir ('.Carbon::today()->subDays(6)->translatedFormat('d M').' - '.Carbon::today()->translatedFormat('d M Y').')';
+            $tanggalMulaiInput = Carbon::today()->subDays(6)->format('Y-m-d');
+            $tanggalAkhirInput = Carbon::today()->format('Y-m-d');
+        } elseif ($rentang === 'bulan_ini') {
+            $startDate = Carbon::today()->startOfMonth()->startOfDay();
+            $endDate = Carbon::today()->endOfMonth()->endOfDay();
+            $query->whereBetween('waktu_pesan', [$startDate, $endDate]);
+            $daysCount = max(1, $startDate->diffInDays(Carbon::today()) + 1);
+            $rentangLabel = 'Bulan Ini ('.Carbon::today()->translatedFormat('F Y').')';
+            $tanggalMulaiInput = Carbon::today()->startOfMonth()->format('Y-m-d');
+            $tanggalAkhirInput = Carbon::today()->format('Y-m-d');
+        } else {
+            // Default: Keseluruhan Transaksi (Total Pesanan dari seluruh transaksi)
+            $rentang = 'semua';
+            $firstOrderDate = Pesanan::where('status_pesanan', '!=', 'dibatalkan')->min('waktu_pesan');
+            $startDate = $firstOrderDate ? Carbon::parse($firstOrderDate)->startOfDay() : Carbon::today()->startOfDay();
+            $endDate = Carbon::today()->endOfDay();
+            $daysCount = max(1, $startDate->diffInDays(Carbon::today()) + 1);
+            $rentangLabel = 'Semua Transaksi';
+            $tanggalMulaiInput = $startDate->format('Y-m-d');
+            $tanggalAkhirInput = Carbon::today()->format('Y-m-d');
+        }
 
-        // Dynamic 7-day revenue trend
+        // Metrics according to selected filter
+        $totalPesananOmzet = (float) (clone $query)->sum('total_harga');
+        $totalNotaPesanan = (int) (clone $query)->count();
+
+        // Rata-rata Rp / hari dan rata-rata nota / hari berdasarkan data pesanan & periode yang sesuai
+        $rataRataOmzetPerHari = $daysCount > 0 ? round($totalPesananOmzet / $daysCount) : 0;
+        $rataRataNotaPerHari = $daysCount > 0 ? round($totalNotaPesanan / $daysCount, 1) : 0;
+
+        // Legacy compatibility
+        $totalOmzet7Hari = $totalPesananOmzet;
+        $totalShiftSaatIni = (float) Pesanan::whereDate('waktu_pesan', Carbon::today())
+            ->where('status_pesanan', '!=', 'dibatalkan')
+            ->sum('total_harga');
+
+        // Dynamic 7-day revenue trend: Always displays 7 days up to today (the running date)
         $trend7Hari = [];
         $maxDaily = 0;
         $dailyBuckets = [];
 
         for ($i = 0; $i < 7; $i++) {
             $dt = Carbon::today()->subDays(6 - $i);
-            $dayTotal = (float) Pesanan::whereDate('waktu_pesan', $dt)->where('status_pesanan', '!=', 'dibatalkan')->sum('total_harga');
+            $dayQuery = Pesanan::whereDate('waktu_pesan', $dt)
+                ->where('status_pesanan', '!=', 'dibatalkan');
+            $dayTotal = (float) (clone $dayQuery)->sum('total_harga');
+            $dayCount = (int) (clone $dayQuery)->count();
+
             if ($dayTotal > $maxDaily) {
                 $maxDaily = $dayTotal;
             }
             $dailyBuckets[] = [
                 'date' => $dt,
                 'total' => $dayTotal,
+                'count' => $dayCount,
             ];
         }
 
         foreach ($dailyBuckets as $b) {
             $dt = $b['date'];
             $total = $b['total'];
-            $hariNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
-            $hariLabel = $hariNames[$dt->dayOfWeek].' ('.$dt->format('d').')';
-            $tglLabel = $dt->translatedFormat('d M');
-            $height = $maxDaily > 0 ? max(10, (int) round(($total / $maxDaily) * 100)) : 0;
+            $count = $b['count'];
+            $hariTanggal = $dt->locale('id')->translatedFormat('l, j M');
+            $height = $maxDaily > 0 ? max(12, (int) round(($total / $maxDaily) * 100)) : 0;
 
             if ($total >= 1000000) {
-                $label = round($total / 1000000, 2).'Jt';
+                $label = round($total / 1000000, 1).'Jt';
             } elseif ($total >= 1000) {
                 $label = round($total / 1000).'Rb';
+            } elseif ($total > 0) {
+                $label = 'Rp '.number_format($total, 0, ',', '.');
             } else {
-                $label = $total > 0 ? 'Rp '.number_format($total, 0, ',', '.') : '0';
+                $label = 'Rp 0';
             }
 
             $trend7Hari[] = [
-                'hari' => $hariLabel,
-                'tanggal' => $tglLabel,
+                'hari' => $hariTanggal,
+                'hari_tanggal' => $hariTanggal,
                 'total' => $total,
+                'count' => $count,
                 'label' => $label,
                 'height' => $height,
                 'is_peak' => ($maxDaily > 0 && $total === $maxDaily),
             ];
         }
 
-        // Dynamic service breakdown
-        $catsConfig = [
-            ['nama' => 'Fotokopi & Print B/W', 'match' => 'Fotokopi', 'color' => '#F59E0B'],
-            ['nama' => 'Print Warna & Brosur', 'match' => 'Warna', 'color' => '#3B82F6'],
-            ['nama' => 'Penjilidan Skripsi/Spiral', 'match' => 'Jilid', 'color' => '#64748B'],
-            ['nama' => 'ATK, Map & Scan Dokumen', 'match' => 'Alat Tulis', 'color' => '#D97706'],
-        ];
-
-        $serviceBreakdown = [];
-        foreach ($catsConfig as $cat) {
-            $val = (float) DetailPesanan::whereHas('pesanan', fn ($q) => $q->where('waktu_pesan', '>=', $startDate)->where('status_pesanan', '!=', 'dibatalkan'))
-                ->whereHas('produkLayanan', fn ($q) => $q->where('kategori', 'like', '%'.$cat['match'].'%')->orWhere('nama_item', 'like', '%'.$cat['match'].'%'))
-                ->sum('sub_total');
-
-            $pct = $totalOmzet7Hari > 0 ? (int) round(($val / $totalOmzet7Hari) * 100) : 0;
-            $serviceBreakdown[] = [
-                'nama' => $cat['nama'],
-                'persen' => $pct,
-                'nilai' => $val,
-                'label_nilai' => $val >= 1000000 ? 'Rp '.round($val / 1000000, 2).'Jt' : 'Rp '.number_format($val, 0, ',', '.'),
-                'color' => $cat['color'],
-            ];
-        }
-
-        // Hourly analytics distribution (database-agnostic for both MySQL and SQLite)
-        $todayOrders = Pesanan::whereDate('waktu_pesan', Carbon::today())->get();
-        $hours = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '19:00', '20:00'];
-        $hourlyDistribution = [];
-        foreach ($hours as $h) {
-            $hourNum = (int) substr($h, 0, 2);
-            $hCount = $todayOrders->filter(fn ($o) => $o->waktu_pesan && $o->waktu_pesan->hour === $hourNum)->count();
-            $load = $hCount >= 5 ? 'peak' : ($hCount >= 2 ? 'medium' : 'low');
-            $hourlyDistribution[] = [
-                'jam' => $h,
-                'load' => $load,
-                'is_peak' => ($load === 'peak'),
-            ];
-        }
+        $rentangTanggalLabel = Carbon::today()->subDays(6)->locale('id')->translatedFormat('d M').' - '.Carbon::today()->locale('id')->translatedFormat('d M Y');
 
         // Query orders for recent transaction logs (5 per page)
-        $orders = Pesanan::orderBy('waktu_pesan', 'desc')->paginate(5)->withQueryString();
+        $orders = (clone $query)->orderBy('waktu_pesan', 'desc')->paginate(5)->withQueryString();
 
         return view('admin.laporan', compact(
             'user',
             'orders',
             'rentang',
+            'rentangLabel',
+            'tanggalMulaiInput',
+            'tanggalAkhirInput',
+            'totalPesananOmzet',
             'totalOmzet7Hari',
             'totalNotaPesanan',
-            'volumeKertas',
-            'rataRataTransaksi',
-            'highestNota',
-            'totalShiftSaatIni',
-            'trend7Hari',
-            'serviceBreakdown',
-            'hourlyDistribution',
-            'activeAntreanCount',
-            'selesaiCount',
             'rataRataNotaPerHari',
             'rataRataOmzetPerHari',
-            'persenSelesai',
+            'totalShiftSaatIni',
+            'trend7Hari',
+            'activeAntreanCount',
             'rentangTanggalLabel'
+        ));
+    }
+
+    /**
+     * Display all transactions (Transaksi Terakhir Gerai).
+     */
+    public function transaksiIndex(Request $request): View
+    {
+        $user = Auth::user();
+        $user->load('adminKasir');
+
+        $activeAntreanCount = AntreanMesin::where('status_antrean', '!=', 'selesai')->count();
+
+        $search = $request->input('q');
+        $jenis = $request->input('jenis', 'semua');
+        $tanggalMulaiInput = $request->input('tanggal_mulai');
+        $tanggalAkhirInput = $request->input('tanggal_akhir');
+
+        $query = Pesanan::with(['pelanggan.user', 'detailPesanan.produkLayanan'])
+            ->where('status_pesanan', '!=', 'dibatalkan');
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nama_pemesan', 'like', "%{$search}%")
+                    ->orWhere('nomor_nota_kustom', 'like', "%{$search}%")
+                    ->orWhere('judul_dokumen', 'like', "%{$search}%")
+                    ->orWhere('spesifikasi', 'like', "%{$search}%")
+                    ->orWhere('pesanan_id', 'like', "%{$search}%");
+            });
+        }
+
+        if ($jenis === 'walk-in') {
+            $query->where('jenis_pesanan', 'walk-in');
+        } elseif ($jenis === 'online') {
+            $query->where('jenis_pesanan', 'online');
+        }
+
+        if ($tanggalMulaiInput && $tanggalAkhirInput) {
+            $startDate = Carbon::parse($tanggalMulaiInput)->startOfDay();
+            $endDate = Carbon::parse($tanggalAkhirInput)->endOfDay();
+            if ($startDate->gt($endDate)) {
+                $temp = $startDate;
+                $startDate = $endDate->copy()->startOfDay();
+                $endDate = $temp->copy()->endOfDay();
+                $tanggalMulaiInput = $startDate->format('Y-m-d');
+                $tanggalAkhirInput = $endDate->format('Y-m-d');
+            }
+            $query->whereBetween('waktu_pesan', [$startDate, $endDate]);
+        }
+
+        $totalCount = (clone $query)->count();
+        $totalOmzet = (float) (clone $query)->sum('total_harga');
+        $totalWalkIn = (clone $query)->where('jenis_pesanan', 'walk-in')->count();
+        $totalOnline = (clone $query)->where('jenis_pesanan', 'online')->count();
+
+        $orders = $query->orderBy('waktu_pesan', 'desc')->paginate(15)->withQueryString();
+
+        return view('admin.transaksi_gerai', compact(
+            'user',
+            'orders',
+            'activeAntreanCount',
+            'search',
+            'jenis',
+            'tanggalMulaiInput',
+            'tanggalAkhirInput',
+            'totalCount',
+            'totalOmzet',
+            'totalWalkIn',
+            'totalOnline'
         ));
     }
 
@@ -3430,6 +3855,26 @@ class DashboardController extends Controller
      */
     public function laporanExport(Request $request): StreamedResponse
     {
+        $rentang = $request->input('rentang');
+        $tanggalMulaiInput = $request->input('tanggal_mulai');
+        $tanggalAkhirInput = $request->input('tanggal_akhir');
+
+        $query = Pesanan::where('status_pesanan', '!=', 'dibatalkan');
+
+        if ($tanggalMulaiInput && $tanggalAkhirInput) {
+            $startDate = Carbon::parse($tanggalMulaiInput)->startOfDay();
+            $endDate = Carbon::parse($tanggalAkhirInput)->endOfDay();
+            $query->whereBetween('waktu_pesan', [$startDate, $endDate]);
+        } elseif ($rentang === 'hari_ini') {
+            $query->whereBetween('waktu_pesan', [Carbon::today()->startOfDay(), Carbon::today()->endOfDay()]);
+        } elseif ($rentang === '7_hari') {
+            $query->whereBetween('waktu_pesan', [Carbon::today()->subDays(6)->startOfDay(), Carbon::today()->endOfDay()]);
+        } elseif ($rentang === 'bulan_ini') {
+            $query->whereBetween('waktu_pesan', [Carbon::today()->startOfMonth()->startOfDay(), Carbon::today()->endOfMonth()->endOfDay()]);
+        }
+
+        $orders = $query->orderBy('waktu_pesan', 'desc')->get();
+
         $headers = [
             'Content-type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename=Laporan_Omzet_Matahari_Fotocopy_'.date('Ymd_His').'.csv',
@@ -3438,17 +3883,17 @@ class DashboardController extends Controller
             'Expires' => '0',
         ];
 
-        $callback = function () {
+        $callback = function () use ($orders) {
             $file = fopen('php://output', 'w');
-            fputcsv($file, ['No. Nota', 'Waktu & Tanggal', 'Nama Pelanggan', 'Layanan & Spesifikasi', 'Metode Bayar', 'Total (Rp)', 'Kasir']);
+            fputcsv($file, ['No. Nota', 'Waktu & Tanggal', 'Tipe Pesanan', 'Nama Pelanggan', 'Layanan & Spesifikasi', 'Metode Bayar', 'Total (Rp)', 'Kasir']);
 
-            $orders = Pesanan::orderBy('waktu_pesan', 'desc')->get();
             foreach ($orders as $o) {
                 fputcsv($file, [
                     $o->nomor_nota,
                     $o->waktu_pesan ? $o->waktu_pesan->format('d M Y H:i') : '-',
+                    strtoupper($o->jenis_pesanan),
                     $o->display_name,
-                    $o->display_spesifikasi,
+                    $o->display_spesifikasi ?: $o->display_judul,
                     $o->metode_pembayaran ?? 'Tunai',
                     (int) $o->total_harga,
                     $o->kasir_nama ?? 'Feri Anto',

@@ -36,6 +36,9 @@ Route::get('/dashboard', function () {
 Route::middleware(['auth', 'admin.only'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'admin'])->name('dashboard');
     Route::get('/dashboard/live-data', [DashboardController::class, 'liveData'])->name('dashboard.live-data');
+    Route::get('/notifications', [DashboardController::class, 'globalNotifications'])->name('notifications');
+    Route::post('/notifications/mark-read', [DashboardController::class, 'markNotificationRead'])->name('notifications.mark-read');
+    Route::post('/notifications/mark-all-read', [DashboardController::class, 'markAllNotificationsRead'])->name('notifications.mark-all-read');
     Route::post('/dashboard/walk-in', [DashboardController::class, 'storeWalkInOrder'])->name('dashboard.walk-in');
     Route::post('/dashboard/queue/{antrean}/status', [DashboardController::class, 'updateQueueStatus'])->name('dashboard.queue.status');
     Route::post('/dashboard/stock', [DashboardController::class, 'storeStock'])->name('dashboard.stock');
@@ -72,6 +75,7 @@ Route::middleware(['auth', 'admin.only'])->prefix('admin')->name('admin.')->grou
 
     // Laporan Penjualan & Analitik Gerai Routes
     Route::get('/laporan', [DashboardController::class, 'laporanIndex'])->name('laporan.index');
+    Route::get('/laporan/transaksi', [DashboardController::class, 'transaksiIndex'])->name('laporan.transaksi');
     Route::get('/laporan/export', [DashboardController::class, 'laporanExport'])->name('laporan.export');
 
     // Master Tarif Layanan Routes (UC-14 / KF-14)

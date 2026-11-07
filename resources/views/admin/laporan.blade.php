@@ -89,47 +89,8 @@
     <main class="flex-1 flex flex-col min-w-0 bg-[#F4F7FC]">
         
         <!-- TOPBAR NAVIGATION -->
-        <header class="bg-white/95 backdrop-blur border-b border-slate-200/80 px-4 md:px-8 py-3 sticky top-0 z-30 flex flex-col sm:flex-row items-center justify-between gap-4">
-            
-            <!-- Search bar -->
-            <div class="relative w-full sm:w-96">
-                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                </div>
-                <input 
-                    type="text" 
-                    placeholder="Cari no. antrean, nota, nama..." 
-                    class="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition placeholder:text-slate-400 font-medium"
-                >
-            </div>
-
-            <!-- Topbar Badges & Actions -->
-            <div class="flex items-center gap-3 flex-wrap justify-end w-full sm:w-auto">
-
-
-                <!-- Live Clock Capsule -->
-                <div class="flex items-center gap-2 bg-slate-100/80 border border-slate-200 px-3 py-1.5 rounded-full text-xs font-mono font-medium text-slate-700">
-                    <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    <span id="liveClockDisplay">{{ date('H:i') }} WIB • {{ date('d M') }}</span>
-                </div>
-
-                <!-- Notification Bell -->
-                <button class="relative p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition" onclick="alert('Notifikasi: Laporan transaksi terupdate real-time.')">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                    </svg>
-                    <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white"></span>
-                </button>
-
-                <!-- Profile Circle -->
-                <div class="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold text-xs ring-2 ring-amber-200">
-                    FA
-                </div>
-            </div>
+        <header class="bg-white/95 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-30 px-4 md:px-8 py-3 flex items-center justify-end min-h-[60px]">
+            @include('admin.partials.topbar-right')
         </header>
 
         <!-- SUBHEADER & TOP ACTIONS -->
@@ -142,14 +103,14 @@
                         Laporan Penjualan &amp; Analitik Gerai
                     </h1>
                     <p class="text-xs text-slate-500 font-medium mt-1">
-                        Rekapitulasi pendapatan harian, performa layanan, volume cetak, dan tren transaksi Bintaro
+                        Rekapitulasi pendapatan dan tren transaksi Bintaro
                     </p>
                 </div>
 
                 <!-- Top Right Action Buttons -->
                 <div class="flex flex-wrap items-center gap-2.5">
                     <!-- Ekspor Laporan Excel -->
-                    <a href="{{ route('admin.laporan.export') }}" class="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-2xs transition active:scale-95">
+                    <a href="{{ route('admin.laporan.export', request()->query()) }}" class="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-2xs transition active:scale-95">
                         <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
@@ -168,184 +129,194 @@
             </div>
         </div>
 
-        <!-- ========================================== -->
-        <!-- FILTER BAR & SHIFT INFO                    -->
-        <!-- ========================================== -->
-        <!-- FILTER RENTANG WAKTU                       -->
-        <!-- ========================================== -->
-        <div class="px-4 md:px-8 pb-4">
-            <div class="flex items-center gap-1.5 flex-wrap bg-white p-2.5 rounded-2xl border border-slate-200/80 shadow-2xs">
-                <a href="{{ route('admin.laporan.index', ['rentang' => 'hari_ini']) }}" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition {{ $rentang === 'hari_ini' ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-500 hover:text-slate-800' }}">
-                    Hari Ini
-                </a>
-                <a href="{{ route('admin.laporan.index', ['rentang' => '7_hari']) }}" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition {{ $rentang === '7_hari' ? 'bg-white border border-slate-300 text-slate-900 shadow-2xs font-extrabold' : 'text-slate-500 hover:text-slate-800' }}">
-                    7 Hari Terakhir
-                </a>
-                <a href="{{ route('admin.laporan.index', ['rentang' => 'bulan_ini']) }}" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition {{ $rentang === 'bulan_ini' ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-500 hover:text-slate-800' }}">
-                    Bulan Ini ({{ now()->translatedFormat('M Y') }})
-                </a>
+        <!-- ============================================================ -->
+        <!-- 1. FILTER TANGGAL (POSISI PALING ATAS)                        -->
+        <!-- ============================================================ -->
+        <div class="px-4 md:px-8 pb-5">
+            <div class="bg-white px-5 py-3 sm:px-7 sm:py-3.5 rounded-2xl border border-slate-200/90 shadow-2xs">
+                <div class="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3.5">
+                    
+                    <!-- Quick Filter Buttons -->
+                    <div class="flex items-center gap-2 overflow-x-auto shrink-0">
+                        <a href="{{ route('admin.laporan.index') }}" class="h-9 px-4 inline-flex items-center justify-center rounded-xl text-xs font-bold transition whitespace-nowrap {{ $rentang === 'semua' || empty($rentang) ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-600 bg-slate-100 hover:bg-slate-200' }}">
+                            Semua Transaksi
+                        </a>
+                        <a href="{{ route('admin.laporan.index', ['rentang' => 'hari_ini']) }}" class="h-9 px-4 inline-flex items-center justify-center rounded-xl text-xs font-bold transition whitespace-nowrap {{ $rentang === 'hari_ini' ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-600 bg-slate-100 hover:bg-slate-200' }}">
+                            Hari Ini
+                        </a>
+                        <a href="{{ route('admin.laporan.index', ['rentang' => '7_hari']) }}" class="h-9 px-4 inline-flex items-center justify-center rounded-xl text-xs font-bold transition whitespace-nowrap {{ $rentang === '7_hari' ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-600 bg-slate-100 hover:bg-slate-200' }}">
+                            7 Hari Terakhir
+                        </a>
+                    </div>
+
+                    <!-- Date Range Filter Form -->
+                    <form method="GET" action="{{ route('admin.laporan.index') }}" class="flex items-center gap-2.5 flex-nowrap shrink-0 overflow-x-auto sm:mr-3">
+                        <span class="text-xs text-slate-500 font-bold whitespace-nowrap shrink-0">Rentang:</span>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            <input 
+                                type="date" 
+                                name="tanggal_mulai" 
+                                value="{{ $tanggalMulaiInput }}" 
+                                class="h-9 px-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 font-mono text-slate-700 bg-slate-50/70 w-32 sm:w-36 shrink-0"
+                                required
+                            >
+                            <span class="text-xs text-slate-400 font-semibold shrink-0">s/d</span>
+                            <input 
+                                type="date" 
+                                name="tanggal_akhir" 
+                                value="{{ $tanggalAkhirInput }}" 
+                                class="h-9 px-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 font-mono text-slate-700 bg-slate-50/70 w-32 sm:w-36 shrink-0"
+                                required
+                            >
+                        </div>
+
+                        <button type="submit" class="h-9 px-4 inline-flex items-center justify-center bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition shadow-2xs shrink-0 whitespace-nowrap">
+                            Terapkan
+                        </button>
+
+                        @if($rentang && $rentang !== 'semua')
+                        <a href="{{ route('admin.laporan.index') }}" class="h-9 px-2 inline-flex items-center justify-center text-xs font-bold text-rose-600 hover:underline shrink-0 whitespace-nowrap">
+                            Reset
+                        </a>
+                        @endif
+                    </form>
+
+                </div>
+
+                <!-- Pemberitahuan jika tidak ada pesanan pada tanggal/periode yang dipilih -->
+                @if($totalNotaPesanan === 0)
+                <div class="mt-2.5 p-3 bg-amber-50 border border-amber-200/80 rounded-xl flex items-center gap-2.5 text-amber-800 text-xs font-medium">
+                    <svg class="w-4 h-4 text-amber-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span>Tidak ada transaksi atau pembelian pada tanggal tersebut.</span>
+                </div>
+                @endif
             </div>
         </div>
 
-        <!-- ========================================== -->
-        <!-- 2 KPI SUMMARY METRIC CARDS                 -->
-        <!-- ========================================== -->
+        <!-- ============================================================ -->
+        <!-- 2. DUA KOLOM: TREN PENDAPATAN 7 HARI & KARTU STATISTIK VERTIKAL -->
+        <!-- ============================================================ -->
         <div class="px-4 md:px-8 pb-5">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
                 
-                <!-- Card 1: TOTAL OMZET 7 HARI -->
-                <div class="bg-white rounded-2xl p-4 shadow-xs border border-slate-200/80 flex flex-col justify-between">
-                    <div class="flex items-center justify-between">
-                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono">TOTAL OMZET 7 HARI</span>
-                        <div class="w-8 h-8 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="mt-2">
-                        <div class="flex items-baseline">
-                            <span class="text-2xl sm:text-3xl font-black text-slate-900 font-mono">Rp {{ number_format($totalOmzet7Hari, 0, ',', '.') }}</span>
-                        </div>
-                        <p class="text-[11px] text-slate-500 font-medium mt-1">
-                            Rata-rata <strong class="text-slate-700 font-mono">Rp {{ number_format($rataRataOmzetPerHari, 0, ',', '.') }}</strong> / hari
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Card 2: TOTAL NOTA PESANAN -->
-                <div class="bg-white rounded-2xl p-4 shadow-xs border border-slate-200/80 flex flex-col justify-between">
-                    <div class="flex items-center justify-between">
-                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono">TOTAL NOTA PESANAN</span>
-                        <div class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="mt-2">
-                        <div class="flex items-baseline">
-                            <span class="text-2xl sm:text-3xl font-black text-slate-900 font-mono">{{ $totalNotaPesanan }}</span>
-                            <span class="text-xs text-slate-500 font-bold ml-1.5">Nota</span>
-                        </div>
-                        <p class="text-[11px] text-slate-500 font-medium mt-1">
-                            Rata-rata <strong class="text-slate-700 font-mono">{{ number_format($rataRataNotaPerHari, 1, ',', '.') }}</strong> nota / hari • <span class="text-emerald-600 font-bold">{{ $selesaiCount }} Selesai ({{ $persenSelesai }}%)</span>
-                        </p>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- ========================================== -->
-        <!-- MID-SECTION: CHARTS (2 COLUMNS)            -->
-        <!-- ========================================== -->
-        <div class="px-4 md:px-8 pb-5">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                
-                <!-- COLUMN 1: TREN PENDAPATAN 7 HARI (BAR CHART) -->
-                <div class="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-2xs flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-start justify-between">
+                <!-- Kolom Kiri: Tren Pendapatan 7 Hari (lg:col-span-8 untuk lebar ideal) -->
+                <div class="lg:col-span-8 flex flex-col">
+                    <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs flex-1 flex flex-col justify-between">
+                        <!-- Header Grafik -->
+                        <div class="flex items-start justify-between flex-wrap gap-2">
                             <div>
-                                <h3 class="text-sm font-extrabold text-slate-900">Tren Pendapatan 7 Hari</h3>
-                                <p class="text-xs text-slate-400 mt-0.5">Fluktuasi omzet harian {{ $rentangTanggalLabel }}</p>
+                                <h3 class="text-sm sm:text-base font-extrabold text-slate-900">Tren Pendapatan 7 Hari</h3>
+
                             </div>
                             <!-- Legend -->
-                            <div class="flex items-center gap-1.5 text-xs text-slate-600 font-semibold">
+                            <div class="flex items-center gap-2 text-[11px] sm:text-xs text-slate-600 font-semibold bg-slate-50 px-2.5 py-1.5 rounded-xl border border-slate-200/60">
                                 <span class="w-2.5 h-2.5 rounded bg-amber-500"></span>
                                 <span>Omzet Harian</span>
                             </div>
                         </div>
 
                         <!-- Bar Chart Graphic Area -->
-                        <div class="pt-6 pb-2">
-                            <div class="h-44 flex items-end justify-between gap-2 px-2 border-b border-slate-100">
+                        <div class="pt-4 pb-1 flex-1 flex flex-col justify-end">
+                            <!-- Bar Tracks & Values -->
+                            <div class="flex items-end justify-between gap-1 sm:gap-2 px-1">
                                 @foreach($trend7Hari as $t)
-                                <div class="flex-1 flex flex-col items-center gap-2 group h-full justify-end">
-                                    <!-- Value tag -->
-                                    <span class="text-[10px] font-bold font-mono {{ !empty($t['is_peak']) ? 'text-amber-600 font-black' : 'text-slate-400' }}">
-                                        {{ $t['label'] }}
-                                    </span>
-                                    <!-- Bar Container -->
-                                    <div class="w-full max-w-[36px] bg-slate-50 rounded-t-xl h-full flex items-end overflow-hidden p-0.5">
-                                        <div 
-                                            class="w-full rounded-t-lg transition-all duration-500 {{ !empty($t['is_peak']) ? 'bg-amber-500 shadow-sm' : 'bg-amber-400/80 group-hover:bg-amber-500' }}" 
-                                            style="height: {{ $t['height'] }}%;"
-                                        ></div>
+                                <div class="flex-1 flex flex-col items-center justify-end group">
+                                    <!-- Value tag above bar -->
+                                    <div class="h-5 flex items-center justify-center mb-1">
+                                        <span class="text-[10px] sm:text-[11px] font-bold font-mono {{ !empty($t['is_peak']) ? 'text-amber-600 font-black' : ($t['total'] > 0 ? 'text-slate-600' : 'text-slate-400') }} whitespace-nowrap">
+                                            {{ $t['label'] }}
+                                        </span>
                                     </div>
-                                    <!-- Day label -->
-                                    <span class="text-[10px] font-bold {{ !empty($t['is_peak']) ? 'text-slate-900 font-black' : 'text-slate-500' }}">
-                                        {{ $t['hari'] }}
+                                    
+                                    <!-- Bar Track & Fill -->
+                                    <div class="w-full max-w-[28px] sm:max-w-[34px] h-28 sm:h-32 bg-slate-100/70 rounded-t-lg flex items-end p-0.5 overflow-hidden">
+                                        @if($t['total'] > 0)
+                                        <div 
+                                            class="w-full rounded-t-md transition-all duration-500 {{ !empty($t['is_peak']) ? 'bg-amber-500 shadow-sm' : 'bg-amber-400 group-hover:bg-amber-500' }}" 
+                                            style="height: {{ max(10, $t['height']) }}%;"
+                                        ></div>
+                                        @else
+                                        <div class="w-full h-1 bg-slate-200 rounded-t-sm"></div>
+                                        @endif
+                                    </div>
+                                </div>
+                                @endforeach
+                            </div>
+
+                            <!-- Baseline Divider -->
+                            <div class="border-b border-slate-200 my-1.5"></div>
+
+                            <!-- Day & Orders count underneath baseline -->
+                            <div class="flex items-start justify-between gap-1 sm:gap-2 px-1 pt-0.5">
+                                @foreach($trend7Hari as $t)
+                                <div class="flex-1 flex flex-col items-center text-center min-w-0">
+                                    <span class="text-[9px] sm:text-[10px] xl:text-[11px] font-bold {{ !empty($t['is_peak']) ? 'text-slate-900 font-black' : 'text-slate-700' }} leading-tight block truncate max-w-full">
+                                        {{ $t['hari_tanggal'] }}
+                                    </span>
+                                    <span class="text-[9px] sm:text-[10px] font-medium text-slate-400 font-mono mt-0.5 block truncate max-w-full">
+                                        {{ $t['count'] }} pesanan
                                     </span>
                                 </div>
                                 @endforeach
                             </div>
                         </div>
                     </div>
-
-
                 </div>
 
-                <!-- COLUMN 2: KOMPOSISI LAYANAN (DONUT CHART) -->
-                <div class="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-2xs flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-start justify-between">
-                            <div>
-                                <h3 class="text-sm font-extrabold text-slate-900">Komposisi Layanan</h3>
-                                <p class="text-xs text-slate-400 mt-0.5">Proporsi omzet menurut jenis pekerjaan</p>
+                <!-- Kolom Kanan: Dua Kartu Statistik Disusun Vertikal (lg:col-span-4) -->
+                <div class="lg:col-span-4 flex flex-col gap-4">
+                    
+                    <!-- Card 1 (Atas): TOTAL PESANAN -->
+                    <div class="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-2xs flex-1 flex flex-col justify-between">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono">TOTAL PESANAN</span>
+                            <div class="w-8 h-8 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                </svg>
                             </div>
-                            <span class="text-xs font-mono font-bold text-slate-400">Total 100%</span>
                         </div>
-
-                        <!-- Donut Graphic & Legend Breakdown -->
-                        <div class="pt-6 pb-2 flex flex-col sm:flex-row items-center justify-center sm:justify-around gap-6">
-                            
-                            <!-- Visual Donut (CSS Conic Gradient) -->
-                            <div class="relative w-36 h-36 flex-shrink-0">
-                                <div class="w-full h-full donut-chart flex items-center justify-center shadow-xs">
-                                    <!-- Inner White Hole -->
-                                    <div class="w-24 h-24 bg-white rounded-full flex flex-col items-center justify-center shadow-inner">
-                                        <span class="text-base font-black text-slate-900 font-mono leading-none">48%</span>
-                                        <span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest mt-0.5">CETAK B/W</span>
-                                    </div>
-                                </div>
+                        <div class="mt-2.5">
+                            <div class="flex items-baseline">
+                                <span class="text-2xl sm:text-3xl font-black text-slate-900 font-mono tracking-tight">Rp {{ number_format($totalPesananOmzet, 0, ',', '.') }}</span>
                             </div>
-
-                            <!-- Legend List -->
-                            <div class="space-y-2.5 text-xs w-full sm:w-auto">
-                                @foreach($serviceBreakdown as $sb)
-                                <div class="flex items-center justify-between gap-4">
-                                    <div class="flex items-center gap-2">
-                                        <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: {{ $sb['color'] }};"></span>
-                                        <span class="text-slate-700 font-bold text-xs">{{ $sb['nama'] }}</span>
-                                    </div>
-                                    <div class="flex items-center gap-1 font-mono text-[11px] whitespace-nowrap">
-                                        <span class="font-extrabold text-slate-900">{{ $sb['persen'] }}%</span>
-                                        <span class="text-slate-400 font-normal">({{ $sb['label_nilai'] }})</span>
-                                    </div>
-                                </div>
-                                @endforeach
-                            </div>
-
+                            <p class="text-[11px] text-slate-500 font-medium mt-1">
+                                Rata-rata <strong class="text-slate-700 font-mono">Rp {{ number_format($rataRataOmzetPerHari, 0, ',', '.') }}</strong> / hari
+                            </p>
                         </div>
                     </div>
 
-                    <!-- Bottom Machine Capacity -->
-                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-medium">
-                        <span>Kapasitas Produksi Mesin</span>
-                        <span class="font-mono font-bold text-blue-600">78.4% Utilisasi Optimal</span>
+                    <!-- Card 2 (Bawah): TOTAL NOTA PESANAN -->
+                    <div class="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-2xs flex-1 flex flex-col justify-between">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono">TOTAL NOTA PESANAN</span>
+                            <div class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="mt-2.5">
+                            <div class="flex items-baseline">
+                                <span class="text-2xl sm:text-3xl font-black text-slate-900 font-mono tracking-tight">{{ $totalNotaPesanan }}</span>
+                                <span class="text-xs text-slate-500 font-bold ml-1.5">Nota</span>
+                            </div>
+                            <p class="text-[11px] text-slate-500 font-medium mt-1">
+                                Rata-rata <strong class="text-slate-700 font-mono">{{ number_format($rataRataNotaPerHari, 1, ',', '.') }}</strong> nota / hari
+                            </p>
+                        </div>
                     </div>
+
                 </div>
 
             </div>
         </div>
 
-
-
-        <!-- ========================================== -->
-        <!-- BOTTOM SECTION: TRANSAKSI TERAKHIR GERAI   -->
-        <!-- ========================================== -->
+        <!-- ============================================================ -->
+        <!-- 3. DATA TRANSAKSI TERAKHIR GERAI                             -->
+        <!-- ============================================================ -->
         <div class="px-4 md:px-8 pb-10">
             <div class="bg-white rounded-3xl border border-slate-200/90 shadow-2xs overflow-hidden">
                 
@@ -353,11 +324,10 @@
                 <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
                         <h3 class="text-sm font-extrabold text-slate-900">Transaksi Terakhir Gerai</h3>
-                        <p class="text-xs text-slate-400 mt-0.5">Log pesanan walk-in real-time loket Bintaro</p>
                     </div>
                     <div class="flex items-center gap-3 text-xs text-slate-500 font-medium">
                         <span>Menampilkan <strong>{{ $orders->count() }}</strong> dari <strong>{{ $totalNotaPesanan }}</strong> nota</span>
-                        <a href="{{ route('admin.walkin.index') }}" class="font-bold text-amber-600 hover:underline flex items-center gap-1">
+                        <a href="{{ route('admin.laporan.transaksi') }}" class="font-bold text-amber-600 hover:text-amber-700 hover:underline flex items-center gap-1">
                             <span>Lihat Semua</span>
                             <span>→</span>
                         </a>
@@ -388,7 +358,7 @@
 
                                 <!-- Waktu & Tanggal -->
                                 <td class="py-3.5 px-3 text-slate-500 whitespace-nowrap font-mono text-[11px]">
-                                    {{ $o->waktu_pesan ? $o->waktu_pesan->format('d M, H:i') : now()->format('d M, H:i') }} WIB
+                                    {{ ($o->waktu_pesan ? $o->waktu_pesan->copy() : now())->timezone('Asia/Jakarta')->format('d M, H:i') }} WIB
                                 </td>
 
                                 <!-- Pelanggan -->
@@ -442,28 +412,18 @@
                             @empty
                             <tr>
                                 <td colspan="7" class="py-12 px-4 text-center">
-                                    <div class="w-12 h-12 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-2 shadow-2xs font-bold text-xl">
+                                    <div class="w-12 h-12 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-2 shadow-2xs font-bold text-xl">
                                         📊
                                     </div>
-                                    <h4 class="font-bold text-slate-800 text-sm">Belum Ada Riwayat Transaksi Omzet</h4>
+                                    <h4 class="font-bold text-slate-800 text-sm">Tidak ada transaksi atau pembelian pada tanggal tersebut</h4>
                                     <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-                                        Semua transaksi masuk dari kasir walk-in maupun pesanan online akan otomatis terakumulasi di sini secara real-time.
+                                        Silakan ubah rentang tanggal atau pilih filter Semua Transaksi untuk melihat riwayat data lainnya.
                                     </p>
                                 </td>
                             </tr>
                             @endforelse
                         </tbody>
                     </table>
-                </div>
-
-                <!-- Footer with Shift Omzet & Pagination -->
-                <div class="p-4 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 font-medium">
-                    <div>
-                        Halaman 1 dari 37 • Total omzet shift saat ini: <strong class="text-slate-900 font-mono">Rp {{ number_format($totalShiftSaatIni, 0, ',', '.') }}</strong>
-                    </div>
-                    <div>
-                        {{ $orders->links() }}
-                    </div>
                 </div>
 
             </div>

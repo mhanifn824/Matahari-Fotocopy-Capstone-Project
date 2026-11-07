@@ -112,10 +112,10 @@
         <!-- ====================================== -->
         <!-- TOPBAR NAVIGATION                      -->
         <!-- ====================================== -->
-        <header class="bg-white/95 backdrop-blur border-b border-slate-200/80 px-4 md:px-8 py-3 sticky top-0 z-30 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <header class="bg-white/95 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-30 px-4 md:px-8 py-3 flex items-center justify-between gap-4 min-h-[60px]">
             
             <!-- Search bar -->
-            <div class="relative w-full sm:w-96">
+            <div class="relative flex-1 max-w-md">
                 <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -124,38 +124,15 @@
                 <input 
                     type="text" 
                     id="searchPosInput"
-                    placeholder="Cari no. antrean, nota, nama..." 
-                    class="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition placeholder:text-slate-400 font-medium"
+                    placeholder="Cari nomor nota atau nama pelanggan..." 
+                    class="w-full pl-10 pr-4 py-2 text-xs bg-slate-100/90 hover:bg-slate-100 focus:bg-white border border-slate-200/80 rounded-full focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition text-slate-800 placeholder-slate-400 font-medium"
                     onkeyup="filterPosTransactions(this.value)"
+                    oninput="filterPosTransactions(this.value)"
                 >
             </div>
 
-            <!-- Topbar Badges & Quick Toggles -->
-            <div class="flex items-center gap-3 flex-wrap justify-end w-full sm:w-auto">
-                
+            @include('admin.partials.topbar-right')
 
-
-                <!-- Live Clock Capsule -->
-                <div class="flex items-center gap-2 bg-slate-100/80 border border-slate-200 px-3 py-1.5 rounded-full text-xs font-mono font-medium text-slate-700">
-                    <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    <span id="liveClockDisplay">{{ date('H:i') }} WIB • {{ date('d M') }}</span>
-                </div>
-
-                <!-- Notification Bell -->
-                <button class="relative p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition" onclick="showToast('Semua notifikasi transaksi telah sinkron real-time.')">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                    </svg>
-                    <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white"></span>
-                </button>
-
-                <!-- Profile Circle -->
-                <div class="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold text-xs ring-2 ring-amber-200">
-                    FA
-                </div>
-            </div>
         </header>
 
         <!-- Flash message notification -->
@@ -242,24 +219,79 @@
                             <span class="w-2 h-2 rounded-full bg-amber-500"></span>
                             <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-700">Pilih Layanan & ATK Cepat (Klik untuk Masuk Nota)</h3>
                         </div>
-                        <span class="text-[11px] text-slate-400 font-mono">{{ $catalogProducts->count() }} Item Tersedia</span>
+                        <span id="catalogItemCountBadge" class="text-[11px] text-slate-400 font-mono">{{ $catalogProducts->count() }} Item Tersedia</span>
                     </div>
 
-                    <div id="catalogGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 max-h-56 overflow-y-auto pr-2 custom-scrollbar">
+                    <!-- Input Pencarian Barang & Layanan ATK -->
+                    <div class="relative mb-3">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                        </div>
+                        <input 
+                            type="text" 
+                            id="catalogSearchInput"
+                            placeholder="Cari barang atau layanan ATK..." 
+                            class="w-full pl-9 pr-8 py-2 text-xs bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition text-slate-800 placeholder-slate-400 font-medium"
+                            onkeyup="filterCatalogProducts()"
+                            oninput="filterCatalogProducts()"
+                        >
+                        <button 
+                            type="button" 
+                            id="catalogSearchClearBtn" 
+                            onclick="clearCatalogSearch()" 
+                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 hidden text-xs font-bold"
+                            title="Hapus pencarian"
+                        >
+                            ✕
+                        </button>
+                    </div>
+
+                    <div id="catalogGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 max-h-72 overflow-y-auto pr-2 custom-scrollbar">
                         @foreach($catalogProducts as $prod)
+                        @php
+                            $stokItem = $inventoryStockMap->get($prod->nama_item) ?? null;
+                            if (!$stokItem) {
+                                $stokItem = $inventoryStockMap->first(function ($s) use ($prod) {
+                                    return str_contains(strtolower($prod->nama_item), strtolower($s->nama_bahan)) ||
+                                           str_contains(strtolower($s->nama_bahan), strtolower($prod->nama_item));
+                                });
+                            }
+                        @endphp
                         <div 
                             onclick="addItemToCart('{{ addslashes($prod->nama_item) }}', {{ (float)$prod->harga_dasar }}, '{{ $prod->kategori }}', {{ $prod->produk_id }})"
                             data-category="{{ $prod->kategori }}"
-                            class="catalog-item-card p-2.5 rounded-xl border border-slate-200/90 hover:border-amber-400 hover:bg-amber-50/40 bg-slate-50/40 cursor-pointer transition transform active:scale-95 flex flex-col justify-between group min-h-[92px]"
+                            data-name="{{ strtolower($prod->nama_item) }}"
+                            class="catalog-item-card p-2.5 rounded-xl border border-slate-200/90 hover:border-amber-400 hover:bg-amber-50/40 bg-slate-50/40 cursor-pointer transition transform active:scale-95 flex flex-col justify-between group min-h-[105px]"
                         >
                             <div>
                                 <div class="flex items-center justify-between text-[10px] text-slate-400 mb-1">
-                                    <span class="truncate">{{ $prod->kategori }}</span>
+                                    <span class="truncate font-semibold">{{ $prod->kategori }}</span>
                                     <span class="text-amber-600 font-bold opacity-0 group-hover:opacity-100 transition text-[10px]">+ Nota</span>
                                 </div>
                                 <h4 class="text-xs font-bold text-slate-800 line-clamp-2 leading-snug group-hover:text-amber-900">
                                     {{ $prod->nama_item }}
                                 </h4>
+                                <div class="mt-1.5 flex items-center">
+                                    @if($stokItem)
+                                        @if($stokItem->jumlah_stok > 0)
+                                            <span class="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/60">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                Stok: {{ $stokItem->jumlah_stok }} {{ $stokItem->satuan }}
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center gap-1 text-[10px] font-semibold text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200/60">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                                Stok Habis
+                                            </span>
+                                        @endif
+                                    @else
+                                        <span class="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                                            Layanan Siap
+                                        </span>
+                                    @endif
+                                </div>
                             </div>
                             <div class="mt-2 pt-1 border-t border-slate-200/60 flex items-center justify-between">
                                 <span class="text-xs font-mono font-extrabold text-slate-900 group-hover:text-amber-700">
@@ -269,6 +301,17 @@
                             </div>
                         </div>
                         @endforeach
+
+                        <!-- Empty State Pencarian Barang / Layanan -->
+                        <div id="catalogEmptyState" class="col-span-full py-8 text-center" style="display: none;">
+                            <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                </svg>
+                            </div>
+                            <p class="font-bold text-slate-700 text-xs">Barang atau layanan tidak tersedia</p>
+                            <p class="text-[11px] text-slate-400 mt-0.5" id="catalogEmptyText">Tidak ditemukan barang atau layanan yang sesuai dengan kata kunci.</p>
+                        </div>
                     </div>
                 </div>
 
@@ -304,7 +347,9 @@
                             </thead>
                             <tbody id="walkInTableBody" class="divide-y divide-slate-100">
                                 @forelse($todayWalkInOrders as $order)
-                                <tr class="hover:bg-slate-50/60 transition group font-medium text-slate-800">
+                                <tr class="walkin-order-row hover:bg-slate-50/60 transition group font-medium text-slate-800"
+                                    data-nota="{{ strtolower($order->kode_nota_walkin . ' ' . str_replace('#', '', $order->kode_nota_walkin)) }}"
+                                    data-nama="{{ strtolower($order->display_name) }}">
                                     <!-- No. Nota / Waktu -->
                                     <td class="py-3.5 px-4 whitespace-nowrap">
                                         <div class="font-extrabold font-mono text-slate-900">{{ $order->kode_nota_walkin }}</div>
@@ -350,6 +395,21 @@
                                     </td>
                                 </tr>
                                 @endforelse
+
+                                <!-- Search Not Found State -->
+                                <tr id="searchNotFoundRow" style="display: none;">
+                                    <td colspan="5" class="py-12 px-4 text-center">
+                                        <div class="flex flex-col items-center justify-center max-w-sm mx-auto space-y-2">
+                                            <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                                </svg>
+                                            </div>
+                                            <p class="font-bold text-slate-700 text-sm">Data tidak tersedia</p>
+                                            <p class="text-xs text-slate-400 not-found-text">Nomor nota atau nama pelanggan tidak ditemukan.</p>
+                                        </div>
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -436,7 +496,7 @@
                         <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
                             Pilihan Cepat Metode Pembayaran
                         </label>
-                        <div class="grid grid-cols-4 gap-1.5">
+                        <div class="grid grid-cols-3 gap-1.5">
                             <button type="button" onclick="selectPaymentMethod('QRIS', this)" class="payment-method-btn active py-1.5 rounded-xl border border-sky-300 bg-sky-50 text-sky-800 font-bold text-xs flex flex-col items-center justify-center gap-0.5 transition">
                                 <span class="text-xs">📱</span>
                                 <span class="text-[10px] font-mono">QRIS</span>
@@ -445,46 +505,12 @@
                                 <span class="text-xs">💵</span>
                                 <span class="text-[10px] font-mono">Tunai</span>
                             </button>
-                            <button type="button" onclick="selectPaymentMethod('EDC', this)" class="payment-method-btn py-1.5 rounded-xl border border-slate-200 hover:border-slate-300 text-slate-700 font-bold text-xs flex flex-col items-center justify-center gap-0.5 transition">
-                                <span class="text-xs">💳</span>
-                                <span class="text-[10px] font-mono">EDC</span>
-                            </button>
                             <button type="button" onclick="selectPaymentMethod('TRANSFER', this)" class="payment-method-btn py-1.5 rounded-xl border border-slate-200 hover:border-slate-300 text-slate-700 font-bold text-xs flex flex-col items-center justify-center gap-0.5 transition">
                                 <span class="text-xs">🏦</span>
                                 <span class="text-[10px] font-mono">Transfer</span>
                             </button>
                         </div>
                     </div>
-
-                    <!-- Cash Tender / Uang Diterima (Only visible when TUNAI is selected) -->
-                    <div id="cashTenderSection" class="hidden bg-slate-50 p-2.5 rounded-2xl border border-slate-200/80 space-y-1.5 transition-all">
-                        <div class="flex items-center justify-between text-[10px] font-bold text-slate-500">
-                            <span>UANG DITERIMA (TUNAI)</span>
-                            <span class="text-amber-700 font-mono font-bold" id="kembalianText">Kembalian: Rp 0</span>
-                        </div>
-                        <div class="grid grid-cols-4 gap-1 text-xs">
-                            <button type="button" onclick="setTenderAmount('pas')" id="tenderPasBtn" class="tender-btn py-1 px-1 rounded-lg border border-slate-200 bg-white font-bold text-slate-800 hover:bg-slate-100 text-[10px] truncate">
-                                Rp Pas
-                            </button>
-                            <button type="button" onclick="setTenderAmount(50000)" class="tender-btn py-1 px-1 rounded-lg border border-amber-400 bg-amber-500 text-white font-bold text-[10px] truncate">
-                                50.000
-                            </button>
-                            <button type="button" onclick="setTenderAmount(100000)" class="tender-btn py-1 px-1 rounded-lg border border-slate-200 bg-white font-bold text-slate-800 hover:bg-slate-100 text-[10px] truncate">
-                                100.000
-                            </button>
-                            <button type="button" onclick="promptCustomTender()" class="tender-btn py-1 px-1 rounded-lg border border-slate-200 bg-white font-bold text-slate-800 hover:bg-slate-100 text-[10px] truncate">
-                                Custom
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Toggle Kirim ke Antrean Pengerjaan -->
-                    <label for="kirim_workshop" class="flex items-start gap-2.5 p-2.5 rounded-2xl bg-slate-50 hover:bg-amber-50/60 border border-slate-200/80 cursor-pointer transition select-none">
-                        <input type="checkbox" name="kirim_workshop" id="kirim_workshop" value="1" class="mt-0.5 w-4 h-4 rounded text-amber-600 focus:ring-amber-500 border-slate-300">
-                        <span class="text-[11px] font-bold text-slate-700 leading-snug">
-                            Kirim ke Antrean Pengerjaan (Jika dokumen memerlukan waktu cetak/jilid)
-                        </span>
-                    </label>
 
                     <!-- Primary Checkout Button -->
                     <button 
@@ -599,12 +625,8 @@
                         <span id="rcptTotal">Rp 0</span>
                     </div>
                     <div class="flex justify-between text-slate-600 pt-1">
-                        <span id="rcptMetode">Metode (QRIS):</span>
-                        <span id="rcptTender">Rp 0</span>
-                    </div>
-                    <div class="flex justify-between text-slate-600">
-                        <span>Kembalian:</span>
-                        <span id="rcptKembalian">Rp 0</span>
+                        <span>Metode Pembayaran:</span>
+                        <span id="rcptMetode" class="font-bold">QRIS</span>
                     </div>
                 </div>
 
@@ -672,7 +694,6 @@
             pelanggan_id: null
         };
         let selectedPayment = 'QRIS';
-        let currentTender = 50000;
         let nextNota = '{{ $nextNotaCode }}';
 
         // Initialize state on page load
@@ -744,6 +765,55 @@
             renderCart();
         }
 
+        // Live manual typing in quantity input
+        function handleQtyInput(index, inputEl) {
+            if (!cart[index]) return;
+            const val = parseInt(inputEl.value, 10);
+            if (!isNaN(val) && val > 0) {
+                cart[index].kuantitas = val;
+                cart[index].sub_total = cart[index].kuantitas * cart[index].harga_satuan;
+                updateOrderSummaryOnly();
+            }
+        }
+
+        // Finalize manual quantity on blur
+        function handleQtyBlur(index, inputEl) {
+            if (!cart[index]) return;
+            let val = parseInt(inputEl.value, 10);
+            if (isNaN(val) || val <= 0) {
+                val = 1;
+                inputEl.value = 1;
+            }
+            cart[index].kuantitas = val;
+            cart[index].sub_total = cart[index].kuantitas * cart[index].harga_satuan;
+            renderCart();
+        }
+
+        // Lightweight live totals update while user is typing
+        function updateOrderSummaryOnly() {
+            const subtotalText = document.getElementById('subtotalValText');
+            const diskonText = document.getElementById('diskonValText');
+            const totalText = document.getElementById('totalTagihanValText');
+
+            let subtotal = 0;
+            cart.forEach((item, idx) => {
+                subtotal += item.sub_total;
+                const rowSubtotalEl = document.getElementById(`cart-item-subtotal-${idx}`);
+                if (rowSubtotalEl) {
+                    rowSubtotalEl.textContent = `Rp ${formatNumber(item.sub_total)}`;
+                }
+            });
+
+            if (subtotalText) subtotalText.textContent = `Rp ${formatNumber(subtotal)}`;
+
+            const rawDiscount = currentCustomer.discount || 0;
+            const appliedDiscount = Math.min(rawDiscount, subtotal);
+            const finalTotal = Math.max(0, subtotal - appliedDiscount);
+
+            if (diskonText) diskonText.textContent = `- Rp ${formatNumber(appliedDiscount)}`;
+            if (totalText) totalText.textContent = `Rp ${formatNumber(finalTotal)}`;
+        }
+
         // Remove item from Cart
         function removeItemFromCart(index) {
             if (!cart[index]) return;
@@ -789,7 +859,6 @@
                 if (diskonText) diskonText.textContent = '- Rp 0';
                 if (totalText) totalText.textContent = 'Rp 0';
                 if (submitBtn) submitBtn.disabled = true;
-                updateKembalian(0);
                 return;
             }
 
@@ -809,14 +878,23 @@
                             <p class="text-[11px] text-slate-400 mt-0.5">${item.rincian}</p>
                         </div>
                         <div class="flex items-center gap-2">
-                            <!-- Stepper -->
+                            <!-- Stepper with manual typing input -->
                             <div class="flex items-center border border-slate-200 rounded-lg bg-slate-50 overflow-hidden font-mono text-xs">
-                                <button type="button" onclick="updateItemQty(${idx}, -1)" class="px-2 py-0.5 hover:bg-slate-200 text-slate-600 transition">-</button>
-                                <span class="px-2 font-bold text-slate-800">${item.kuantitas}</span>
-                                <button type="button" onclick="updateItemQty(${idx}, 1)" class="px-2 py-0.5 hover:bg-slate-200 text-slate-600 transition">+</button>
+                                <button type="button" onclick="updateItemQty(${idx}, -1)" class="px-2 py-0.5 hover:bg-slate-200 text-slate-600 transition font-bold select-none">-</button>
+                                <input 
+                                    type="number" 
+                                    min="1" 
+                                    value="${item.kuantitas}" 
+                                    oninput="handleQtyInput(${idx}, this)" 
+                                    onblur="handleQtyBlur(${idx}, this)" 
+                                    onkeydown="if(event.key==='Enter'){ event.preventDefault(); this.blur(); }" 
+                                    class="w-12 text-center font-bold text-slate-800 bg-white border-x border-slate-200 py-0.5 focus:outline-none focus:ring-1 focus:ring-amber-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    title="Ketik jumlah item manual"
+                                >
+                                <button type="button" onclick="updateItemQty(${idx}, 1)" class="px-2 py-0.5 hover:bg-slate-200 text-slate-600 transition font-bold select-none">+</button>
                             </div>
                             <!-- Price & Delete -->
-                            <span class="font-mono font-bold text-xs text-slate-900 w-20 text-right">
+                            <span id="cart-item-subtotal-${idx}" class="font-mono font-bold text-xs text-slate-900 w-20 text-right">
                                 Rp ${formatNumber(item.sub_total)}
                             </span>
                             <button type="button" onclick="removeItemFromCart(${idx})" class="text-slate-300 hover:text-red-500 transition p-1">
@@ -839,56 +917,6 @@
 
             diskonText.textContent = `- Rp ${formatNumber(appliedDiscount)}`;
             totalText.textContent = `Rp ${formatNumber(finalTotal)}`;
-
-            // Update tender button for "Rp Pas"
-            const tenderPasBtn = document.getElementById('tenderPasBtn');
-            if (tenderPasBtn) {
-                tenderPasBtn.textContent = `Rp ${formatNumber(finalTotal)} (Pas)`;
-            }
-
-            updateKembalian(finalTotal);
-        }
-
-        // Set Tender Amount
-        function setTenderAmount(amount) {
-            const subtotal = cart.reduce((acc, it) => acc + it.sub_total, 0);
-            const rawDiscount = currentCustomer.discount || 0;
-            const appliedDiscount = Math.min(rawDiscount, subtotal);
-            const finalTotal = Math.max(0, subtotal - appliedDiscount);
-
-            if (amount === 'pas') {
-                currentTender = finalTotal;
-            } else {
-                currentTender = parseFloat(amount) || finalTotal;
-            }
-
-            // Update tender active styling
-            document.querySelectorAll('.tender-btn').forEach(btn => {
-                btn.classList.remove('bg-amber-500', 'text-white', 'border-amber-400');
-                btn.classList.add('bg-white', 'text-slate-800', 'border-slate-200');
-            });
-            if (window.event && window.event.target && window.event.target.classList) {
-                const targetBtn = window.event.target.closest('.tender-btn');
-                if (targetBtn) {
-                    targetBtn.classList.add('bg-amber-500', 'text-white', 'border-amber-400');
-                    targetBtn.classList.remove('bg-white', 'text-slate-800', 'border-slate-200');
-                }
-            }
-
-            updateKembalian(finalTotal);
-        }
-
-        function promptCustomTender() {
-            const val = prompt('Masukkan nominal uang yang diterima:', currentTender);
-            if (val !== null && !isNaN(val)) {
-                setTenderAmount(parseFloat(val));
-            }
-        }
-
-        function updateKembalian(finalTotal) {
-            const kembalianEl = document.getElementById('kembalianText');
-            const change = Math.max(0, currentTender - finalTotal);
-            kembalianEl.textContent = `Kembalian: Rp ${formatNumber(change)}`;
         }
 
         // Select Payment Method
@@ -900,35 +928,88 @@
             });
             btn.classList.add('active', 'border-sky-300', 'bg-sky-50', 'text-sky-800');
             btn.classList.remove('border-slate-200', 'text-slate-700');
-
-            const cashTenderSection = document.getElementById('cashTenderSection');
-            if (cashTenderSection) {
-                if (method === 'TUNAI') {
-                    cashTenderSection.classList.remove('hidden');
-                } else {
-                    cashTenderSection.classList.add('hidden');
-                }
-            }
         }
+
+        let activeCatalogCategory = 'Semua Item';
 
         // Filter Category in Catalog Grid
         function filterCategory(cat, btn) {
+            activeCatalogCategory = cat;
             document.querySelectorAll('.category-filter-btn').forEach(b => {
-                b.classList.remove('bg-slate-900', 'text-white', 'shadow-xs');
-                b.classList.add('bg-white', 'text-slate-700', 'border', 'border-slate-200');
+                b.classList.remove('active', 'bg-slate-900', 'text-white', 'shadow-xs');
+                b.classList.add('bg-white', 'text-slate-700', 'hover:bg-slate-100', 'border', 'border-slate-200');
             });
-            btn.classList.add('bg-slate-900', 'text-white', 'shadow-xs');
-            btn.classList.remove('bg-white', 'text-slate-700', 'border', 'border-slate-200');
+            if (btn) {
+                btn.classList.add('active', 'bg-slate-900', 'text-white', 'shadow-xs');
+                btn.classList.remove('bg-white', 'text-slate-700', 'hover:bg-slate-100', 'border', 'border-slate-200');
+            }
+            applyCatalogFilter();
+        }
 
+        // Filter Products by keyword search in Catalog
+        function filterCatalogProducts() {
+            const input = document.getElementById('catalogSearchInput');
+            const clearBtn = document.getElementById('catalogSearchClearBtn');
+            if (clearBtn) {
+                clearBtn.classList.toggle('hidden', !input || !input.value.trim());
+            }
+            applyCatalogFilter();
+        }
+
+        // Clear Catalog Search
+        function clearCatalogSearch() {
+            const input = document.getElementById('catalogSearchInput');
+            if (input) {
+                input.value = '';
+                input.focus();
+            }
+            const clearBtn = document.getElementById('catalogSearchClearBtn');
+            if (clearBtn) {
+                clearBtn.classList.add('hidden');
+            }
+            applyCatalogFilter();
+        }
+
+        // Unified Catalog Filter (Category + Search Keyword)
+        function applyCatalogFilter() {
+            const keyword = (document.getElementById('catalogSearchInput')?.value || '').toLowerCase().trim();
             const cards = document.querySelectorAll('.catalog-item-card');
+            let visibleCount = 0;
+
             cards.forEach(card => {
-                const itemCat = card.getAttribute('data-category');
-                if (cat === 'Semua Item' || itemCat === cat) {
+                const itemCat = card.getAttribute('data-category') || '';
+                const itemName = (card.getAttribute('data-name') || card.querySelector('h4')?.textContent || '').toLowerCase();
+
+                const matchesCat = (activeCatalogCategory === 'Semua' || activeCatalogCategory === 'Semua Item' || itemCat === activeCatalogCategory);
+                const matchesKeyword = (keyword === '' || itemName.includes(keyword));
+
+                if (matchesCat && matchesKeyword) {
                     card.style.display = 'flex';
+                    visibleCount++;
                 } else {
                     card.style.display = 'none';
                 }
             });
+
+            // Empty state handling
+            const emptyState = document.getElementById('catalogEmptyState');
+            if (emptyState) {
+                emptyState.style.display = (visibleCount === 0) ? 'block' : 'none';
+                const emptyText = document.getElementById('catalogEmptyText');
+                if (emptyText) {
+                    if (keyword !== '') {
+                        emptyText.textContent = `Tidak ditemukan barang atau layanan untuk kata kunci "${keyword}".`;
+                    } else {
+                        emptyText.textContent = `Tidak ada item pada kategori "${activeCatalogCategory}".`;
+                    }
+                }
+            }
+
+            // Update badge count
+            const countBadge = document.getElementById('catalogItemCountBadge');
+            if (countBadge) {
+                countBadge.textContent = `${visibleCount} Item Tersedia`;
+            }
         }
 
         // Customer Selection Modal Handling
@@ -976,9 +1057,6 @@
             const rawDiscount = currentCustomer.discount || 0;
             const appliedDiscount = Math.min(rawDiscount, subtotal);
             const finalTotal = Math.max(0, subtotal - appliedDiscount);
-            const tenderAmount = selectedPayment === 'TUNAI' ? currentTender : finalTotal;
-            const change = selectedPayment === 'TUNAI' ? Math.max(0, currentTender - finalTotal) : 0;
-
             const now = new Date();
             const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} WIB`;
 
@@ -988,9 +1066,8 @@
             document.getElementById('rcptSubtotal').textContent = `Rp ${formatNumber(subtotal)}`;
             document.getElementById('rcptDiskon').textContent = `- Rp ${formatNumber(appliedDiscount)}`;
             document.getElementById('rcptTotal').textContent = `Rp ${formatNumber(finalTotal)}`;
-            document.getElementById('rcptMetode').textContent = `Metode (${selectedPayment}):`;
-            document.getElementById('rcptTender').textContent = `Rp ${formatNumber(tenderAmount)}`;
-            document.getElementById('rcptKembalian').textContent = `Rp ${formatNumber(change)}`;
+            const rcptMetodeEl = document.getElementById('rcptMetode');
+            if (rcptMetodeEl) rcptMetodeEl.textContent = selectedPayment;
 
             let itemsHtml = '';
             cart.forEach(it => {
@@ -1033,9 +1110,9 @@
                 diskon: appliedDiscount,
                 total_harga: finalTotal,
                 metode_pembayaran: selectedPayment,
-                uang_diterima: selectedPayment === 'TUNAI' ? currentTender : finalTotal,
-                kembalian: selectedPayment === 'TUNAI' ? Math.max(0, currentTender - finalTotal) : 0,
-                kirim_workshop: document.getElementById('kirim_workshop')?.checked ? true : false
+                uang_diterima: finalTotal,
+                kembalian: 0,
+                kirim_workshop: false
             };
 
             const submitBtn = document.getElementById('modalSubmitBtn');
@@ -1068,8 +1145,6 @@
                     
                     // Reset cart
                     cart = [];
-                    const kirimCheckbox = document.getElementById('kirim_workshop');
-                    if (kirimCheckbox) kirimCheckbox.checked = false;
                     renderCart();
                     
                     // Refresh data table
@@ -1150,7 +1225,9 @@
                     let rowsHtml = '';
                     data.orders.forEach(ord => {
                         rowsHtml += `
-                            <tr class="hover:bg-slate-50/60 transition group font-medium text-slate-800">
+                            <tr class="walkin-order-row hover:bg-slate-50/60 transition group font-medium text-slate-800"
+                                data-nota="${(ord.no_nota || '').toLowerCase()} ${(ord.no_nota || '').replace('#', '').toLowerCase()}"
+                                data-nama="${(ord.nama || '').toLowerCase()}">
                                 <td class="py-3.5 px-4 whitespace-nowrap">
                                     <div class="font-extrabold font-mono text-slate-900">${ord.no_nota}</div>
                                     <div class="text-[11px] text-slate-400 font-mono mt-0.5">${ord.waktu}</div>
@@ -1173,7 +1250,26 @@
                             </tr>
                         `;
                     });
+                    rowsHtml += `
+                        <tr id="searchNotFoundRow" style="display: none;">
+                            <td colspan="5" class="py-12 px-4 text-center">
+                                <div class="flex flex-col items-center justify-center max-w-sm mx-auto space-y-2">
+                                    <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                        </svg>
+                                    </div>
+                                    <p class="font-bold text-slate-700 text-sm">Data tidak tersedia</p>
+                                    <p class="text-xs text-slate-400 not-found-text">Nomor nota atau nama pelanggan tidak ditemukan.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
                     tbody.innerHTML = rowsHtml;
+                    const curSearch = document.getElementById('searchPosInput')?.value || '';
+                    if (curSearch) {
+                        filterPosTransactions(curSearch);
+                    }
                 }
             } catch (e) {
                 console.error(e);
@@ -1194,15 +1290,41 @@
             }, 1000);
         }
 
-        // Table search filter
+        // Table search filter: strictly filters nomor nota and nama pelanggan only
         function filterPosTransactions(query) {
-            const term = query.toLowerCase().trim();
-            const rows = document.querySelectorAll('#walkInTableBody tr');
+            const term = (query || '').toLowerCase().trim();
+            const rows = document.querySelectorAll('#walkInTableBody tr.walkin-order-row');
+            let visibleCount = 0;
+
             rows.forEach(r => {
-                if (r.id === 'emptyTableRow') return;
-                const text = r.textContent.toLowerCase();
-                r.style.display = text.includes(term) ? '' : 'none';
+                const nota = r.getAttribute('data-nota') || '';
+                const nama = r.getAttribute('data-nama') || '';
+                if (term === '' || nota.includes(term) || nama.includes(term)) {
+                    r.style.display = '';
+                    visibleCount++;
+                } else {
+                    r.style.display = 'none';
+                }
             });
+
+            const emptyTableRow = document.getElementById('emptyTableRow');
+            const searchNotFoundRow = document.getElementById('searchNotFoundRow');
+
+            if (emptyTableRow) {
+                emptyTableRow.style.display = (rows.length === 0) ? '' : 'none';
+            }
+
+            if (searchNotFoundRow) {
+                if (rows.length > 0 && term !== '' && visibleCount === 0) {
+                    searchNotFoundRow.style.display = '';
+                    const notFoundText = searchNotFoundRow.querySelector('.not-found-text');
+                    if (notFoundText) {
+                        notFoundText.textContent = `Nomor nota atau nama pelanggan "${query}" tidak ditemukan.`;
+                    }
+                } else {
+                    searchNotFoundRow.style.display = 'none';
+                }
+            }
         }
 
         // Helper: Number Formatter

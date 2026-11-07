@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\DetailPesanan;
+use App\Models\InventarisStok;
 use App\Models\LaporanOmzet;
 use App\Models\Pelanggan;
 use App\Models\Pesanan;
@@ -195,5 +196,154 @@ class AdminWalkInTest extends TestCase
 
         $custResponse = $this->actingAs($this->customer)->get(route('admin.walkin.index'));
         $custResponse->assertRedirect(route('customer.dashboard'));
+    }
+
+    public function test_walkin_page_integrates_with_manajemen_stok_and_removes_kirim_workshop_toggle(): void
+    {
+        $response = $this->actingAs($this->admin)->get(route('admin.walkin.index'));
+
+        $response->assertStatus(200);
+        $response->assertDontSee('Kirim ke Antrean Pengerjaan');
+        $response->assertSee('Pilih Layanan & ATK Cepat (Klik untuk Masuk Nota)', false);
+        $response->assertSee('Fotokopi &amp; Print', false);
+        $response->assertSee('Alat Tulis &amp; Map', false);
+        $response->assertSee('Jilid &amp; Finishing', false);
+        $response->assertSee('Jasa &amp; Lainnya', false);
+        $response->assertSee('Kertas HVS A4 70gr PaperOne');
+        $response->assertSee('Kawat Spiral No. 10 (1/2 inch)');
+        $response->assertSee('Stok:');
+    }
+
+    public function test_walkin_checkout_deducts_inventory_stock_and_updates_financial_reports(): void
+    {
+        $this->actingAs($this->admin)->get(route('admin.walkin.index'));
+
+        $stokSpiral = InventarisStok::where('nama_bahan', 'Kawat Spiral No. 10 (1/2 inch)')->firstOrFail();
+        $initialStock = $stokSpiral->jumlah_stok;
+
+        $payload = [
+            'nama_pemesan' => 'Citra Kirana',
+            'tipe_pelanggan' => 'Walk-in Tamu',
+            'items' => [
+                [
+                    'nama_item' => 'Kawat Spiral No. 10 (1/2 inch)',
+                    'kuantitas' => 5,
+                    'harga_satuan' => 10000,
+                    'sub_total' => 50000,
+                    'rincian' => '5 Batang',
+                ],
+            ],
+            'subtotal' => 50000,
+            'diskon' => 0,
+            'total_harga' => 50000,
+            'metode_pembayaran' => 'TUNAI',
+            'uang_diterima' => 50000,
+            'kembalian' => 0,
+        ];
+
+        $response = $this->actingAs($this->admin)->postJson(route('admin.walkin.checkout'), $payload);
+
+        $response->assertStatus(200);
+        $this->assertEquals($initialStock - 5, $stokSpiral->fresh()->jumlah_stok);
+
+        // Check LaporanOmzet
+        $periode = now()->format('Y-m');
+        $this->assertDatabaseHas('laporan_omzet', [
+            'periode' => $periode,
+            'total_pendapatan_offline' => 50000,
+        ]);
+
+        // Check laporan index page displays the transaction and omzet
+        $laporanResponse = $this->actingAs($this->admin)->get(route('admin.laporan.index'));
+        $laporanResponse->assertStatus(200);
+        $laporanResponse->assertSee('Citra Kirana');
+        $laporanResponse->assertSee('Rp 50.000');
+    }
+
+    public function test_adding_new_inventory_item_automatically_syncs_to_walkin_catalog(): void
+    {
+        $payload = [
+            'kode_bahan' => 'A-GNT-10',
+            'nama_bahan' => 'Gunting Joyko Stainless Besar',
+            'gramatur_detail' => 'Ukuran 8 Inch Tajam Presisi',
+            'kategori' => 'Alat Tulis & Koreksi',
+            'jumlah_stok' => 15,
+            'batas_minimum' => 3,
+            'kapasitas_maksimal' => 30,
+            'satuan' => 'Pcs',
+        ];
+
+        $response = $this->actingAs($this->admin)->post(route('admin.stok.tambah-item'), $payload);
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('inventaris_stok', [
+            'kode_bahan' => 'A-GNT-10',
+            'nama_bahan' => 'Gunting Joyko Stainless Besar',
+        ]);
+
+        $this->assertDatabaseHas('produk_layanan', [
+            'nama_item' => 'Gunting Joyko Stainless Besar',
+            'kategori' => 'Alat Tulis & Map',
+            'status_aktif' => true,
+        ]);
+    }
+
+    public function test_walkin_page_does_not_contain_cash_tender_inputs_and_edc_payment_method(): void
+    {
+        $response = $this->actingAs($this->admin)->get(route('admin.walkin.index'));
+
+        $response->assertStatus(200);
+        $response->assertDontSee('UANG DITERIMA (TUNAI)');
+        $response->assertDontSee('Kembalian: Rp');
+        $response->assertDontSee('promptCustomTender');
+        $response->assertDontSee("selectPaymentMethod('EDC'", false);
+        $response->assertSee("selectPaymentMethod('QRIS'", false);
+        $response->assertSee("selectPaymentMethod('TUNAI'", false);
+        $response->assertSee("selectPaymentMethod('TRANSFER'", false);
+    }
+
+    public function test_walkin_nota_supports_manual_quantity_typing_and_retains_stepper_buttons(): void
+    {
+        $response = $this->actingAs($this->admin)->get(route('admin.walkin.index'));
+
+        $response->assertStatus(200);
+        $response->assertSee('handleQtyInput', false);
+        $response->assertSee('handleQtyBlur', false);
+        $response->assertSee('updateItemQty', false);
+        $response->assertSee('type="number"', false);
+    }
+
+    public function test_walkin_search_and_catalog_search_elements_render_properly(): void
+    {
+        $response = $this->actingAs($this->admin)->get(route('admin.walkin.index'));
+
+        $response->assertStatus(200);
+        // Requirement 2: Kasir Walk-in search placeholder and empty state
+        $response->assertSee('placeholder="Cari nomor nota atau nama pelanggan..."', false);
+        $response->assertSee('filterPosTransactions', false);
+        $response->assertSee('id="searchNotFoundRow"', false);
+        $response->assertSee('Data tidak tersedia');
+
+        // Requirement 3: Catalog search input under Pilih Layanan & ATK Cepat
+        $response->assertSee('Pilih Layanan & ATK Cepat (Klik untuk Masuk Nota)', false);
+        $response->assertSee('id="catalogSearchInput"', false);
+        $response->assertSee('placeholder="Cari barang atau layanan ATK..."', false);
+        $response->assertSee('filterCatalogProducts', false);
+        $response->assertSee('id="catalogEmptyState"', false);
+        $response->assertSee('Barang atau layanan tidak tersedia');
+        $response->assertSee('data-name=', false);
+    }
+
+    public function test_pembelian_online_search_elements_and_empty_states_render_properly(): void
+    {
+        $response = $this->actingAs($this->admin)->get(route('admin.antrean.index'));
+
+        $response->assertStatus(200);
+        // Requirement 1: Online orders search
+        $response->assertSee('id="header-search-input"', false);
+        $response->assertSee('filterQueueClientSide', false);
+        $response->assertSee('id="search-not-found-antrean"', false);
+        $response->assertSee('id="search-not-found-atk"', false);
+        $response->assertSee('Data tidak tersedia');
     }
 }
