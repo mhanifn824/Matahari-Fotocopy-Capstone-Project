@@ -796,4 +796,56 @@ class AdminDashboardTest extends TestCase
             'status_alur' => 'Menunggu',
         ]);
     }
+
+    public function test_customer_order_rejects_unsupported_file_extension(): void
+    {
+        Storage::fake('local');
+
+        $invalidFile = UploadedFile::fake()->create('app.exe', 500, 'application/x-msdownload');
+
+        $response = $this->actingAs($this->customer)->postJson(route('customer.order.store'), [
+            'judul_dokumen' => 'Cetak File Berbahaya',
+            'spesifikasi' => 'A4 70g • Hitam Putih',
+            'produk_id' => $this->product->produk_id,
+            'kuantitas' => 1,
+            'metode_pembayaran' => 'qris',
+            'berkas' => $invalidFile,
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['berkas']);
+        $response->assertJsonFragment([
+            'Format berkas tidak didukung. Hanya file PDF, DOC, DOCX, JPG, atau PNG yang dapat dicetak.',
+        ]);
+
+        $this->assertDatabaseMissing('pesanan', [
+            'judul_dokumen' => 'Cetak File Berbahaya',
+        ]);
+    }
+
+    public function test_customer_order_rejects_file_exceeding_20mb(): void
+    {
+        Storage::fake('local');
+
+        $oversizedPdf = UploadedFile::fake()->create('dokumen_besar.pdf', 25600, 'application/pdf');
+
+        $response = $this->actingAs($this->customer)->postJson(route('customer.order.store'), [
+            'judul_dokumen' => 'Cetak Dokumen Sangat Besar',
+            'spesifikasi' => 'A4 70g • Hitam Putih',
+            'produk_id' => $this->product->produk_id,
+            'kuantitas' => 1,
+            'metode_pembayaran' => 'qris',
+            'berkas' => $oversizedPdf,
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['berkas']);
+        $response->assertJsonFragment([
+            'Ukuran berkas dokumen melebihi batas maksimal 20 MB.',
+        ]);
+
+        $this->assertDatabaseMissing('pesanan', [
+            'judul_dokumen' => 'Cetak Dokumen Sangat Besar',
+        ]);
+    }
 }

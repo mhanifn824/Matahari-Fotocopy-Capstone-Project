@@ -182,6 +182,20 @@
     </div>
     @endif
 
+    @if($errors->any())
+    <div id="flashValidationNotice" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 w-full">
+        <div class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2.5">
+                <svg class="w-5 h-5 text-rose-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                </svg>
+                <span>{{ $errors->first() }}</span>
+            </div>
+            <button type="button" onclick="document.getElementById('flashValidationNotice').remove()" class="text-rose-700 hover:text-rose-900 font-bold ml-4">✕</button>
+        </div>
+    </div>
+    @endif
+
     <!-- ======================================================== -->
     <!-- SECTION 1: HERO HEADER                                  -->
     <!-- ======================================================== -->
@@ -1138,7 +1152,7 @@
                             <!-- Selected File State -->
                             <div id="cust-file-selected-state" class="hidden flex items-center justify-between bg-white p-2.5 rounded-xl border border-blue-200 shadow-2xs">
                                 <div class="flex items-center gap-2.5 text-left truncate">
-                                    <div class="w-8 h-8 rounded-lg bg-red-100 text-red-600 font-black text-[10px] flex items-center justify-center shrink-0">
+                                    <div id="cust-file-ext-badge" class="w-8 h-8 rounded-lg bg-red-100 text-red-600 font-black text-[10px] flex items-center justify-center shrink-0">
                                         PDF
                                     </div>
                                     <div class="truncate">
@@ -1150,6 +1164,26 @@
                                     Ganti Berkas
                                 </button>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- File Validation Error / Warning Banner -->
+                    <div id="cust-file-error-banner" class="hidden rounded-2xl bg-rose-50 border border-rose-200/90 p-3.5 text-xs text-rose-800 transition-all duration-200 animate-in fade-in slide-in-from-top-1">
+                        <div class="flex items-start gap-3">
+                            <div class="w-7 h-7 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0 mt-0.5">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <h5 class="font-extrabold text-rose-900 text-xs" id="cust-file-error-title">Berkas Tidak Memenuhi Syarat</h5>
+                                <p class="text-[11px] text-rose-700 mt-0.5 leading-relaxed" id="cust-file-error-desc">
+                                    Pesan kesalahan validasi berkas akan tampil di sini.
+                                </p>
+                            </div>
+                            <button type="button" onclick="hideCustFileError()" class="text-rose-400 hover:text-rose-700 p-1 rounded-lg hover:bg-rose-100 transition shrink-0" title="Tutup peringatan">
+                                ✕
+                            </button>
                         </div>
                     </div>
 
@@ -1537,6 +1571,7 @@
             calculateCustPrice();
         }
         function closeCustomerOrderModal() {
+            hideCustFileError();
             document.getElementById('modalCustomerOrder').classList.add('hidden');
         }
 
@@ -1549,6 +1584,8 @@
 
         let detectedPdfPages = null;
         let currentModalMaxStock = null;
+        const allowedExtensions = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'];
+        const maxCustFileSizeBytes = 20971520; // 20 MB (20 * 1024 * 1024 bytes)
 
         function getCustQtyInput() {
             return document.getElementById('cust-qty-input') || document.getElementById('cust-qty');
@@ -1594,10 +1631,52 @@
             }
         }
 
+        function showCustFileError(title, message) {
+            const banner = document.getElementById('cust-file-error-banner');
+            const titleEl = document.getElementById('cust-file-error-title');
+            const descEl = document.getElementById('cust-file-error-desc');
+            const dropzone = document.getElementById('dropzone-cust-file');
+
+            if (titleEl) titleEl.textContent = title;
+            if (descEl) descEl.textContent = message;
+            if (banner) banner.classList.remove('hidden');
+
+            // Berikan feedback visual border merah pada dropzone selama beberapa detik
+            if (dropzone) {
+                dropzone.classList.add('border-rose-400', 'bg-rose-50/30');
+                dropzone.classList.remove('border-blue-200', 'bg-blue-50/30');
+            }
+        }
+
+        function hideCustFileError() {
+            const banner = document.getElementById('cust-file-error-banner');
+            const dropzone = document.getElementById('dropzone-cust-file');
+            if (banner) banner.classList.add('hidden');
+            if (dropzone) {
+                dropzone.classList.remove('border-rose-400', 'bg-rose-50/30');
+                dropzone.classList.add('border-blue-200', 'bg-blue-50/30');
+            }
+        }
+
+        function resetCustFilePlaceholderState(input) {
+            if (input) input.value = '';
+            detectedPdfPages = null;
+            const emptyState = document.getElementById('cust-file-empty-state');
+            const selectedState = document.getElementById('cust-file-selected-state');
+            const pagesInput = document.getElementById('cust-pages');
+            const extBadgeEl = document.getElementById('cust-file-ext-badge');
+
+            if (emptyState) emptyState.classList.remove('hidden');
+            if (selectedState) selectedState.classList.add('hidden');
+            if (extBadgeEl) extBadgeEl.textContent = 'PDF';
+            if (pagesInput) pagesInput.value = 1;
+            calculateCustPrice();
+        }
+
         function removeCustSelectedFile() {
             const input = document.getElementById('cust-file-input');
-            if (input) input.value = '';
-            handleCustFileSelect(input);
+            resetCustFilePlaceholderState(input);
+            hideCustFileError();
         }
 
         function handleCustFileSelect(input) {
@@ -1607,25 +1686,46 @@
             const selectedState = document.getElementById('cust-file-selected-state');
             const fileNameEl = document.getElementById('cust-file-name');
             const fileInfoEl = document.getElementById('cust-file-info');
+            const extBadgeEl = document.getElementById('cust-file-ext-badge');
 
             if (!file) {
-                detectedPdfPages = null;
-                if (emptyState) emptyState.classList.remove('hidden');
-                if (selectedState) selectedState.classList.add('hidden');
-                if (pagesInput) pagesInput.value = 1;
-                calculateCustPrice();
+                resetCustFilePlaceholderState(input);
                 return;
             }
-
-            if (emptyState) emptyState.classList.add('hidden');
-            if (selectedState) selectedState.classList.remove('hidden');
-            if (fileNameEl) fileNameEl.textContent = file.name;
 
             const sizeFormatted = (file.size / 1024 / 1024 >= 1) 
                 ? (file.size / 1024 / 1024).toFixed(1) + ' MB'
                 : Math.max(1, Math.round(file.size / 1024)) + ' KB';
 
-            if (file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf') {
+            // 1. Validasi Ukuran Berkas (Maksimal 20 MB / 20971520 bytes)
+            if (file.size > maxCustFileSizeBytes) {
+                showCustFileError(
+                    'Ukuran Berkas Terlalu Besar',
+                    `Berkas yang dipilih berukuran ${sizeFormatted}. Kapasitas maksimal dokumen cetak yang diizinkan adalah 20 MB.`
+                );
+                resetCustFilePlaceholderState(input);
+                return;
+            }
+
+            // 2. Validasi Ekstensi File
+            const ext = file.name.includes('.') ? file.name.split('.').pop().toLowerCase() : '';
+            if (!allowedExtensions.includes(ext)) {
+                showCustFileError(
+                    'Format Berkas Tidak Didukung',
+                    `Format .${ext} tidak dapat diproses untuk fotokopi/cetak. Silakan unggah dokumen PDF, Word (.doc/.docx), atau gambar (.jpg/.png).`
+                );
+                resetCustFilePlaceholderState(input);
+                return;
+            }
+
+            hideCustFileError();
+
+            if (emptyState) emptyState.classList.add('hidden');
+            if (selectedState) selectedState.classList.remove('hidden');
+            if (fileNameEl) fileNameEl.textContent = file.name;
+            if (extBadgeEl) extBadgeEl.textContent = ext.toUpperCase();
+
+            if (ext === 'pdf' || file.type === 'application/pdf') {
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const text = e.target.result;
@@ -2421,10 +2521,66 @@
                     const dt = e.dataTransfer;
                     const files = dt && dt.files;
                     if (files && files.length > 0) {
+                        const droppedFile = files[0];
+                        const sizeFormatted = (droppedFile.size / 1024 / 1024 >= 1)
+                            ? (droppedFile.size / 1024 / 1024).toFixed(1) + ' MB'
+                            : Math.max(1, Math.round(droppedFile.size / 1024)) + ' KB';
+
+                        if (droppedFile.size > maxCustFileSizeBytes) {
+                            showCustFileError(
+                                'Ukuran Berkas Terlalu Besar',
+                                `Berkas yang dipilih berukuran ${sizeFormatted}. Kapasitas maksimal dokumen cetak yang diizinkan adalah 20 MB.`
+                            );
+                            resetCustFilePlaceholderState(fileInput);
+                            return;
+                        }
+                        const ext = droppedFile.name.includes('.') ? droppedFile.name.split('.').pop().toLowerCase() : '';
+                        if (!allowedExtensions.includes(ext)) {
+                            showCustFileError(
+                                'Format Berkas Tidak Didukung',
+                                `Format .${ext} tidak dapat diproses untuk fotokopi/cetak. Silakan unggah dokumen PDF, Word (.doc/.docx), atau gambar (.jpg/.png).`
+                            );
+                            resetCustFilePlaceholderState(fileInput);
+                            return;
+                        }
                         fileInput.files = files;
                         handleCustFileSelect(fileInput);
                     }
                 }, false);
+            }
+
+            // Validasi berkas saat form #custOrderForm disubmit
+            const custOrderForm = document.getElementById('custOrderForm');
+            if (custOrderForm) {
+                custOrderForm.addEventListener('submit', function(e) {
+                    const input = document.getElementById('cust-file-input');
+                    const file = input && input.files && input.files[0];
+                    if (file) {
+                        const sizeFormatted = (file.size / 1024 / 1024 >= 1)
+                            ? (file.size / 1024 / 1024).toFixed(1) + ' MB'
+                            : Math.max(1, Math.round(file.size / 1024)) + ' KB';
+
+                        if (file.size > maxCustFileSizeBytes) {
+                            e.preventDefault();
+                            showCustFileError(
+                                'Ukuran Berkas Terlalu Besar',
+                                `Berkas yang dipilih berukuran ${sizeFormatted}. Kapasitas maksimal dokumen cetak yang diizinkan adalah 20 MB.`
+                            );
+                            resetCustFilePlaceholderState(input);
+                            return false;
+                        }
+                        const ext = file.name.includes('.') ? file.name.split('.').pop().toLowerCase() : '';
+                        if (!allowedExtensions.includes(ext)) {
+                            e.preventDefault();
+                            showCustFileError(
+                                'Format Berkas Tidak Didukung',
+                                `Format .${ext} tidak dapat diproses untuk fotokopi/cetak. Silakan unggah dokumen PDF, Word (.doc/.docx), atau gambar (.jpg/.png).`
+                            );
+                            resetCustFilePlaceholderState(input);
+                            return false;
+                        }
+                    }
+                });
             }
         });
 

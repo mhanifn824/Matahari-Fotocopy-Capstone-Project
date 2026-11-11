@@ -1207,6 +1207,24 @@ class DashboardController extends Controller
         $user = Auth::user();
         $user->load('pelanggan');
 
+        if ($request->hasFile('berkas') && ! $request->file('berkas')->isValid()) {
+            $msg = 'Gagal mengunggah berkas. Ukuran berkas melebihi kapasitas unggah server.';
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => $msg,
+                    'errors' => [
+                        'berkas' => [$msg],
+                    ],
+                ], 422);
+            }
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $msg)
+                ->withErrors(['berkas' => $msg]);
+        }
+
         $validated = $request->validate([
             'judul_dokumen' => 'required|string|max:200',
             'spesifikasi' => 'required|string',
@@ -1214,7 +1232,11 @@ class DashboardController extends Controller
             'kuantitas' => 'required|integer|min:1',
             'jumlah_halaman' => 'nullable|integer|min:1',
             'metode_pembayaran' => 'required|string|in:qris,transfer',
-            'berkas' => 'nullable|file|max:20480', // 20MB max
+            'berkas' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:20480',
+        ], [
+            'berkas.file' => 'Berkas yang diunggah harus berupa file dokumen valid.',
+            'berkas.mimes' => 'Format berkas tidak didukung. Hanya file PDF, DOC, DOCX, JPG, atau PNG yang dapat dicetak.',
+            'berkas.max' => 'Ukuran berkas dokumen melebihi batas maksimal 20 MB.',
         ]);
 
         $produk = ProdukLayanan::findOrFail($validated['produk_id']);
