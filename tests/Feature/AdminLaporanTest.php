@@ -123,6 +123,7 @@ class AdminLaporanTest extends TestCase
     public function test_admin_can_access_dedicated_transaksi_terakhir_gerai_page(): void
     {
         Pesanan::create([
+            'nomor_nota_kustom' => '#MTR-WALK-1001',
             'nama_pemesan' => 'Andi Walk-in Gerai',
             'jenis_pesanan' => 'walk-in',
             'total_harga' => 35000,
@@ -132,6 +133,7 @@ class AdminLaporanTest extends TestCase
         ]);
 
         Pesanan::create([
+            'nomor_nota_kustom' => '#MTR-ONL-2002',
             'nama_pemesan' => 'Dewi Order Online',
             'jenis_pesanan' => 'online',
             'total_harga' => 60000,
@@ -144,10 +146,62 @@ class AdminLaporanTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('Transaksi Terakhir Gerai');
+        $response->assertSee('Cari nomor nota atau nama pelanggan...');
         $response->assertSee('Andi Walk-in Gerai');
         $response->assertSee('Dewi Order Online');
         $response->assertSee('WALK-IN');
         $response->assertSee('ONLINE');
+    }
+
+    public function test_admin_transaksi_gerai_search_by_nota_and_nama_and_empty_state(): void
+    {
+        Pesanan::create([
+            'nomor_nota_kustom' => '#NOTA-A101',
+            'nama_pemesan' => 'Bambang Sudirman',
+            'jenis_pesanan' => 'walk-in',
+            'total_harga' => 25000,
+            'status_pesanan' => 'selesai',
+            'metode_pembayaran' => 'TUNAI',
+            'waktu_pesan' => now(),
+        ]);
+
+        Pesanan::create([
+            'nomor_nota_kustom' => '#NOTA-B202',
+            'nama_pemesan' => 'Citra Lestari',
+            'jenis_pesanan' => 'online',
+            'total_harga' => 80000,
+            'status_pesanan' => 'selesai',
+            'metode_pembayaran' => 'QRIS',
+            'waktu_pesan' => now(),
+        ]);
+
+        // 1. Search by nomor nota
+        $notaResponse = $this->actingAs($this->admin)->get(route('admin.laporan.transaksi', ['q' => '#NOTA-A101']));
+        $notaResponse->assertStatus(200);
+        $notaResponse->assertSee('#NOTA-A101');
+        $notaResponse->assertSee('Bambang Sudirman');
+        $notaResponse->assertDontSee('Citra Lestari');
+
+        // 2. Search by nama pelanggan
+        $namaResponse = $this->actingAs($this->admin)->get(route('admin.laporan.transaksi', ['q' => 'Citra']));
+        $namaResponse->assertStatus(200);
+        $namaResponse->assertSee('Citra Lestari');
+        $namaResponse->assertSee('#NOTA-B202');
+        $namaResponse->assertDontSee('Bambang Sudirman');
+
+        // 3. Search combined with filter jenis
+        $combinedResponse = $this->actingAs($this->admin)->get(route('admin.laporan.transaksi', [
+            'q' => 'Citra',
+            'jenis' => 'online',
+        ]));
+        $combinedResponse->assertStatus(200);
+        $combinedResponse->assertSee('Citra Lestari');
+
+        // 4. Data tidak ditemukan
+        $notFoundResponse = $this->actingAs($this->admin)->get(route('admin.laporan.transaksi', ['q' => 'NamaTidakAdaXYZ']));
+        $notFoundResponse->assertStatus(200);
+        $notFoundResponse->assertSee('Tidak Ada Transaksi Ditemukan');
+        $notFoundResponse->assertSee('Tidak ada transaksi yang cocok dengan kriteria pencarian atau filter yang dipilih.');
     }
 
     public function test_guest_and_non_admin_cannot_access_admin_laporan(): void
@@ -166,5 +220,50 @@ class AdminLaporanTest extends TestCase
         $response->assertStatus(200);
         $this->assertStringContainsString('text/csv', (string) $response->headers->get('Content-Type'));
         $this->assertStringContainsString('attachment; filename=Laporan_Omzet_Matahari_Fotocopy_', (string) $response->headers->get('Content-Disposition'));
+    }
+
+    public function test_admin_laporan_rejects_filter_and_shows_notice_when_start_date_is_greater_than_end_date(): void
+    {
+        Pesanan::create([
+            'nama_pemesan' => 'Pesanan Hari Ini',
+            'jenis_pesanan' => 'walk-in',
+            'total_harga' => 50000,
+            'status_pesanan' => 'selesai',
+            'metode_pembayaran' => 'TUNAI',
+            'waktu_pesan' => now(),
+        ]);
+
+        // Input tanggal mulai > tanggal akhir
+        $response = $this->actingAs($this->admin)->get(route('admin.laporan.index', [
+            'tanggal_mulai' => now()->addDays(5)->format('Y-m-d'),
+            'tanggal_akhir' => now()->format('Y-m-d'),
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertSee('Rentang tanggal tidak valid. Tanggal mulai tidak boleh lebih besar dari tanggal akhir. Silakan masukkan tanggal yang benar.');
+        // Filter ditolak dan sistem tidak memfilter rentang tidak valid (tetap menampilkan total pesanan)
+        $response->assertSee('Rp 50.000');
+    }
+
+    public function test_admin_transaksi_gerai_rejects_filter_and_shows_notice_when_start_date_is_greater_than_end_date(): void
+    {
+        Pesanan::create([
+            'nama_pemesan' => 'Pesanan Gerai Valid',
+            'jenis_pesanan' => 'walk-in',
+            'total_harga' => 45000,
+            'status_pesanan' => 'selesai',
+            'metode_pembayaran' => 'TUNAI',
+            'waktu_pesan' => now(),
+        ]);
+
+        $response = $this->actingAs($this->admin)->get(route('admin.laporan.transaksi', [
+            'tanggal_mulai' => now()->addDays(7)->format('Y-m-d'),
+            'tanggal_akhir' => now()->format('Y-m-d'),
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertSee('Rentang tanggal tidak valid. Tanggal mulai tidak boleh lebih besar dari tanggal akhir. Silakan masukkan tanggal yang benar.');
+        // Transaksi tidak difilter dengan rentang yang salah
+        $response->assertSee('Pesanan Gerai Valid');
     }
 }

@@ -248,32 +248,51 @@
                         </button>
                     </div>
 
+                    <!-- Pemberitahuan Validasi Stok Habis (Banner Merah) -->
+                    <div id="walkinStockNotice" class="hidden mb-3 p-3 bg-rose-50 border border-rose-200/80 rounded-xl flex items-center justify-between gap-2.5 text-rose-800 text-xs font-semibold">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-4 h-4 text-rose-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </svg>
+                            <span id="walkinStockNoticeText">Stok produk habis. Produk tidak dapat ditambahkan ke nota.</span>
+                        </div>
+                        <button type="button" onclick="document.getElementById('walkinStockNotice').classList.add('hidden')" class="text-rose-400 hover:text-rose-700 font-bold text-xs p-1">✕</button>
+                    </div>
+
                     <div id="catalogGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 max-h-72 overflow-y-auto pr-2 custom-scrollbar">
                         @foreach($catalogProducts as $prod)
                         @php
-                            $stokItem = $inventoryStockMap->get($prod->nama_item) ?? null;
+                            $stokItem = $prod->stok_item ?? ($inventoryStockMap->get($prod->nama_item) ?? null);
                             if (!$stokItem) {
                                 $stokItem = $inventoryStockMap->first(function ($s) use ($prod) {
                                     return str_contains(strtolower($prod->nama_item), strtolower($s->nama_bahan)) ||
                                            str_contains(strtolower($s->nama_bahan), strtolower($prod->nama_item));
                                 });
                             }
+                            $stokQty = $stokItem ? (int)$stokItem->jumlah_stok : null;
+                            $isHabis = ($stokQty !== null && $stokQty <= 0);
                         @endphp
                         <div 
-                            onclick="addItemToCart('{{ addslashes($prod->nama_item) }}', {{ (float)$prod->harga_dasar }}, '{{ $prod->kategori }}', {{ $prod->produk_id }})"
+                            id="catalog-card-{{ $prod->produk_id }}"
+                            onclick="addItemToCart('{{ addslashes($prod->nama_item) }}', {{ (float)$prod->harga_dasar }}, '{{ $prod->kategori }}', {{ $prod->produk_id }}, {{ $stokQty !== null ? $stokQty : 'null' }})"
                             data-category="{{ $prod->kategori }}"
                             data-name="{{ strtolower($prod->nama_item) }}"
-                            class="catalog-item-card p-2.5 rounded-xl border border-slate-200/90 hover:border-amber-400 hover:bg-amber-50/40 bg-slate-50/40 cursor-pointer transition transform active:scale-95 flex flex-col justify-between group min-h-[105px]"
+                            data-prod-id="{{ $prod->produk_id }}"
+                            data-prod-name="{{ $prod->nama_item }}"
+                            data-price="{{ (float)$prod->harga_dasar }}"
+                            class="catalog-item-card p-2.5 rounded-xl border {{ $isHabis ? 'border-rose-200/80 bg-rose-50/30 opacity-75 cursor-not-allowed' : 'border-slate-200/90 hover:border-amber-400 hover:bg-amber-50/40 bg-slate-50/40 cursor-pointer' }} transition transform active:scale-95 flex flex-col justify-between group min-h-[105px]"
                         >
                             <div>
                                 <div class="flex items-center justify-between text-[10px] text-slate-400 mb-1">
                                     <span class="truncate font-semibold">{{ $prod->kategori }}</span>
-                                    <span class="text-amber-600 font-bold opacity-0 group-hover:opacity-100 transition text-[10px]">+ Nota</span>
+                                    <span class="top-action-badge {{ $isHabis ? 'text-rose-600 font-bold text-[10px]' : 'text-amber-600 font-bold opacity-0 group-hover:opacity-100 transition text-[10px]' }}">
+                                        {{ $isHabis ? 'Habis' : '+ Nota' }}
+                                    </span>
                                 </div>
                                 <h4 class="text-xs font-bold text-slate-800 line-clamp-2 leading-snug group-hover:text-amber-900">
                                     {{ $prod->nama_item }}
                                 </h4>
-                                <div class="mt-1.5 flex items-center">
+                                <div class="mt-1.5 flex items-center stock-badge-container">
                                     @if($stokItem)
                                         @if($stokItem->jumlah_stok > 0)
                                             <span class="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/60">
@@ -297,7 +316,9 @@
                                 <span class="text-xs font-mono font-extrabold text-slate-900 group-hover:text-amber-700">
                                     Rp {{ number_format($prod->harga_dasar, 0, ',', '.') }}
                                 </span>
-                                <span class="text-[11px] w-5 h-5 rounded-md bg-slate-200/70 group-hover:bg-amber-500 group-hover:text-white flex items-center justify-center font-bold text-slate-600 transition">+</span>
+                                <span class="action-btn-indicator {{ $isHabis ? 'text-[11px] w-5 h-5 rounded-md bg-rose-100 text-rose-500 flex items-center justify-center font-bold' : 'text-[11px] w-5 h-5 rounded-md bg-slate-200/70 group-hover:bg-amber-500 group-hover:text-white flex items-center justify-center font-bold text-slate-600 transition' }}" title="{{ $isHabis ? 'Stok Habis' : 'Tambah ke Nota' }}">
+                                    {{ $isHabis ? '✕' : '+' }}
+                                </span>
                             </div>
                         </div>
                         @endforeach
@@ -733,9 +754,29 @@
         });
 
         // Add Item to Cart
-        function addItemToCart(nama, harga, kategori, produkId = null) {
+        function addItemToCart(nama, harga, kategori, produkId = null, stokTersedia = null) {
+            if (stokTersedia !== null && parseInt(stokTersedia, 10) <= 0) {
+                const noticeMsg = 'Stok produk habis. Produk tidak dapat ditambahkan ke nota.';
+                const stockNotice = document.getElementById('walkinStockNotice');
+                const stockNoticeText = document.getElementById('walkinStockNoticeText');
+                if (stockNotice) {
+                    if (stockNoticeText) stockNoticeText.textContent = noticeMsg;
+                    stockNotice.classList.remove('hidden');
+                    clearTimeout(window._walkinStockNoticeTimer);
+                    window._walkinStockNoticeTimer = setTimeout(() => {
+                        stockNotice.classList.add('hidden');
+                    }, 5000);
+                }
+                showToast(noticeMsg, 'error');
+                return;
+            }
+
             const existingIndex = cart.findIndex(item => item.nama_item === nama);
             if (existingIndex > -1) {
+                if (stokTersedia !== null && cart[existingIndex].kuantitas >= parseInt(stokTersedia, 10)) {
+                    showToast(`Stok tidak mencukupi. Sisa stok tersedia: ${stokTersedia}.`, 'error');
+                    return;
+                }
                 cart[existingIndex].kuantitas += 1;
                 cart[existingIndex].sub_total = cart[existingIndex].kuantitas * cart[existingIndex].harga_satuan;
             } else {
@@ -746,7 +787,8 @@
                     kuantitas: 1,
                     sub_total: harga,
                     kategori: kategori,
-                    produk_id: produkId
+                    produk_id: produkId,
+                    stok_tersedia: stokTersedia
                 });
             }
             renderCart();
@@ -756,11 +798,16 @@
         // Adjust Item Quantity
         function updateItemQty(index, delta) {
             if (!cart[index]) return;
-            cart[index].kuantitas += delta;
-            if (cart[index].kuantitas <= 0) {
+            const item = cart[index];
+            if (delta > 0 && item.stok_tersedia !== null && item.kuantitas + delta > parseInt(item.stok_tersedia, 10)) {
+                showToast(`Stok tidak mencukupi. Sisa stok tersedia: ${item.stok_tersedia}.`, 'error');
+                return;
+            }
+            item.kuantitas += delta;
+            if (item.kuantitas <= 0) {
                 cart.splice(index, 1);
             } else {
-                cart[index].sub_total = cart[index].kuantitas * cart[index].harga_satuan;
+                item.sub_total = item.kuantitas * item.harga_satuan;
             }
             renderCart();
         }
@@ -768,10 +815,16 @@
         // Live manual typing in quantity input
         function handleQtyInput(index, inputEl) {
             if (!cart[index]) return;
-            const val = parseInt(inputEl.value, 10);
+            const item = cart[index];
+            let val = parseInt(inputEl.value, 10);
             if (!isNaN(val) && val > 0) {
-                cart[index].kuantitas = val;
-                cart[index].sub_total = cart[index].kuantitas * cart[index].harga_satuan;
+                if (item.stok_tersedia !== null && val > parseInt(item.stok_tersedia, 10)) {
+                    val = parseInt(item.stok_tersedia, 10);
+                    inputEl.value = val;
+                    showToast(`Kuantitas disesuaikan dengan sisa stok: ${item.stok_tersedia}.`, 'error');
+                }
+                item.kuantitas = val;
+                item.sub_total = item.kuantitas * item.harga_satuan;
                 updateOrderSummaryOnly();
             }
         }
@@ -779,13 +832,19 @@
         // Finalize manual quantity on blur
         function handleQtyBlur(index, inputEl) {
             if (!cart[index]) return;
+            const item = cart[index];
             let val = parseInt(inputEl.value, 10);
             if (isNaN(val) || val <= 0) {
                 val = 1;
                 inputEl.value = 1;
             }
-            cart[index].kuantitas = val;
-            cart[index].sub_total = cart[index].kuantitas * cart[index].harga_satuan;
+            if (item.stok_tersedia !== null && val > parseInt(item.stok_tersedia, 10)) {
+                val = parseInt(item.stok_tersedia, 10);
+                inputEl.value = val;
+                showToast(`Kuantitas disesuaikan dengan sisa stok: ${item.stok_tersedia}.`, 'error');
+            }
+            item.kuantitas = val;
+            item.sub_total = item.kuantitas * item.harga_satuan;
             renderCart();
         }
 
@@ -1150,11 +1209,11 @@
                     // Refresh data table
                     fetchLiveWalkInData();
                 } else {
-                    alert('Gagal menyelesaikan transaksi: ' + (data.message || 'Error'));
+                    showToast(data.message || 'Gagal menyelesaikan transaksi.', 'error');
                 }
             } catch (err) {
                 console.error(err);
-                alert('Terjadi kesalahan jaringan saat menyimpan transaksi.');
+                showToast('Terjadi kesalahan jaringan saat menyimpan transaksi.', 'error');
             } finally {
                 if (submitBtn) submitBtn.disabled = false;
                 if (submitBtnText) submitBtnText.textContent = 'Submit Transaksi (Enter)';
@@ -1271,6 +1330,68 @@
                         filterPosTransactions(curSearch);
                     }
                 }
+
+                // Update live catalog stocks from database
+                if (data.catalog && Array.isArray(data.catalog)) {
+                    data.catalog.forEach(item => {
+                        const card = document.getElementById(`catalog-card-${item.produk_id}`);
+                        if (card) {
+                            const topBadge = card.querySelector('.top-action-badge');
+                            const stockContainer = card.querySelector('.stock-badge-container');
+                            const actionBtn = card.querySelector('.action-btn-indicator');
+
+                            if (item.is_habis) {
+                                card.className = 'catalog-item-card p-2.5 rounded-xl border border-rose-200/80 bg-rose-50/30 opacity-75 cursor-not-allowed transition transform active:scale-95 flex flex-col justify-between group min-h-[105px]';
+                                if (topBadge) {
+                                    topBadge.className = 'top-action-badge text-rose-600 font-bold text-[10px]';
+                                    topBadge.textContent = 'Habis';
+                                }
+                                if (stockContainer) {
+                                    stockContainer.innerHTML = `
+                                        <span class="inline-flex items-center gap-1 text-[10px] font-semibold text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200/60">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                            Stok Habis
+                                        </span>
+                                    `;
+                                }
+                                if (actionBtn) {
+                                    actionBtn.className = 'action-btn-indicator text-[11px] w-5 h-5 rounded-md bg-rose-100 text-rose-500 flex items-center justify-center font-bold';
+                                    actionBtn.textContent = '✕';
+                                    actionBtn.title = 'Stok Habis';
+                                }
+                                card.onclick = () => addItemToCart(item.nama_item, item.harga_dasar, item.kategori, item.produk_id, 0);
+                            } else {
+                                card.className = 'catalog-item-card p-2.5 rounded-xl border border-slate-200/90 hover:border-amber-400 hover:bg-amber-50/40 bg-slate-50/40 cursor-pointer transition transform active:scale-95 flex flex-col justify-between group min-h-[105px]';
+                                if (topBadge) {
+                                    topBadge.className = 'top-action-badge text-amber-600 font-bold opacity-0 group-hover:opacity-100 transition text-[10px]';
+                                    topBadge.textContent = '+ Nota';
+                                }
+                                if (stockContainer) {
+                                    if (item.stok_qty !== null) {
+                                        stockContainer.innerHTML = `
+                                            <span class="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/60">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                Stok: ${item.stok_qty} ${item.satuan}
+                                            </span>
+                                        `;
+                                    } else {
+                                        stockContainer.innerHTML = `
+                                            <span class="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                                                Layanan Siap
+                                            </span>
+                                        `;
+                                    }
+                                }
+                                if (actionBtn) {
+                                    actionBtn.className = 'action-btn-indicator text-[11px] w-5 h-5 rounded-md bg-slate-200/70 group-hover:bg-amber-500 group-hover:text-white flex items-center justify-center font-bold text-slate-600 transition';
+                                    actionBtn.textContent = '+';
+                                    actionBtn.title = 'Tambah ke Nota';
+                                }
+                                card.onclick = () => addItemToCart(item.nama_item, item.harga_dasar, item.kategori, item.produk_id, item.stok_qty);
+                            }
+                        }
+                    });
+                }
             } catch (e) {
                 console.error(e);
             }
@@ -1333,11 +1454,16 @@
         }
 
         // Helper: Toast Message
-        function showToast(msg) {
+        function showToast(msg, type = 'info') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
-            toast.className = 'bg-slate-900 text-white text-xs px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 transform transition-all duration-300 translate-y-2 opacity-0 pointer-events-auto';
-            toast.innerHTML = `<span>ℹ️</span><span>${msg}</span>`;
+            if (type === 'error') {
+                toast.className = 'bg-rose-600 text-white text-xs px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 transform transition-all duration-300 translate-y-2 opacity-0 pointer-events-auto font-medium';
+                toast.innerHTML = `<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg><span>${msg}</span>`;
+            } else {
+                toast.className = 'bg-slate-900 text-white text-xs px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 transform transition-all duration-300 translate-y-2 opacity-0 pointer-events-auto';
+                toast.innerHTML = `<span>ℹ️</span><span>${msg}</span>`;
+            }
             container.appendChild(toast);
             
             setTimeout(() => {
@@ -1347,7 +1473,7 @@
             setTimeout(() => {
                 toast.classList.add('translate-y-2', 'opacity-0');
                 setTimeout(() => toast.remove(), 300);
-            }, 3000);
+            }, 4000);
         }
     </script>
 </body>

@@ -150,7 +150,7 @@
                     </div>
 
                     <!-- Date Range Filter Form -->
-                    <form method="GET" action="{{ route('admin.laporan.index') }}" class="flex items-center gap-2.5 flex-nowrap shrink-0 overflow-x-auto sm:mr-3">
+                    <form id="formFilterTanggal" method="GET" action="{{ route('admin.laporan.index') }}" class="flex items-center gap-2.5 flex-nowrap shrink-0 overflow-x-auto sm:mr-3">
                         <span class="text-xs text-slate-500 font-bold whitespace-nowrap shrink-0">Rentang:</span>
                         <div class="flex items-center gap-1.5 shrink-0">
                             <input 
@@ -183,8 +183,25 @@
 
                 </div>
 
+                <!-- Pemberitahuan jika rentang tanggal tidak valid -->
+                @if(!empty($pesanErrorTanggal))
+                <div id="errorTanggalBanner" class="mt-2.5 p-3 bg-rose-50 border border-rose-200/80 rounded-xl flex items-center gap-2.5 text-rose-800 text-xs font-medium">
+                    <svg class="w-4 h-4 text-rose-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    <span id="errorTanggalText">{{ $pesanErrorTanggal }}</span>
+                </div>
+                @else
+                <div id="errorTanggalBanner" class="hidden mt-2.5 p-3 bg-rose-50 border border-rose-200/80 rounded-xl flex items-center gap-2.5 text-rose-800 text-xs font-medium">
+                    <svg class="w-4 h-4 text-rose-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    <span id="errorTanggalText"></span>
+                </div>
+                @endif
+
                 <!-- Pemberitahuan jika tidak ada pesanan pada tanggal/periode yang dipilih -->
-                @if($totalNotaPesanan === 0)
+                @if($totalNotaPesanan === 0 && empty($pesanErrorTanggal))
                 <div class="mt-2.5 p-3 bg-amber-50 border border-amber-200/80 rounded-xl flex items-center gap-2.5 text-amber-800 text-xs font-medium">
                     <svg class="w-4 h-4 text-amber-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -443,6 +460,27 @@
             const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
             document.getElementById('liveClockDisplay').textContent = `${hours}:${minutes} WIB • ${now.getDate()} ${months[now.getMonth()]}`;
         }, 1000);
+
+        // Validasi Rentang Tanggal Filter
+        const dateFilterForm = document.getElementById('formFilterTanggal');
+        if (dateFilterForm) {
+            dateFilterForm.addEventListener('submit', function (e) {
+                const inputMulai = dateFilterForm.querySelector('input[name="tanggal_mulai"]');
+                const inputAkhir = dateFilterForm.querySelector('input[name="tanggal_akhir"]');
+                if (inputMulai && inputAkhir && inputMulai.value && inputAkhir.value) {
+                    if (inputMulai.value > inputAkhir.value) {
+                        e.preventDefault();
+                        const pesan = 'Rentang tanggal tidak valid. Tanggal mulai tidak boleh lebih besar dari tanggal akhir. Silakan masukkan tanggal yang benar.';
+                        const banner = document.getElementById('errorTanggalBanner');
+                        const textEl = document.getElementById('errorTanggalText');
+                        if (banner) {
+                            if (textEl) textEl.textContent = pesan;
+                            banner.classList.remove('hidden');
+                        }
+                    }
+                }
+            });
+        }
     </script>
 </body>
 </html>

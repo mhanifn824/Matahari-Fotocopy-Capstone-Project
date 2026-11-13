@@ -2033,6 +2033,13 @@ class DashboardController extends Controller
 
         $inventoryStockMap = InventarisStok::all()->keyBy('nama_bahan');
 
+        foreach ($catalogProducts as $prod) {
+            $stok = $this->findMatchingInventarisStok($prod->nama_item);
+            $prod->stok_item = $stok;
+            $prod->stok_qty = $stok ? (int) $stok->jumlah_stok : null;
+            $prod->is_habis = ($prod->stok_qty !== null && $prod->stok_qty <= 0);
+        }
+
         $members = Pelanggan::with('user')->get();
 
         // Sync monthly revenue report
@@ -2085,6 +2092,28 @@ class DashboardController extends Controller
             ];
         });
 
+        $catalog = ProdukLayanan::where('status_aktif', true)
+            ->orderBy('kategori', 'asc')
+            ->orderBy('nama_item', 'asc')
+            ->get()
+            ->map(function ($prod) {
+                $stokItem = $this->findMatchingInventarisStok($prod->nama_item);
+                $stokQty = $stokItem ? (int) $stokItem->jumlah_stok : null;
+                $isHabis = ($stokQty !== null && $stokQty <= 0);
+
+                return [
+                    'produk_id' => $prod->produk_id,
+                    'nama_item' => $prod->nama_item,
+                    'kategori' => $prod->kategori,
+                    'harga_dasar' => (float) $prod->harga_dasar,
+                    'stok_id' => $stokItem?->stok_id,
+                    'stok_qty' => $stokQty,
+                    'jumlah_stok' => $stokQty,
+                    'satuan' => $stokItem?->satuan ?? '',
+                    'is_habis' => $isHabis,
+                ];
+            });
+
         return response()->json([
             'status' => 'success',
             'todayOmset' => $todayOmset,
@@ -2093,6 +2122,7 @@ class DashboardController extends Controller
             'nextNotaCode' => $nextNotaCode,
             'activeAntreanCount' => $activeAntreanCount,
             'orders' => $orders,
+            'catalog' => $catalog,
         ]);
     }
 
@@ -2122,6 +2152,17 @@ class DashboardController extends Controller
         ]);
 
         $this->ensureCatalogProductsExist();
+
+        // Validasi stok produk: jika stok produk habis (0), kasir tidak boleh menambahkan produk tersebut ke nota
+        foreach ($validated['items'] as $item) {
+            $stokItem = $this->findMatchingInventarisStok($item['nama_item']);
+            if ($stokItem && (int) $stokItem->jumlah_stok <= 0) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Stok produk habis. Produk tidak dapat ditambahkan ke nota.',
+                ], 422);
+            }
+        }
 
         return DB::transaction(function () use ($validated) {
             // Build item description summary
@@ -2168,14 +2209,7 @@ class DashboardController extends Controller
                 ]);
 
                 // Integrasi Manajemen Stok: Pengurangan stok langsung untuk barang/bahan ATK & Jilid yang dibeli
-                $stokItem = InventarisStok::where('nama_bahan', $item['nama_item'])->first()
-                    ?? InventarisStok::where('nama_bahan', 'like', '%'.$item['nama_item'].'%')->first();
-                if (! $stokItem) {
-                    $stokItem = InventarisStok::all()->first(function ($s) use ($item) {
-                        return str_contains(strtolower($item['nama_item']), strtolower($s->nama_bahan)) ||
-                               str_contains(strtolower($s->nama_bahan), strtolower($item['nama_item']));
-                    });
-                }
+                $stokItem = $this->findMatchingInventarisStok($item['nama_item']);
                 if ($stokItem) {
                     $stokItem->decrement('jumlah_stok', min((int) $stokItem->jumlah_stok, (int) $item['kuantitas']));
                 }
@@ -2547,6 +2581,63 @@ class DashboardController extends Controller
         }
 
         return 5000;
+    }
+
+    /**
+     * Cari kecocokan data InventarisStok berdasarkan nama item katalog/pesanan.
+     */
+    public function findMatchingInventarisStok(string $namaItem): ?InventarisStok
+    {
+        $cleanName = trim($namaItem);
+        if ($cleanName === '') {
+            return null;
+        }
+
+        // 1. Exact match by nama_bahan
+        $exact = InventarisStok::where('nama_bahan', $cleanName)->first();
+        if ($exact) {
+            return $exact;
+        }
+
+        // 2. Exact match case-insensitive
+        $exactCi = InventarisStok::whereRaw('LOWER(nama_bahan) = ?', [strtolower($cleanName)])->first();
+        if ($exactCi) {
+            return $exactCi;
+        }
+
+        // 3. Substring match
+        $sub = InventarisStok::where('nama_bahan', 'like', '%'.$cleanName.'%')->first();
+        if ($sub) {
+            return $sub;
+        }
+
+        $all = InventarisStok::all();
+        $subInCollection = $all->first(function ($s) use ($cleanName) {
+            $sName = strtolower($s->nama_bahan);
+            $cName = strtolower($cleanName);
+
+            return str_contains($sName, $cName) || str_contains($cName, $sName);
+        });
+        if ($subInCollection) {
+            return $subInCollection;
+        }
+
+        // 4. Token-based matching without parenthetical details like (1 Rim), (Biru), etc.
+        $simplified = preg_replace('/\s*\(.*?\)\s*/', ' ', $cleanName);
+        $simplified = trim(preg_replace('/\s+/', ' ', $simplified));
+        if ($simplified !== '' && $simplified !== $cleanName) {
+            $tokenMatch = $all->first(function ($s) use ($simplified) {
+                $sName = strtolower($s->nama_bahan);
+                $cSimp = strtolower($simplified);
+
+                return str_contains($sName, $cSimp) || str_contains($cSimp, $sName);
+            });
+            if ($tokenMatch) {
+                return $tokenMatch;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -3664,21 +3755,29 @@ class DashboardController extends Controller
         $tanggalAkhirInput = $request->input('tanggal_akhir');
 
         $query = Pesanan::where('status_pesanan', '!=', 'dibatalkan');
+        $pesanErrorTanggal = null;
 
         if ($tanggalMulaiInput && $tanggalAkhirInput) {
-            $rentang = 'rentang_tanggal';
-            $startDate = Carbon::parse($tanggalMulaiInput)->startOfDay();
-            $endDate = Carbon::parse($tanggalAkhirInput)->endOfDay();
-            if ($startDate->gt($endDate)) {
-                $temp = $startDate;
-                $startDate = $endDate->copy()->startOfDay();
-                $endDate = $temp->copy()->endOfDay();
-                $tanggalMulaiInput = $startDate->format('Y-m-d');
-                $tanggalAkhirInput = $endDate->format('Y-m-d');
+            $parsedStart = Carbon::parse($tanggalMulaiInput)->startOfDay();
+            $parsedEnd = Carbon::parse($tanggalAkhirInput)->endOfDay();
+
+            if ($parsedStart->gt($parsedEnd)) {
+                $pesanErrorTanggal = 'Rentang tanggal tidak valid. Tanggal mulai tidak boleh lebih besar dari tanggal akhir. Silakan masukkan tanggal yang benar.';
+                // Menolak proses filter dan menggunakan rentang default
+                $rentang = 'semua';
+                $firstOrderDate = Pesanan::where('status_pesanan', '!=', 'dibatalkan')->min('waktu_pesan');
+                $startDate = $firstOrderDate ? Carbon::parse($firstOrderDate)->startOfDay() : Carbon::today()->startOfDay();
+                $endDate = Carbon::today()->endOfDay();
+                $daysCount = max(1, $startDate->diffInDays(Carbon::today()) + 1);
+                $rentangLabel = 'Semua Transaksi';
+            } else {
+                $rentang = 'rentang_tanggal';
+                $startDate = $parsedStart;
+                $endDate = $parsedEnd;
+                $query->whereBetween('waktu_pesan', [$startDate, $endDate]);
+                $daysCount = max(1, $startDate->diffInDays($endDate) + 1);
+                $rentangLabel = $startDate->translatedFormat('d M Y').' - '.$endDate->translatedFormat('d M Y');
             }
-            $query->whereBetween('waktu_pesan', [$startDate, $endDate]);
-            $daysCount = max(1, $startDate->diffInDays($endDate) + 1);
-            $rentangLabel = $startDate->translatedFormat('d M Y').' - '.$endDate->translatedFormat('d M Y');
         } elseif ($rentang === 'hari_ini') {
             $startDate = Carbon::today()->startOfDay();
             $endDate = Carbon::today()->endOfDay();
@@ -3799,7 +3898,8 @@ class DashboardController extends Controller
             'totalShiftSaatIni',
             'trend7Hari',
             'activeAntreanCount',
-            'rentangTanggalLabel'
+            'rentangTanggalLabel',
+            'pesanErrorTanggal'
         ));
     }
 
@@ -3822,12 +3922,22 @@ class DashboardController extends Controller
             ->where('status_pesanan', '!=', 'dibatalkan');
 
         if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('nama_pemesan', 'like', "%{$search}%")
-                    ->orWhere('nomor_nota_kustom', 'like', "%{$search}%")
-                    ->orWhere('judul_dokumen', 'like', "%{$search}%")
-                    ->orWhere('spesifikasi', 'like', "%{$search}%")
-                    ->orWhere('pesanan_id', 'like', "%{$search}%");
+            $cleanSearch = trim($search);
+            $query->where(function ($q) use ($cleanSearch) {
+                $q->where('nama_pemesan', 'like', "%{$cleanSearch}%")
+                    ->orWhereHas('pelanggan.user', function ($qu) use ($cleanSearch) {
+                        $qu->where('nama', 'like', "%{$cleanSearch}%");
+                    })
+                    ->orWhere('nomor_nota_kustom', 'like', "%{$cleanSearch}%")
+                    ->orWhere('judul_dokumen', 'like', "%{$cleanSearch}%")
+                    ->orWhere('spesifikasi', 'like', "%{$cleanSearch}%");
+
+                if (preg_match('/(\d+)$/', $cleanSearch, $matches)) {
+                    $possibleId = (int) $matches[1];
+                    if ($possibleId > 0) {
+                        $q->orWhere('pesanan_id', $possibleId);
+                    }
+                }
             });
         }
 
@@ -3837,17 +3947,17 @@ class DashboardController extends Controller
             $query->where('jenis_pesanan', 'online');
         }
 
+        $pesanErrorTanggal = null;
+
         if ($tanggalMulaiInput && $tanggalAkhirInput) {
-            $startDate = Carbon::parse($tanggalMulaiInput)->startOfDay();
-            $endDate = Carbon::parse($tanggalAkhirInput)->endOfDay();
-            if ($startDate->gt($endDate)) {
-                $temp = $startDate;
-                $startDate = $endDate->copy()->startOfDay();
-                $endDate = $temp->copy()->endOfDay();
-                $tanggalMulaiInput = $startDate->format('Y-m-d');
-                $tanggalAkhirInput = $endDate->format('Y-m-d');
+            $parsedStart = Carbon::parse($tanggalMulaiInput)->startOfDay();
+            $parsedEnd = Carbon::parse($tanggalAkhirInput)->endOfDay();
+
+            if ($parsedStart->gt($parsedEnd)) {
+                $pesanErrorTanggal = 'Rentang tanggal tidak valid. Tanggal mulai tidak boleh lebih besar dari tanggal akhir. Silakan masukkan tanggal yang benar.';
+            } else {
+                $query->whereBetween('waktu_pesan', [$parsedStart, $parsedEnd]);
             }
-            $query->whereBetween('waktu_pesan', [$startDate, $endDate]);
         }
 
         $totalCount = (clone $query)->count();
@@ -3868,7 +3978,8 @@ class DashboardController extends Controller
             'totalCount',
             'totalOmzet',
             'totalWalkIn',
-            'totalOnline'
+            'totalOnline',
+            'pesanErrorTanggal'
         ));
     }
 

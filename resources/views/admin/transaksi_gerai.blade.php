@@ -161,7 +161,7 @@
         <!-- FILTER & SEARCH BAR -->
         <div class="px-4 md:px-8 pb-4">
             <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-2xs">
-                <form method="GET" action="{{ route('admin.laporan.transaksi') }}" class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+                <form id="formFilterTransaksi" method="GET" action="{{ route('admin.laporan.transaksi') }}" class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
                     
                     <!-- Search input -->
                     <div class="relative flex-1">
@@ -173,11 +173,16 @@
                         <input 
                             type="text" 
                             name="q" 
+                            id="search-transaksi-input"
                             value="{{ $search }}" 
-                            placeholder="Cari nomor nota, nama pelanggan, dokumen..." 
+                            placeholder="Cari nomor nota atau nama pelanggan..." 
                             class="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 font-medium"
                         >
                     </div>
+
+                    @if(!empty($jenis) && $jenis !== 'semua')
+                    <input type="hidden" name="jenis" value="{{ $jenis }}">
+                    @endif
 
                     <!-- Jenis Filter Buttons -->
                     <div class="flex items-center gap-1.5 overflow-x-auto">
@@ -220,6 +225,23 @@
                     </div>
 
                 </form>
+
+                <!-- Pemberitahuan jika rentang tanggal tidak valid -->
+                @if(!empty($pesanErrorTanggal))
+                <div id="errorTanggalBanner" class="mt-2.5 p-3 bg-rose-50 border border-rose-200/80 rounded-xl flex items-center gap-2.5 text-rose-800 text-xs font-medium">
+                    <svg class="w-4 h-4 text-rose-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    <span id="errorTanggalText">{{ $pesanErrorTanggal }}</span>
+                </div>
+                @else
+                <div id="errorTanggalBanner" class="hidden mt-2.5 p-3 bg-rose-50 border border-rose-200/80 rounded-xl flex items-center gap-2.5 text-rose-800 text-xs font-medium">
+                    <svg class="w-4 h-4 text-rose-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    <span id="errorTanggalText"></span>
+                </div>
+                @endif
             </div>
         </div>
 
@@ -243,7 +265,7 @@
                         </thead>
                         <tbody class="divide-y divide-slate-100 text-slate-700 font-medium">
                             @forelse($orders as $o)
-                            <tr class="hover:bg-slate-50/60 transition group">
+                            <tr class="transaksi-row hover:bg-slate-50/60 transition group" data-search="{{ strtolower($o->nomor_nota . ' ' . $o->display_name . ' ' . $o->nomor_nota_kustom . ' ' . $o->nama_pemesan . ' ' . ($o->pelanggan?->user?->nama ?? '')) }}">
                                 <!-- No. Nota -->
                                 <td class="py-3.5 px-4 font-mono font-extrabold text-blue-600 whitespace-nowrap">
                                     {{ $o->nomor_nota }}
@@ -331,6 +353,19 @@
                                 </td>
                             </tr>
                             @endforelse
+
+                            <!-- Client-side real-time search empty state -->
+                            <tr id="client-empty-state-row" style="display: none;">
+                                <td colspan="8" class="py-12 px-4 text-center">
+                                    <div class="w-12 h-12 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-2 shadow-2xs font-bold text-xl">
+                                        📋
+                                    </div>
+                                    <h4 class="font-bold text-slate-800 text-sm">Tidak Ada Transaksi Ditemukan</h4>
+                                    <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                                        Tidak ada transaksi yang cocok dengan kriteria pencarian atau filter yang dipilih.
+                                    </p>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -362,6 +397,56 @@
             const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
             document.getElementById('liveClockDisplay').textContent = `${hours}:${minutes} WIB • ${now.getDate()} ${months[now.getMonth()]}`;
         }, 1000);
+
+        // Real-time table search for transaksi
+        const searchInput = document.getElementById('search-transaksi-input');
+        if (searchInput) {
+            searchInput.addEventListener('input', function () {
+                const query = this.value.toLowerCase().trim();
+                const rows = document.querySelectorAll('tr.transaksi-row');
+                let visibleCount = 0;
+
+                rows.forEach(row => {
+                    const searchData = row.getAttribute('data-search') || '';
+                    if (!query || searchData.includes(query)) {
+                        row.style.display = '';
+                        visibleCount++;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                const clientEmpty = document.getElementById('client-empty-state-row');
+                if (clientEmpty) {
+                    if (rows.length > 0 && visibleCount === 0) {
+                        clientEmpty.style.display = '';
+                    } else {
+                        clientEmpty.style.display = 'none';
+                    }
+                }
+            });
+        }
+
+        // Validasi Rentang Tanggal Filter Transaksi
+        const transaksiFilterForm = document.getElementById('formFilterTransaksi');
+        if (transaksiFilterForm) {
+            transaksiFilterForm.addEventListener('submit', function (e) {
+                const inputMulai = transaksiFilterForm.querySelector('input[name="tanggal_mulai"]');
+                const inputAkhir = transaksiFilterForm.querySelector('input[name="tanggal_akhir"]');
+                if (inputMulai && inputAkhir && inputMulai.value && inputAkhir.value) {
+                    if (inputMulai.value > inputAkhir.value) {
+                        e.preventDefault();
+                        const pesan = 'Rentang tanggal tidak valid. Tanggal mulai tidak boleh lebih besar dari tanggal akhir. Silakan masukkan tanggal yang benar.';
+                        const banner = document.getElementById('errorTanggalBanner');
+                        const textEl = document.getElementById('errorTanggalText');
+                        if (banner) {
+                            if (textEl) textEl.textContent = pesan;
+                            banner.classList.remove('hidden');
+                        }
+                    }
+                }
+            });
+        }
     </script>
 </body>
 </html>

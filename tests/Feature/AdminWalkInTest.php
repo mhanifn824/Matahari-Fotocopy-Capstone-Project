@@ -346,4 +346,157 @@ class AdminWalkInTest extends TestCase
         $response->assertSee('id="search-not-found-atk"', false);
         $response->assertSee('Data tidak tersedia');
     }
+
+    public function test_walkin_renders_stock_warning_banner_and_labels_out_of_stock_items(): void
+    {
+        InventarisStok::create([
+            'nama_bahan' => 'Buku Tulis Sinar Dunia 38 Lembar',
+            'kategori' => 'ATK',
+            'jumlah_stok' => 0,
+            'satuan' => 'pcs',
+            'harga_beli' => 2500,
+        ]);
+
+        $response = $this->actingAs($this->admin)->get(route('admin.walkin.index'));
+
+        $response->assertStatus(200);
+        $response->assertSee('id="walkinStockNotice"', false);
+        $response->assertSee('Stok produk habis. Produk tidak dapat ditambahkan ke nota.');
+        $response->assertSee('Stok Habis');
+    }
+
+    public function test_walkin_checkout_rejects_items_with_zero_stock(): void
+    {
+        InventarisStok::create([
+            'nama_bahan' => 'Buku Tulis Sinar Dunia 38 Lembar',
+            'kategori' => 'ATK',
+            'jumlah_stok' => 0,
+            'satuan' => 'pcs',
+            'harga_beli' => 2500,
+        ]);
+
+        $payload = [
+            'nama_pemesan' => 'Budi Santoso',
+            'tipe_pelanggan' => 'Walk-in Tamu',
+            'items' => [
+                [
+                    'nama_item' => 'Buku Tulis Sinar Dunia 38 Lembar',
+                    'kuantitas' => 1,
+                    'harga_satuan' => 4000,
+                    'sub_total' => 4000,
+                ],
+            ],
+            'subtotal' => 4000,
+            'diskon' => 0,
+            'total_harga' => 4000,
+            'metode_pembayaran' => 'TUNAI',
+        ];
+
+        $response = $this->actingAs($this->admin)->postJson(route('admin.walkin.checkout'), $payload);
+
+        $response->assertStatus(422);
+        $response->assertJson([
+            'status' => 'error',
+            'message' => 'Stok produk habis. Produk tidak dapat ditambahkan ke nota.',
+        ]);
+
+        $this->assertEquals(0, Pesanan::count());
+    }
+
+    public function test_stock_synchronization_between_manajemen_stok_and_kasir_walkin(): void
+    {
+        // 1. Awal: Buat item di inventaris dengan stok habis (0)
+        $stok = InventarisStok::create([
+            'kode_bahan' => 'ATK-SPIDOL-01',
+            'nama_bahan' => 'Spidol Marker Snowman Hitam',
+            'kategori' => 'Alat Tulis & Map',
+            'jumlah_stok' => 0,
+            'satuan' => 'pcs',
+            'batas_minimum' => 5,
+            'kapasitas_maksimal' => 50,
+            'harga_beli' => 7000,
+        ]);
+
+        // 2. Pada Kasir Walk-in, item berstatus habis dan ditolak saat checkout
+        $walkinRes = $this->actingAs($this->admin)->get(route('admin.walkin.index'));
+        $walkinRes->assertStatus(200);
+        $walkinRes->assertSee('Spidol Marker Snowman Hitam');
+        $walkinRes->assertSee('Stok Habis');
+
+        $rejectedCheckout = $this->actingAs($this->admin)->postJson(route('admin.walkin.checkout'), [
+            'nama_pemesan' => 'Pelanggan Walk-in',
+            'tipe_pelanggan' => 'Walk-in Tamu',
+            'items' => [
+                [
+                    'nama_item' => 'Spidol Marker Snowman Hitam',
+                    'kuantitas' => 1,
+                    'harga_satuan' => 9000,
+                    'sub_total' => 9000,
+                ],
+            ],
+            'subtotal' => 9000,
+            'diskon' => 0,
+            'total_harga' => 9000,
+            'metode_pembayaran' => 'TUNAI',
+        ]);
+        $rejectedCheckout->assertStatus(422);
+        $rejectedCheckout->assertJson([
+            'status' => 'error',
+            'message' => 'Stok produk habis. Produk tidak dapat ditambahkan ke nota.',
+        ]);
+
+        // 3. Admin menambah stok melalui fitur Manajemen Stok (catat bahan masuk / quick add)
+        $addStockRes = $this->actingAs($this->admin)->postJson(route('admin.stok.catat-masuk'), [
+            'stok_id' => $stok->stok_id,
+            'no_surat_jalan' => 'SJ-2026-TEST-01',
+            'jumlah_masuk' => 20,
+            'satuan' => 'pcs',
+            'mitra_supplier' => 'CV Sinar Abadi Bintaro',
+        ]);
+        $addStockRes->assertStatus(200);
+        $this->assertEquals(20, $stok->fresh()->jumlah_stok);
+
+        // 4. Kasir Walk-in secara otomatis mengikuti data terbaru dari database
+        $walkinUpdatedRes = $this->actingAs($this->admin)->get(route('admin.walkin.index'));
+        $walkinUpdatedRes->assertStatus(200);
+        $walkinUpdatedRes->assertSee('Stok: 20 pcs');
+
+        $liveDataRes = $this->actingAs($this->admin)->get(route('admin.walkin.live-data'));
+        $liveDataRes->assertStatus(200);
+        $liveDataRes->assertJsonFragment([
+            'nama_item' => 'Spidol Marker Snowman Hitam',
+            'jumlah_stok' => 20,
+            'is_habis' => false,
+        ]);
+
+        // 5. Produk yang sebelumnya habis sekarang BISA ditambahkan dan dicheckout
+        $successCheckout = $this->actingAs($this->admin)->postJson(route('admin.walkin.checkout'), [
+            'nama_pemesan' => 'Pelanggan Sukses',
+            'tipe_pelanggan' => 'Walk-in Tamu',
+            'items' => [
+                [
+                    'nama_item' => 'Spidol Marker Snowman Hitam',
+                    'kuantitas' => 4,
+                    'harga_satuan' => 9000,
+                    'sub_total' => 36000,
+                ],
+            ],
+            'subtotal' => 36000,
+            'diskon' => 0,
+            'total_harga' => 36000,
+            'metode_pembayaran' => 'TUNAI',
+        ]);
+        $successCheckout->assertStatus(200);
+
+        // 6. Stok di database berkurang otomatis (20 - 4 = 16)
+        $this->assertEquals(16, $stok->fresh()->jumlah_stok);
+
+        // 7. Perubahan stok langsung tercermin di Manajemen Stok (menggunakan sumber database yang sama)
+        $stokLiveRes = $this->actingAs($this->admin)->get(route('admin.stok.live-data'));
+        $stokLiveRes->assertStatus(200);
+        $stokLiveRes->assertJsonFragment([
+            'nama_bahan' => 'Spidol Marker Snowman Hitam',
+            'jumlah_stok' => 16,
+        ]);
+    }
 }
